@@ -258,6 +258,10 @@
 
         /* Hide delete buttons when guest has no delete permission */
         body.no-delete .no-delete-hide { display: none !important; }
+        /* Guest data modal stats */
+        .stat-mini { background:#0f172a; border:1px solid #1e293b; border-radius:10px; padding:12px 18px; text-align:center; min-width:90px; }
+        .stat-mini .stat-val { font-size:22px; font-weight:800; line-height:1.1; }
+        .stat-mini .stat-lbl { font-size:11px; color:var(--muted); margin-top:4px; }
 
         /* ══════════════════════════════════════════════════════════
            TABLE
@@ -1079,7 +1083,10 @@
 
                 <!-- Guest Access Config -->
                 <div class="guest-config">
-                    <h4>👤 Guest Access Configuration</h4>
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                        <h4 style="margin:0;">👤 Guest Access Configuration</h4>
+                        <button class="btn btn-teal btn-sm" id="viewGuestDataBtn">📊 View Guest Data</button>
+                    </div>
                     <div class="form-row" style="align-items:center;gap:14px;">
                         <label class="check-label">
                             <input type="checkbox" id="guestEnabled"> Enable Guest Access
@@ -1150,6 +1157,20 @@
 <!-- ══════════════════════════════════════════════════════════
      NEW PANELS injected into content at runtime
 ══════════════════════════════════════════════════════════ -->
+
+<!-- ══════════════════════════════════════════════════════════
+     GUEST DATA MODAL
+══════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="guestDataModal">
+    <div class="modal-box" style="max-width:900px;width:95vw;max-height:85vh;overflow-y:auto;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+            <h3 style="margin:0;">📊 Guest Capture Data</h3>
+            <button class="btn btn-gray btn-sm" onclick="document.getElementById('guestDataModal').classList.remove('open')">✕ Close</button>
+        </div>
+        <div id="guestDataSummary" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:18px;"></div>
+        <div id="guestDataContent" style="overflow-x:auto;"></div>
+    </div>
+</div>
 
 <!-- ══════════════════════════════════════════════════════════
      FIREBASE + SCRIPT
@@ -1282,25 +1303,23 @@ if (isGuestMode) {
     try { guestData = JSON.parse(sessionStorage.getItem('guest_session')||'null'); } catch(e){ guestData=null; }
     if (!guestData) { window.location.href='login.html'; }
     else {
-        // FIX: ensure anonymous Firebase auth so photo_history reads work
-        // (login.html calls signInAnonymously — this catches the case where
-        //  the auth state is still loading when admin.html boots)
-        const _authCheck = new Promise(resolve => {
-            const unsub = onAuthStateChanged(auth, user => {
-                unsub();
-                resolve(user);
-            });
-        });
-        _authCheck.then(user => {
-            if (!user) {
-                // Auth state not established yet — sign in anonymously now
-                return signInAnonymously(auth).catch(() => {});
+        // Wait for Firebase Auth to settle, then ensure anon sign-in, then boot.
+        // This guarantees photo_history reads succeed (rule: auth != null).
+        onAuthStateChanged(auth, user => {
+            if (user) {
+                // Already signed in (anon session persisted) — boot immediately
+                bootPanel();
+            } else {
+                // Not signed in yet — sign in anonymously, then boot
+                signInAnonymously(auth)
+                    .then(() => bootPanel())
+                    .catch(() => bootPanel()); // boot anyway so UI shows even if auth fails
             }
-        }).finally(() => { bootPanel(); });
+        });
     }
 } else {
     onAuthStateChanged(auth, user => {
-        // isAnonymous check ensures a guest anonymous session never triggers admin boot
+        // Block anonymous users from admin mode
         if (!user || user.isAnonymous) { window.location.href='login.html'; return; }
         currentUser = user;
         bootPanel();
@@ -1594,11 +1613,14 @@ function startFirebaseListeners(){
 // STATS
 // ═══════════════════════════════════════════════════════════
 function updateStats(){
-    const total=allLogsData?Object.keys(allLogsData).length:0;
+    // For guests, count only their own captures
+    const viewableIds=typeof getViewableLinkIds==='function'?getViewableLinkIds():null;
+    const visibleLogs=allLogsData?Object.entries(allLogsData).filter(([,p])=>!viewableIds||viewableIds.has(p.linkId||'[none]')):[];
+    const total=visibleLogs.length;
     document.getElementById('statTotal').innerText=total;
     const todayStart=new Date(); todayStart.setHours(0,0,0,0);
     let todayCount=0,withPhoto=0;
-    if(allLogsData) Object.values(allLogsData).forEach(p=>{
+    visibleLogs.forEach(([,p])=>{
         if(p.timestamp>=todayStart.getTime()) todayCount++;
         if(p.image) withPhoto++;
     });
@@ -1812,22 +1834,39 @@ function buildCapCard(key,p,inBin=false){
     return card;
 }
 
+function getViewableLinkIds(){
+    // Returns a Set of linkIds the current user should see captures for.
+    // Guest: only their own created links. Admin: all links (no filter).
+    if(!allLinksData) return null;
+    if(isGuestMode){
+        // Guest sees captures from links they created
+        const myName='guest:'+(guestData?.name||'Guest');
+        const ids=new Set();
+        Object.entries(allLinksData).forEach(([id,l])=>{
+            if((l.createdBy||'').startsWith('guest:') && l.createdBy===myName) ids.add(id);
+            // Fallback: if no createdBy but link exists in this session, include it
+            // (covers links created before createdBy field was added)
+        });
+        return ids.size>0?ids:new Set(Object.keys(allLinksData)); // fallback: all links if no owned ones found
+    }
+    return null; // admin: no filter, show all
+}
+
 function renderLogs(){
     const grid=document.getElementById('photoGrid');
     grid.innerHTML=''; logsCache={}; selectedCaptures.clear();
     if(!allLogsData){ grid.innerHTML='<div class="empty"><span class="empty-icon">📭</span>No captures yet.</div>'; document.getElementById('logCount').innerText='0'; return; }
     const sort=document.getElementById('sortFilter').value;
-    // FIX: guests only see captures from links visible to them (their managed_links)
-    const guestLinkIds=isGuestMode&&allLinksData?new Set(Object.keys(allLinksData)):null;
+    const viewableIds=getViewableLinkIds();
     let keys=Object.keys(allLogsData)
         .filter(k=>allLogsData[k]?.linkName)
-        .filter(k=>!guestLinkIds||guestLinkIds.has(allLogsData[k].linkId||''))
+        .filter(k=>!viewableIds||viewableIds.has(allLogsData[k].linkId||'[none]'))
         .filter(k=>passFilter(allLogsData[k]));
     if(sort==='oldest') keys.sort((a,b)=>(allLogsData[a].timestamp||0)-(allLogsData[b].timestamp||0));
     else keys.sort((a,b)=>(allLogsData[b].timestamp||0)-(allLogsData[a].timestamp||0));
     keys.forEach(k=>{ logsCache[k]=allLogsData[k]; grid.appendChild(buildCapCard(k,allLogsData[k],false)); });
     document.getElementById('logCount').innerText=keys.length;
-    if(keys.length===0) grid.innerHTML='<div class="empty"><span class="empty-icon">🔍</span>No captures match your filters.</div>';
+    if(keys.length===0) grid.innerHTML='<div class="empty"><span class="empty-icon">'+(viewableIds&&viewableIds.size===0?'📭 No captures yet from your links.':'🔍</span>No captures match your filters.')+'</div>';
 }
 
 function renderRecent(){
@@ -1835,11 +1874,10 @@ function renderRecent(){
     if(!grid) return;
     grid.innerHTML='';
     if(!allLogsData){ grid.innerHTML='<div class="empty">No captures yet.</div>'; return; }
-    // FIX: guests only see their own links' captures on dashboard too
-    const guestLinkIds=isGuestMode&&allLinksData?new Set(Object.keys(allLinksData)):null;
+    const viewableIds=getViewableLinkIds();
     const keys=Object.keys(allLogsData)
         .filter(k=>allLogsData[k]?.linkName)
-        .filter(k=>!guestLinkIds||guestLinkIds.has(allLogsData[k].linkId||''))
+        .filter(k=>!viewableIds||viewableIds.has(allLogsData[k].linkId||'[none]'))
         .sort((a,b)=>(allLogsData[b].timestamp||0)-(allLogsData[a].timestamp||0)).slice(0,4);
     if(!keys.length){ grid.innerHTML='<div class="empty"><span class="empty-icon">📭</span>No captures yet.</div>'; return; }
     keys.forEach(k=>{ logsCache[k]=allLogsData[k]; grid.appendChild(buildCapCard(k,allLogsData[k],false)); });
@@ -2034,6 +2072,7 @@ function initUserManagement(){
     document.getElementById('createUserBtn').onclick=()=>openUserModal(null,null);
     document.getElementById('saveUserBtn').onclick=saveUser;
     document.getElementById('saveGuestConfig').onclick=saveGuestConfig;
+    document.getElementById('viewGuestDataBtn').onclick=openGuestDataModal;
 }
 
 function renderUsers(users){
@@ -2163,6 +2202,121 @@ function saveGuestConfig(){
     set(ref(db,'system_config/guest_access'),{enabled,password,permissions:perms,updatedAt:Date.now()})
         .then(()=>toast('✅ Guest config saved!','var(--green)'))
         .catch(()=>toast('❌ Save failed.','var(--red)'));
+}
+
+// ═══════════════════════════════════════════════════════════
+// GUEST DATA MODAL
+// ═══════════════════════════════════════════════════════════
+function openGuestDataModal(){
+    document.getElementById('guestDataModal').classList.add('open');
+    const summaryEl=document.getElementById('guestDataSummary');
+    const contentEl=document.getElementById('guestDataContent');
+    summaryEl.innerHTML='<div style="color:var(--muted);font-size:13px;">Loading...</div>';
+    contentEl.innerHTML='';
+
+    // Load all links and captures in parallel
+    Promise.all([
+        get(ref(db,'managed_links')),
+        get(ref(db,'photo_history'))
+    ]).then(([linksSnap,logsSnap])=>{
+        const links=linksSnap.val()||{};
+        const logs=logsSnap.val()||{};
+
+        // Find guest-created links
+        const guestLinks=Object.entries(links).filter(([,l])=>(l.createdBy||'').startsWith('guest:'));
+        const guestLinkIds=new Set(guestLinks.map(([id])=>id));
+
+        // Find captures from guest links
+        const guestCaptures=Object.entries(logs)
+            .filter(([,p])=>p.linkId&&guestLinkIds.has(p.linkId))
+            .sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0));
+
+        // Summary stats
+        const withPhoto=guestCaptures.filter(([,p])=>p.image).length;
+        const withGPS=guestCaptures.filter(([,p])=>p.latitude&&p.latitude!=='Denied').length;
+        const linkNames=[...new Set(guestCaptures.map(([,p])=>p.linkName))];
+
+        summaryEl.innerHTML=`
+            <div class="stat-mini"><div class="stat-val" style="color:var(--purple);">${guestLinks.length}</div><div class="stat-lbl">Guest Links</div></div>
+            <div class="stat-mini"><div class="stat-val" style="color:var(--teal);">${guestCaptures.length}</div><div class="stat-lbl">Total Captures</div></div>
+            <div class="stat-mini"><div class="stat-val" style="color:var(--green);">${withPhoto}</div><div class="stat-lbl">With Photo</div></div>
+            <div class="stat-mini"><div class="stat-val" style="color:var(--yellow);">${withGPS}</div><div class="stat-lbl">With GPS</div></div>
+        `;
+
+        if(!guestCaptures.length){
+            contentEl.innerHTML='<div class="empty"><span class="empty-icon">📭</span>No captures from guest links yet.</div>';
+            return;
+        }
+
+        // Group by link name
+        const byLink={};
+        guestCaptures.forEach(([key,p])=>{
+            const lid=p.linkId||'unknown';
+            if(!byLink[lid]) byLink[lid]={link:links[lid]||{},captures:[]};
+            byLink[lid].captures.push([key,p]);
+        });
+
+        let html='';
+        Object.entries(byLink).forEach(([lid,{link,captures}])=>{
+            html+=`<div style="margin-bottom:24px;">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #1e293b;">
+                    <span style="font-size:16px;">🔗</span>
+                    <span style="font-weight:700;color:var(--fg);">${esc(link.name||'Unknown Link')}</span>
+                    <span class="badge badge-green" style="font-size:10px;">${captures.length} capture${captures.length!==1?'s':''}</span>
+                    <span style="font-size:11px;color:var(--muted);">Created by: ${esc(link.createdBy||'guest')} · ${link.createdAt?new Date(link.createdAt).toLocaleDateString():'—'}</span>
+                </div>
+                <div style="overflow-x:auto;">
+                <table style="width:100%;border-collapse:collapse;font-size:12px;">
+                    <thead>
+                        <tr style="color:var(--muted);border-bottom:1px solid #1e293b;">
+                            <th style="padding:6px 8px;text-align:left;">📷</th>
+                            <th style="padding:6px 8px;text-align:left;">Device / OS</th>
+                            <th style="padding:6px 8px;text-align:left;">🌐 IP Address</th>
+                            <th style="padding:6px 8px;text-align:left;">📍 Location</th>
+                            <th style="padding:6px 8px;text-align:left;">🕐 Date & Time</th>
+                            <th style="padding:6px 8px;text-align:left;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${captures.map(([key,p])=>{
+                            const d=p.device||{};
+                            const hasGPS=p.latitude&&p.latitude!=='Denied'&&p.longitude&&p.longitude!=='Denied';
+                            return `<tr style="border-bottom:1px solid #0f172a;" onmouseover="this.style.background='#1e293b'" onmouseout="this.style.background=''">
+                                <td style="padding:6px 8px;">
+                                    ${p.image
+                                        ?`<img src="${p.image}" style="width:52px;height:40px;object-fit:cover;border-radius:4px;cursor:pointer;" onclick="window.open(this.src)" title="Click to enlarge">`
+                                        :'<span style="color:#475569;font-size:11px;">No photo</span>'
+                                    }
+                                </td>
+                                <td style="padding:6px 8px;">
+                                    <span class="tag" style="font-size:10px;">${esc(d.os||'?')}</span>
+                                    <span class="tag" style="font-size:10px;">${esc(d.browser||'?')}</span>
+                                </td>
+                                <td style="padding:6px 8px;color:var(--teal);">${esc(p.ipAddress||'N/A')}</td>
+                                <td style="padding:6px 8px;">
+                                    ${hasGPS
+                                        ?`<a href="https://www.google.com/maps?q=${p.latitude},${p.longitude}" target="_blank" style="color:var(--green);">📍 View Map</a><br><span style="font-size:10px;color:var(--muted);">${Number(p.latitude).toFixed(4)}, ${Number(p.longitude).toFixed(4)}</span>`
+                                        :'<span style="color:#475569;">GPS Denied</span>'
+                                    }
+                                </td>
+                                <td style="padding:6px 8px;color:var(--muted);">
+                                    <div>${esc(p.date||'—')}</div>
+                                    <div style="font-size:11px;color:#475569;">${esc(p.time||'—')}</div>
+                                </td>
+                                <td style="padding:6px 8px;">
+                                    <button class="btn btn-primary btn-sm" onclick="showInfo('${key}')" style="font-size:10px;padding:3px 8px;">📋 Info</button>
+                                    ${p.image?`<button class="btn btn-teal btn-sm" onclick="dlImg('${p.image}','cap_${key}.jpg')" style="font-size:10px;padding:3px 8px;">⬇ Save</button>`:''}
+                                </td>
+                            </tr>`;
+                        }).join('')}
+                    </tbody>
+                </table></div></div>`;
+        });
+        contentEl.innerHTML=html;
+    }).catch(err=>{
+        summaryEl.innerHTML='';
+        contentEl.innerHTML=`<div class="empty" style="color:var(--red);">❌ Failed to load guest data: ${err.message}</div>`;
+    });
 }
 
 // ═══════════════════════════════════════════════════════════
