@@ -175,7 +175,7 @@
 <script type="module">
 import { initializeApp }    from "firebase-app";
 import { getDatabase, ref, get, set, serverTimestamp } from "firebase-database";
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "firebase-auth";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signInAnonymously } from "firebase-auth";
 
 const app  = initializeApp({
     apiKey: "AIzaSyCu-4lEX3qQqPCow3nhvCHZNrpg5nbEUm0",
@@ -265,7 +265,7 @@ window.doGuestLogin = async function () {
         }
         btn.disabled = false; btn.innerHTML = '👤 Enter as Guest';
 
-        // Always fetch FRESH permissions from Firebase
+        // Fetch fresh permissions
         let perms = { view_captures: true, view_links: true, export_data: false, delete_data: false, manage_links: false };
         try {
             const permSnap = await get(ref(db, 'system_config/guest_access/permissions'));
@@ -274,17 +274,14 @@ window.doGuestLogin = async function () {
 
         window._pendingGuestPerms = perms;
 
-        // FIX: Use localStorage to persist name across logins
-        // Key is derived from the password so different passwords = different name slots
+        // Derive a stable localStorage key from the password
         const pwKey = 'gn_' + pw.split('').reduce((a,c)=>((a<<5)-a+c.charCodeAt(0))|0,0).toString(36).replace('-','m');
         window._pendingPwKey = pwKey;
         const savedName = localStorage.getItem(pwKey) || '';
 
         if (savedName) {
-            // Name already saved — skip modal entirely, go straight to panel
             await _completeGuestLogin(savedName, perms, pwKey);
         } else {
-            // First time logging in — show name modal
             document.getElementById('guestNameModal').classList.add('open');
             setTimeout(() => document.getElementById('guestName').focus(), 200);
         }
@@ -295,14 +292,16 @@ window.doGuestLogin = async function () {
     }
 };
 
-// Shared helper — saves name and redirects
 async function _completeGuestLogin(name, perms, pwKey) {
-    // Persist name in localStorage (survives logouts and browser restarts)
+    // Persist name in localStorage so next login skips the name modal
     if (name && pwKey) {
         try { localStorage.setItem(pwKey, name); } catch(e) {}
     }
 
-    // Session storage holds the active session (cleared on logout/tab close)
+    // FIX: Sign in anonymously so Firebase Auth rules (auth != null) are satisfied.
+    // This allows reading photo_history in admin.html without changing security rules.
+    try { await signInAnonymously(getAuth()); } catch(e) { console.warn('Anon auth failed:', e); }
+
     sessionStorage.setItem('guest_session', JSON.stringify({
         name: name || '',
         role: 'guest',
@@ -311,7 +310,6 @@ async function _completeGuestLogin(name, perms, pwKey) {
         _pwKey: pwKey || ''
     }));
 
-    // Log visit to Firebase
     set(ref(db, 'guest_sessions/' + Date.now()), {
         name: name || 'Anonymous Guest',
         loginTime: Date.now(),
