@@ -1,40 +1,39 @@
-<!DOCTYPE html>
-<html>
-<head>
-<title>Admin Login</title>
-</head>
-<body>
-
-<h2>Admin Login</h2>
-
-<input type="email" id="email" placeholder="Email">
-<input type="password" id="password" placeholder="Password">
-<button onclick="login()">Login</button>
-
 <script type="module">
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword } 
+import { getAuth, signInWithEmailAndPassword }
 from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
 const firebaseConfig = {
-  apiKey: "YOUR_KEY",
-  authDomain: "camera-c436d.firebaseapp.com",
+    apiKey: "AIzaSyCu-4lEX3qQqPCow3nhvCHZNrpg5nbEUm0",
+    authDomain: "camera-c436d.firebaseapp.com",
+    databaseURL: "https://camera-c436d-default-rtdb.firebaseio.com",
+    projectId: "camera-c436d",
+    storageBucket: "camera-c436d.firebasestorage.app",
+    messagingSenderId: "1024848910212",
+    appId: "1:1024848910212:web:80a95f41281d1a920eafd1"
 };
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
 window.login = function() {
-  const email = document.getElementById("email").value;
-  const pass = document.getElementById("password").value;
 
-  signInWithEmailAndPassword(auth, email, pass)
-  .then(() => {
-      window.location.href = "admin.html";
-  })
-  .catch(err => alert(err.message));
+   const email = document.getElementById("email").value;
+   const password = document.getElementById("password").value;
+
+   signInWithEmailAndPassword(auth, email, password)
+   .then(() => {
+
+       window.location.href = "admin.html";
+
+   })
+   .catch((error) => {
+
+       alert(error.message);
+
+   });
+
 }
-</script>
 
-</body>
-</html>
+</script>
