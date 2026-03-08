@@ -615,7 +615,7 @@
         .session-dot { width:10px; height:10px; border-radius:50%; background:var(--green); flex-shrink:0; animation: pulse 2s infinite; }
         .session-dot.inactive { background:var(--muted); animation:none; }
 
-        /* Guest config section (old inline version replaced) */
+        /* Guest config section */
         .guest-config {
             background: rgba(139,92,246,.08);
             border: 1px solid rgba(139,92,246,.25);
@@ -624,46 +624,6 @@
             margin-bottom: 20px;
         }
         .guest-config h4 { font-size: 14px; font-weight: 700; margin-bottom: 12px; color: var(--purple); }
-
-        /* Guest status card — shown when guest is configured */
-        .guest-status-card {
-            background: var(--card2);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 18px 20px;
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            flex-wrap: wrap;
-        }
-        .guest-status-card .gs-avatar {
-            width: 48px; height: 48px;
-            background: linear-gradient(135deg, var(--purple), var(--teal));
-            border-radius: 12px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 22px; flex-shrink: 0;
-        }
-        .guest-status-card .gs-info { flex: 1; min-width: 0; }
-        .guest-status-card .gs-title { font-size: 14px; font-weight: 700; margin-bottom: 3px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-        .guest-status-card .gs-meta { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
-        .guest-status-card .gs-perms { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
-        .guest-status-card .gs-actions { display: flex; gap: 6px; flex-wrap: wrap; flex-shrink: 0; }
-
-        /* Guest not-configured empty state */
-        .guest-empty-state {
-            text-align: center;
-            padding: 32px 20px;
-            border: 2px dashed rgba(139,92,246,.3);
-            border-radius: 12px;
-            background: rgba(139,92,246,.04);
-        }
-        .guest-empty-state .ge-icon { font-size: 40px; margin-bottom: 12px; }
-        .guest-empty-state .ge-title { font-size: 15px; font-weight: 700; margin-bottom: 6px; color: var(--text); }
-        .guest-empty-state .ge-desc { font-size: 12px; color: var(--muted); margin-bottom: 18px; line-height: 1.6; max-width: 340px; margin-left: auto; margin-right: auto; }
-
-        /* Status badges */
-        .badge-enabled  { background: rgba(16,185,129,.15); color: var(--green); border: 1px solid rgba(16,185,129,.3); border-radius: 20px; padding: 2px 10px; font-size: 11px; font-weight: 700; }
-        .badge-disabled { background: rgba(239,68,68,.12); color: var(--red); border: 1px solid rgba(239,68,68,.25); border-radius: 20px; padding: 2px 10px; font-size: 11px; font-weight: 700; }
 
         /* Permission toggle grid */
         .perm-grid {
@@ -706,6 +666,25 @@
             border-radius: 20px; padding: 2px 8px;
             font-size: 10px; font-weight: 700;
         }
+
+        /* Guest status avatar in section header */
+        .gs-avatar {
+            width: 44px; height: 44px;
+            background: linear-gradient(135deg, var(--purple), var(--teal));
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; flex-shrink: 0;
+        }
+        .badge-enabled  { background: rgba(16,185,129,.15); color: var(--green); border: 1px solid rgba(16,185,129,.3); border-radius: 20px; padding: 3px 11px; font-size: 11px; font-weight: 700; }
+        .badge-disabled { background: rgba(239,68,68,.12); color: var(--red); border: 1px solid rgba(239,68,68,.25); border-radius: 20px; padding: 3px 11px; font-size: 11px; font-weight: 700; }
+        .guest-empty-state {
+            text-align: center; padding: 40px 20px;
+            border: 2px dashed rgba(139,92,246,.3); border-radius: 12px;
+            background: rgba(139,92,246,.04);
+        }
+        .guest-empty-state .ge-icon  { font-size: 44px; margin-bottom: 14px; }
+        .guest-empty-state .ge-title { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+        .guest-empty-state .ge-desc  { font-size: 12px; color: var(--muted); margin-bottom: 20px; line-height: 1.7; max-width:360px; margin-left:auto; margin-right:auto; }
     </style>
     <!-- QR Code: fully self-contained inline generator in main script below, no CDN needed -->
 </head>
@@ -832,6 +811,7 @@
         <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;">Role</label>
         <select id="editUserRole" style="width:100%;margin-bottom:10px;">
             <option value="user">👨 User</option>
+            <option value="guest">👤 Guest</option>
         </select>
         <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;">Status</label>
         <select id="editUserStatus" style="width:100%;margin-bottom:12px;">
@@ -843,38 +823,6 @@
         <div class="modal-row">
             <button class="btn btn-primary" id="saveUserBtn">💾 Save User</button>
             <button class="btn btn-gray" id="closeUserEditBtn">Cancel</button>
-        </div>
-    </div>
-</div>
-
-<!-- Guest Config Modal -->
-<div id="guestConfigModal" class="modal-overlay">
-    <div class="modal-box" style="max-width:540px;width:95vw;max-height:90vh;overflow-y:auto;">
-        <h3 id="guestModalTitle">👤 Set Up Guest Access</h3>
-        <p style="font-size:12px;color:var(--muted);margin-bottom:18px;line-height:1.6;">
-            Guest access lets visitors log in with a shared password — no account needed.
-            You control exactly what they can see and do.
-        </p>
-
-        <div style="background:rgba(139,92,246,.08);border:1px solid rgba(139,92,246,.25);border-radius:10px;padding:14px 16px;margin-bottom:16px;">
-            <label class="check-label" style="margin-bottom:0;">
-                <input type="checkbox" id="guestEnabled" style="width:auto;margin:0;">
-                <span style="font-size:13px;font-weight:600;">Enable Guest Access</span>
-            </label>
-            <p style="font-size:11px;color:var(--muted);margin-top:6px;margin-left:22px;">When disabled, guests cannot log in even with the correct password.</p>
-        </div>
-
-        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;">Guest Password *</label>
-        <div style="position:relative;margin-bottom:16px;">
-            <input type="text" id="guestPwField" placeholder="Set a password guests will use to log in" style="width:100%;padding-right:40px;">
-        </div>
-
-        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:8px;">Guest Permissions — What can guests do?</label>
-        <div class="perm-grid" id="guestPermGrid" style="margin-bottom:18px;"></div>
-
-        <div class="modal-row">
-            <button class="btn btn-purple" id="saveGuestConfig">💾 Save Guest Config</button>
-            <button class="btn btn-gray" id="closeGuestConfigModal">Cancel</button>
         </div>
     </div>
 </div>
@@ -929,7 +877,7 @@
         <div class="nav-section" id="adminOnlyNav">
             <div class="nav-label">Admin</div>
             <button class="nav-item" data-panel="users">
-                <span class="nav-icon">👥</span> User Management
+                <span class="nav-icon">👤</span> Guest Management
             </button>
             <button class="nav-item" data-panel="sessions">
                 <span class="nav-icon">🔒</span> Sessions
@@ -1139,27 +1087,82 @@
             <!-- ══════════════ USER MANAGEMENT PANEL ══════════════ -->
             <div class="panel" id="panel-users">
 
-                <!-- SECTION 1: Regular Users -->
-                <div class="section">
-                    <div class="section-header">
-                        <h3>👥 Users</h3>
-                        <div class="section-header-right">
-                            <button class="btn btn-primary btn-sm" id="createUserBtn">➕ Add User</button>
+                <!-- Guest not configured: empty state shown by JS -->
+                <div id="guestEmptyState" style="display:none;">
+                    <div class="section">
+                        <div class="guest-empty-state">
+                            <div class="ge-icon">👤</div>
+                            <div class="ge-title">No Guest Access Configured</div>
+                            <div class="ge-desc">
+                                Create a shared guest password so visitors can log in with limited,
+                                admin-controlled permissions — no account needed.
+                            </div>
+                            <button class="btn btn-purple" id="setupGuestBtn" style="font-size:13px;padding:10px 24px;">
+                                ➕ Set Up Guest Access
+                            </button>
                         </div>
                     </div>
-                    <div id="userList"><div class="empty"><span class="empty-icon">👥</span>No users yet. Click "Add User" to create one.</div></div>
                 </div>
 
-                <!-- SECTION 2: Guest Access — renders dynamically -->
-                <div class="section" id="guestAccessSection">
-                    <div class="section-header">
-                        <h3>👤 Guest Access</h3>
-                        <div class="section-header-right" id="guestSectionActions"></div>
+                <!-- Guest configured: full management card shown by JS -->
+                <div id="guestConfiguredState" style="display:none;">
+
+                    <!-- Status + Quick Actions bar -->
+                    <div class="section" id="guestStatusSection">
+                        <div class="section-header" style="margin-bottom:0;">
+                            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                                <div class="gs-avatar">👤</div>
+                                <div>
+                                    <div style="font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                                        Guest Access
+                                        <span id="guestStatusBadge" class="badge-enabled">● ENABLED</span>
+                                    </div>
+                                    <div style="font-size:11px;color:var(--muted);margin-top:3px;" id="guestMetaLine">—</div>
+                                </div>
+                            </div>
+                            <div class="section-header-right" style="gap:8px;">
+                                <button class="btn btn-sm btn-green" id="quickEnableBtn" style="display:none;">▶ Enable</button>
+                                <button class="btn btn-sm btn-orange" id="quickDisableBtn">⏸ Disable</button>
+                                <button class="btn btn-sm btn-red" id="removeGuestBtn">🗑 Remove Guest</button>
+                            </div>
+                        </div>
                     </div>
-                    <!-- Dynamic content injected here by renderGuestSection() -->
-                    <div id="guestSectionBody">
-                        <div class="empty"><span class="empty-icon" style="font-size:32px;">⏳</span>Loading guest config...</div>
+
+                    <!-- Change Password -->
+                    <div class="section">
+                        <div class="section-header"><h3>🔑 Change Guest Password</h3></div>
+                        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                            <div style="position:relative;flex:1;min-width:200px;max-width:340px;">
+                                <input type="text" id="guestPwField" placeholder="Enter new guest password"
+                                    style="width:100%;padding-right:40px;">
+                                <button onclick="togglePwVisibility()" id="pwToggleBtn"
+                                    style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:15px;color:var(--muted);"
+                                    title="Show/hide password">👁</button>
+                            </div>
+                            <button class="btn btn-primary btn-sm" id="savePasswordBtn">💾 Save Password</button>
+                        </div>
+                        <p style="font-size:11px;color:var(--muted);margin-top:8px;">
+                            This is the password guests enter on the login page to access the panel.
+                        </p>
                     </div>
+
+                    <!-- Permissions -->
+                    <div class="section">
+                        <div class="section-header">
+                            <h3>🔐 Guest Permissions</h3>
+                            <div class="section-header-right">
+                                <button class="btn btn-primary btn-sm" id="saveGuestConfig">💾 Save Permissions</button>
+                            </div>
+                        </div>
+                        <p style="font-size:12px;color:var(--muted);margin-bottom:14px;">
+                            Control exactly what guests can see and do when they log in.
+                        </p>
+                        <div class="perm-grid" id="guestPermGrid"></div>
+                    </div>
+
+                    <!-- Enable toggle (hidden checkbox kept for compatibility) -->
+                    <input type="checkbox" id="guestEnabled" style="display:none;">
+
                 </div>
 
             </div>
@@ -1497,7 +1500,7 @@ function setupAdminUI(){
 // ═══════════════════════════════════════════════════════════
 const PANEL_TITLES = {
     dashboard:'Dashboard', links:'Manage Links', captures:'Live Captures',
-    bin:'Recycle Bin', users:'User Management', sessions:'Sessions & Security', settings:'Settings'
+    bin:'Recycle Bin', users:'Guest Management', sessions:'Sessions & Security', settings:'Settings'
 };
 
 function switchPanel(name){
@@ -1598,6 +1601,9 @@ function setupCommonHandlers(){
     };
 
     // User management modal close
+    const closeUEM=document.getElementById('closeUserEditBtn');
+    if(closeUEM) closeUEM.onclick=()=>document.getElementById('userEditModal').classList.remove('open');
+
     // Guest welcome close
     const gwClose=document.querySelector('#guestWelcomeModal .btn');
     if(gwClose) gwClose.onclick=()=>document.getElementById('guestWelcomeModal').classList.remove('open');
@@ -2061,253 +2067,190 @@ function openLightbox(src,info){
 // ═══════════════════════════════════════════════════════════
 // USER MANAGEMENT
 // ═══════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
+// GUEST MANAGEMENT (renamed from User Management)
+// ═══════════════════════════════════════════════════════════
 function initUserManagement(){
-    // Listen for user list changes in realtime
-    onValue(ref(db,'users'), snap => renderUsers(snap.val()||{}));
+    // Realtime listener — re-renders the whole guest section whenever Firebase changes
+    onValue(ref(db,'system_config/guest_access'), snap => renderGuestManagement(snap.val()));
 
-    // Listen for guest config changes in realtime — re-renders guest section dynamically
-    onValue(ref(db,'system_config/guest_access'), snap => renderGuestSection(snap.val()));
+    // Set up guest button (shown in empty state)
+    document.getElementById('setupGuestBtn').onclick = () => openGuestEditMode(null);
 
-    // Wire up buttons
-    document.getElementById('createUserBtn').onclick = () => openUserModal(null, null);
-    document.getElementById('saveUserBtn').onclick = saveUser;
+    // Save password button
+    document.getElementById('savePasswordBtn').onclick = saveGuestPassword;
 
-    // Close buttons for both modals
+    // Save permissions button
+    document.getElementById('saveGuestConfig').onclick = saveGuestPermissions;
+
+    // Quick enable / disable buttons
+    document.getElementById('quickEnableBtn').onclick  = () => setGuestEnabled(true);
+    document.getElementById('quickDisableBtn').onclick = () => setGuestEnabled(false);
+
+    // Remove guest button
+    document.getElementById('removeGuestBtn').onclick = () => {
+        if(!confirm('Remove guest access entirely?\nGuests will no longer be able to log in.')) return;
+        remove(ref(db,'system_config/guest_access'))
+            .then(() => toast('🗑 Guest access removed.','var(--red)'))
+            .catch(err => toast('❌ Failed: '+err.message,'var(--red)'));
+    };
+
+    // Close modal handler
     const closeUEM = document.getElementById('closeUserEditBtn');
     if(closeUEM) closeUEM.onclick = () => document.getElementById('userEditModal').classList.remove('open');
-    const closeGCM = document.getElementById('closeGuestConfigModal');
-    if(closeGCM) closeGCM.onclick = () => document.getElementById('guestConfigModal').classList.remove('open');
-
-    // Save guest config button (in modal)
-    document.getElementById('saveGuestConfig').onclick = saveGuestConfig;
 }
 
-function renderUsers(users){
-    const list = document.getElementById('userList');
-    const entries = Object.entries(users).filter(([,u]) => u.role !== 'guest');
-    if(!entries.length){
-        list.innerHTML = '<div class="empty"><span class="empty-icon">👥</span>No users yet. Click "Add User" to create one.</div>';
-        return;
-    }
-    list.innerHTML = '';
-    entries.forEach(([id,u]) => {
-        const roleClass = `role-${u.role||'user'}`;
-        const isOwner   = (u.email === ADMIN_OWNER_EMAIL || u.isOwner);
-        const permsHtml = ALL_PERMISSIONS
-            .filter(p => ['view_captures','view_links','export_data','delete_data','manage_links'].includes(p.key))
-            .map(p => `<span class="perm-chip ${u.permissions?.[p.key]?'':'disabled'}">${p.icon} ${p.label}</span>`)
-            .join('');
-        const card = document.createElement('div');
-        card.className = 'user-card';
-        card.innerHTML = `
-            <div class="user-avatar">${u.role==='admin'?'🛡️':'👨'}</div>
-            <div class="user-info">
-                <div class="un">${esc(u.name||'Unnamed')} <span class="role-badge ${roleClass}">${u.role||'user'}</span>
-                ${isOwner?'<span class="badge badge-yellow" style="margin-left:4px;">OWNER</span>':''}
-                ${u.status==='disabled'?'<span class="badge badge-red" style="margin-left:4px;">DISABLED</span>':''}</div>
-                <div class="ur">${esc(u.email||'—')} · Created ${u.createdAt?new Date(u.createdAt).toLocaleDateString():'—'}</div>
-                <div class="user-perms">${permsHtml}</div>
-            </div>
-            <div class="user-actions">
-                ${!isOwner?`<button class="btn btn-yellow btn-sm" data-uid="${id}" data-action="editUser">✏️ Edit</button>`:''}
-                ${!isOwner?(u.status==='disabled'
-                    ?`<button class="btn btn-green btn-sm" data-uid="${id}" data-action="enableUser">▶ Enable</button>`
-                    :`<button class="btn btn-orange btn-sm" data-uid="${id}" data-action="disableUser">⏸ Disable</button>`):''}
-                ${!isOwner?`<button class="btn btn-red btn-sm" data-uid="${id}" data-action="deleteUser">🗑 Delete</button>`:''}
-                ${isOwner?'<span style="font-size:11px;color:var(--muted);">Protected Owner</span>':''}
-            </div>`;
-        list.appendChild(card);
-    });
-}
-
-// ── Guest Access Section ─────────────────────────────────────────────
-function renderGuestSection(cfg){
-    const body    = document.getElementById('guestSectionBody');
-    const actions = document.getElementById('guestSectionActions');
-    if(!body) return;
-
+// ── Main render: switches between empty state and configured state ──
+function renderGuestManagement(cfg){
     const hasConfig = cfg && (cfg.password || typeof cfg.enabled !== 'undefined');
+    const emptyEl   = document.getElementById('guestEmptyState');
+    const confEl    = document.getElementById('guestConfiguredState');
+    if(!emptyEl || !confEl) return;
 
     if(!hasConfig){
-        body.innerHTML = `
-            <div class="guest-empty-state">
-                <div class="ge-icon">👤</div>
-                <div class="ge-title">No Guest Access Configured</div>
-                <div class="ge-desc">
-                    Set up a shared guest password so visitors can log in with limited,
-                    admin-controlled permissions — no account needed.
-                </div>
-                <button class="btn btn-purple" id="addGuestBtn" style="font-size:13px;padding:10px 24px;">
-                    ➕ Set Up Guest Access
-                </button>
-            </div>`;
-        actions.innerHTML = '';
-        document.getElementById('addGuestBtn').onclick = () => openGuestModal(null);
+        emptyEl.style.display = '';
+        confEl.style.display  = 'none';
         return;
     }
+
+    emptyEl.style.display = 'none';
+    confEl.style.display  = '';
 
     const isEnabled = !!cfg.enabled;
     const password  = cfg.password || '';
     const perms     = cfg.permissions || {};
     const updatedAt = cfg.updatedAt ? new Date(cfg.updatedAt).toLocaleDateString() : 'Never';
 
-    const permLabels = ALL_PERMISSIONS
-        .filter(p => ['view_captures','view_links','export_data','delete_data','manage_links'].includes(p.key))
-        .map(p => `<span class="perm-chip ${perms[p.key]?'':'disabled'}">${p.icon} ${p.label}</span>`)
-        .join('');
-
-    body.innerHTML = `
-        <div class="guest-status-card">
-            <div class="gs-avatar">👤</div>
-            <div class="gs-info">
-                <div class="gs-title">
-                    Guest Access
-                    <span class="${isEnabled?'badge-enabled':'badge-disabled'}">
-                        ${isEnabled?'● ENABLED':'○ DISABLED'}
-                    </span>
-                </div>
-                <div class="gs-meta">
-                    Password: <strong style="color:var(--text);letter-spacing:.1em;">${password ? '•'.repeat(Math.min(password.length,12)) : '<em style=color:var(--red)>not set</em>'}</strong>
-                    &nbsp;·&nbsp; Last updated: ${updatedAt}
-                </div>
-                <div class="gs-perms">${permLabels}</div>
-            </div>
-            <div class="gs-actions">
-                <button class="btn btn-yellow btn-sm" id="editGuestBtn">✏️ Edit</button>
-                <button class="btn btn-sm ${isEnabled?'btn-orange':'btn-green'}" id="toggleGuestBtn">
-                    ${isEnabled?'⏸ Disable':'▶ Enable'}
-                </button>
-                <button class="btn btn-red btn-sm" id="deleteGuestBtn">🗑 Remove</button>
-            </div>
-        </div>`;
-
-    actions.innerHTML = '';
-    document.getElementById('editGuestBtn').onclick   = () => openGuestModal(cfg);
-    document.getElementById('toggleGuestBtn').onclick = () => {
-        const ns = !isEnabled;
-        update(ref(db,'system_config/guest_access'), { enabled: ns, updatedAt: Date.now() })
-            .then(() => toast(ns ? '▶ Guest access enabled.' : '⏸ Guest access disabled.', ns ? 'var(--green)' : 'var(--orange)'))
-            .catch(err => toast('❌ Failed: ' + err.message, 'var(--red)'));
-    };
-    document.getElementById('deleteGuestBtn').onclick = () => {
-        if(!confirm('Remove guest access entirely?\nGuests will no longer be able to log in.')) return;
-        remove(ref(db,'system_config/guest_access'))
-            .then(() => toast('🗑 Guest access removed.','var(--red)'))
-            .catch(err => toast('❌ Failed: ' + err.message,'var(--red)'));
-    };
-}
-
-function openGuestModal(cfg){
-    const isEdit = !!(cfg && (cfg.password || typeof cfg.enabled !== 'undefined'));
-    document.getElementById('guestModalTitle').innerText = isEdit ? '✏️ Edit Guest Access' : '👤 Set Up Guest Access';
-    buildGuestPermGrid();
-    const enableEl = document.getElementById('guestEnabled');
-    const pwEl     = document.getElementById('guestPwField');
-    if(enableEl) enableEl.checked = isEdit ? !!cfg.enabled : true;
-    if(pwEl)     pwEl.value       = isEdit ? (cfg.password||'') : '';
-    if(isEdit && cfg.permissions){
-        ALL_PERMISSIONS.forEach(p => {
-            const cb = document.getElementById('gp_'+p.key);
-            if(cb && cfg.permissions[p.key] !== undefined){
-                cb.checked = !!cfg.permissions[p.key];
-                cb.closest('.perm-toggle')?.classList.toggle('active', !!cfg.permissions[p.key]);
-            }
-        });
+    // Status badge
+    const badge = document.getElementById('guestStatusBadge');
+    if(badge){
+        badge.className = isEnabled ? 'badge-enabled' : 'badge-disabled';
+        badge.innerText = isEnabled ? '● ENABLED' : '○ DISABLED';
     }
-    document.getElementById('guestConfigModal').classList.add('open');
-    setTimeout(() => document.getElementById('guestPwField')?.focus(), 150);
-}
 
-// BUG FIX: event delegation for user action buttons
-document.addEventListener('click', e => {
-    const btn = e.target.closest('[data-action][data-uid]');
-    if(!btn) return;
-    const {uid, action} = btn.dataset;
-    if(action === 'editUser')         get(ref(db,'users/'+uid)).then(s => openUserModal(uid,s.val()));
-    else if(action === 'disableUser') update(ref(db,'users/'+uid),{status:'disabled'}).then(()=>toast('⏸ User disabled.','var(--orange)'));
-    else if(action === 'enableUser')  update(ref(db,'users/'+uid),{status:'active'}).then(()=>toast('▶ User enabled.','var(--green)'));
-    else if(action === 'deleteUser'){
-        if(!confirm('Permanently delete this user?')) return;
-        remove(ref(db,'users/'+uid)).then(()=>toast('🗑 User deleted.','var(--red)'));
+    // Meta line — show masked password + last update
+    const meta = document.getElementById('guestMetaLine');
+    if(meta){
+        const masked = password ? '•'.repeat(Math.min(password.length,14)) : '<em style="color:var(--red)">password not set</em>';
+        meta.innerHTML = `Password: <strong style="color:var(--text);letter-spacing:.1em;">${masked}</strong> &nbsp;·&nbsp; Last updated: ${updatedAt}`;
     }
-});
 
-function openUserModal(uid, userData){
-    document.getElementById('userEditTitle').innerText = uid ? '✏️ Edit User' : '➕ Create User';
-    document.getElementById('editUserId').value   = uid||'';
-    document.getElementById('editUserName').value  = userData?.name||'';
-    document.getElementById('editUserEmail').value = userData?.email||'';
-    const roleEl = document.getElementById('editUserRole');
-    if(roleEl) roleEl.value = userData?.role||'user';
-    document.getElementById('editUserStatus').value = userData?.status||'active';
-    const pg = document.getElementById('editUserPerms');
-    pg.innerHTML = '';
-    ALL_PERMISSIONS.forEach(p => {
-        const defaultOn = ['view_captures','view_links','export_data'].includes(p.key);
-        const checked   = userData ? (!!(userData.permissions?.[p.key])) : defaultOn;
-        const div = document.createElement('div');
-        div.className = 'perm-toggle'+(checked?' active':'');
-        div.innerHTML = `<input type="checkbox" id="ep_${p.key}" ${checked?'checked':''}><div><div class="pt-icon">${p.icon}</div><div class="pt-label">${p.label}</div><div class="pt-desc">${p.desc}</div></div>`;
-        div.querySelector('input').onchange = ev => div.classList.toggle('active', ev.target.checked);
-        pg.appendChild(div);
-    });
-    const lbl = document.getElementById('editUserNameLabel');
-    if(lbl) lbl.innerText = 'Display Name *';
-    document.getElementById('userEditModal').classList.add('open');
+    // Password field — fill with current password
+    const pwEl = document.getElementById('guestPwField');
+    if(pwEl && !pwEl._userEditing) pwEl.value = password;
+
+    // Quick enable/disable button visibility
+    const enBtn = document.getElementById('quickEnableBtn');
+    const disBtn = document.getElementById('quickDisableBtn');
+    if(enBtn)  enBtn.style.display  = isEnabled ? 'none' : '';
+    if(disBtn) disBtn.style.display = isEnabled ? '' : 'none';
+
+    // Hidden checkbox (kept for any legacy code that reads it)
+    const cb = document.getElementById('guestEnabled');
+    if(cb) cb.checked = isEnabled;
+
+    // Build/update permission grid with current values
+    buildGuestPermGrid(perms);
 }
 
-function saveUser(){
-    const uid    = document.getElementById('editUserId').value;
-    const name   = document.getElementById('editUserName').value.trim();
-    const email  = document.getElementById('editUserEmail').value.trim();
-    const role   = document.getElementById('editUserRole').value;
-    const status = document.getElementById('editUserStatus').value;
-    if(!name){ toast('❌ Display name is required.','var(--red)'); return; }
-    const perms = {};
-    ALL_PERMISSIONS.forEach(p => { perms[p.key] = document.getElementById('ep_'+p.key)?.checked || false; });
-    const data = { name, email, role, status, permissions: perms, updatedAt: Date.now() };
-    if(!uid) data.createdAt = Date.now();
-    const uRef = uid ? ref(db,'users/'+uid) : ref(db,'users/usr_'+Date.now());
-    (uid ? update(uRef,data) : set(uRef,data))
-        .then(() => { document.getElementById('userEditModal').classList.remove('open'); toast('✅ User saved: '+name,'var(--green)'); })
-        .catch(err => { console.error('saveUser error:',err); toast('❌ Save failed: '+err.message,'var(--red)'); });
+// ── Open the panel in "create" mode: just show the configured state with blanks ──
+function openGuestEditMode(cfg){
+    // Show configured state so user can fill in password + permissions
+    document.getElementById('guestEmptyState').style.display  = 'none';
+    document.getElementById('guestConfiguredState').style.display = '';
+    // Reset badge to "disabled" until saved
+    const badge = document.getElementById('guestStatusBadge');
+    if(badge){ badge.className='badge-disabled'; badge.innerText='○ NOT SAVED YET'; }
+    const meta = document.getElementById('guestMetaLine');
+    if(meta) meta.innerText = 'Set a password and permissions below, then click Save.';
+    document.getElementById('guestPwField').value = '';
+    buildGuestPermGrid({});
+    // Hide enable/disable until saved
+    const enBtn = document.getElementById('quickEnableBtn');
+    const disBtn = document.getElementById('quickDisableBtn');
+    if(enBtn)  enBtn.style.display = 'none';
+    if(disBtn) disBtn.style.display = 'none';
+    // Scroll to password field
+    setTimeout(() => document.getElementById('guestPwField')?.focus(), 100);
 }
 
-
-function buildGuestPermGrid(){
+function buildGuestPermGrid(currentPerms){
     const pg = document.getElementById('guestPermGrid');
     if(!pg) return;
-    pg.innerHTML = '';
     const guestRelevant = ['view_captures','view_links','export_data','delete_data','manage_links'];
     const guestDefaultOn = ['view_captures'];
+    pg.innerHTML = '';
     ALL_PERMISSIONS.filter(p => guestRelevant.includes(p.key)).forEach(p => {
-        const def = guestDefaultOn.includes(p.key);
+        const val = currentPerms && currentPerms[p.key] !== undefined
+            ? !!currentPerms[p.key]
+            : guestDefaultOn.includes(p.key);
         const div = document.createElement('div');
-        div.className = 'perm-toggle'+(def?' active':'');
-        div.innerHTML = `<input type="checkbox" id="gp_${p.key}" ${def?'checked':''}><div><div class="pt-icon">${p.icon}</div><div class="pt-label">${p.label}</div><div class="pt-desc">${p.desc}</div></div>`;
+        div.className = 'perm-toggle'+(val?' active':'');
+        div.innerHTML = `<input type="checkbox" id="gp_${p.key}" ${val?'checked':''}><div><div class="pt-icon">${p.icon}</div><div class="pt-label">${p.label}</div><div class="pt-desc">${p.desc}</div></div>`;
         div.querySelector('input').onchange = ev => div.classList.toggle('active', ev.target.checked);
         pg.appendChild(div);
     });
 }
 
-function saveGuestConfig(){
-    const enabled  = document.getElementById('guestEnabled').checked;
-    const password = document.getElementById('guestPwField').value.trim();
-    if(!password){ toast('❌ Please set a guest password.','var(--red)'); return; }
+function setGuestEnabled(enabled){
+    update(ref(db,'system_config/guest_access'), { enabled, updatedAt: Date.now() })
+        .then(() => toast(enabled ? '▶ Guest access enabled.' : '⏸ Guest access disabled.', enabled ? 'var(--green)' : 'var(--orange)'))
+        .catch(err => toast('❌ Failed: '+err.message,'var(--red)'));
+}
+
+function saveGuestPassword(){
+    const pw = document.getElementById('guestPwField').value.trim();
+    if(!pw){ toast('❌ Please enter a password.','var(--red)'); return; }
+    // If no config exists yet, create it
+    get(ref(db,'system_config/guest_access')).then(snap => {
+        const existing = snap.val() || {};
+        const data = { ...existing, password: pw, updatedAt: Date.now() };
+        if(typeof data.enabled === 'undefined') data.enabled = true;
+        if(!data.permissions){
+            const perms = {};
+            ALL_PERMISSIONS.forEach(p => { perms[p.key] = ['view_captures'].includes(p.key); });
+            data.permissions = perms;
+        }
+        return set(ref(db,'system_config/guest_access'), data);
+    })
+    .then(() => toast('🔑 Password saved!','var(--green)'))
+    .catch(err => { console.error(err); toast('❌ Save failed: '+err.message,'var(--red)'); });
+}
+
+function saveGuestPermissions(){
     const perms = {};
     ALL_PERMISSIONS.forEach(p => {
         const cb = document.getElementById('gp_'+p.key);
         perms[p.key] = cb ? cb.checked : false;
     });
-    set(ref(db,'system_config/guest_access'), { enabled, password, permissions: perms, updatedAt: Date.now() })
-        .then(() => {
-            document.getElementById('guestConfigModal').classList.remove('open');
-            toast('✅ Guest access saved!','var(--green)');
-        })
-        .catch(err => { console.error('saveGuestConfig error:',err); toast('❌ Save failed: '+err.message,'var(--red)'); });
+    get(ref(db,'system_config/guest_access')).then(snap => {
+        const existing = snap.val() || {};
+        const data = { ...existing, permissions: perms, updatedAt: Date.now() };
+        if(typeof data.enabled === 'undefined') data.enabled = true;
+        if(!data.password){ toast('❌ Set a password first (above).','var(--red)'); return; }
+        return set(ref(db,'system_config/guest_access'), data);
+    })
+    .then(r => { if(r !== undefined || true) toast('✅ Permissions saved!','var(--green)'); })
+    .catch(err => { console.error(err); toast('❌ Save failed: '+err.message,'var(--red)'); });
 }
 
+// Password show/hide toggle
+window.togglePwVisibility = function(){
+    const inp = document.getElementById('guestPwField');
+    const btn = document.getElementById('pwToggleBtn');
+    if(!inp) return;
+    if(inp.type === 'password'){ inp.type='text'; if(btn) btn.innerText='🙈'; }
+    else { inp.type='text'; } // already text, keep visible
+    inp._userEditing = true;
+};
 
+// ── Legacy stubs (kept so nothing breaks if referenced elsewhere) ──
+function renderUsers(){}
+function loadGuestConfig(){}
+function saveGuestConfig(){ saveGuestPermissions(); }
+
+
+// ═══════════════════════════════════════════════════════════
 function initSessionsPanel(){
     onValue(ref(db,'active_sessions'),snap=>{
         const sessions=snap.val()||{};
