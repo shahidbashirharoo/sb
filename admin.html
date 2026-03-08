@@ -513,43 +513,17 @@
         }
     </style>
     <!-- QR Code: fully self-contained inline generator in main script below, no CDN needed -->
-    <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "camera-c436d.firebaseapp.com",
-      projectId: "camera-c436d",
-    };
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    onAuthStateChanged(auth, (user) => {
-       if (!user) {
-          // not logged in
-          window.location.href = "login.html";
-       }
-    });
-    </script>
 </head>
 <body>
 
 <!-- ══════════════════════════════════════════════════════════
-     LOGIN
+     AUTH LOADING SCREEN — shown until Firebase confirms login
 ══════════════════════════════════════════════════════════ -->
-<div id="loginOverlay">
-    <div class="login-box">
-        <div class="login-logo">🛡️</div>
-        <h2>Shahid Bashir</h2>
-        <p>Admin Control Panel — Secure Access</p>
-        <input type="password" id="adminPass" placeholder="Enter admin password" autocomplete="current-password">
-        <button class="btn btn-primary" id="loginBtn" style="width:100%;padding:11px;font-size:14px;justify-content:center;">
-            🔓 Access Dashboard
-        </button>
-        <p id="loginError" style="color:var(--red);font-size:12px;margin-top:10px;display:none;">
-            ❌ Incorrect password. Try again.
-        </p>
-    </div>
+<div id="loginOverlay" style="position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999;flex-direction:column;gap:16px;">
+    <div style="width:44px;height:44px;border:4px solid #1e293b;border-top-color:#3b82f6;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+    <p style="color:#64748b;font-size:14px;">Verifying session...</p>
 </div>
+<style>@keyframes spin{to{transform:rotate(360deg)}}</style>
 
 <!-- ══════════════════════════════════════════════════════════
      LIGHTBOX
@@ -581,24 +555,6 @@
             <button class="btn btn-primary" id="saveEditLink">💾 Save</button>
             <button class="btn btn-gray"    id="closeEditLink">Cancel</button>
         </div>
-    </div>
-</div>
-
-<!-- Password Modal -->
-<div id="pwModal" class="modal-overlay">
-    <div class="modal-box">
-        <h3>🔐 Change Password</h3>
-        <label>Current Password</label>
-        <input type="password" id="oldPw" placeholder="Current password">
-        <label>New Password</label>
-        <input type="password" id="newPw" placeholder="New password (min 4 chars)">
-        <label>Confirm New Password</label>
-        <input type="password" id="newPw2" placeholder="Confirm password">
-        <div class="modal-row">
-            <button class="btn btn-primary" id="savePwBtn">Save</button>
-            <button class="btn btn-gray"    id="closePwModal">Cancel</button>
-        </div>
-        <p id="pwMsg" style="font-size:12px;margin-top:10px;"></p>
     </div>
 </div>
 
@@ -683,8 +639,8 @@
         </div>
 
         <div class="sidebar-footer">
-            <button class="nav-item" id="changePwBtn">
-                <span class="nav-icon">🔐</span> Change Password
+            <button class="nav-item" id="signOutBtn">
+                <span class="nav-icon">🚪</span> Sign Out
             </button>
             <button class="nav-item" id="refreshBtn">
                 <span class="nav-icon">🔄</span> Refresh
@@ -882,7 +838,8 @@
 {
     "imports": {
         "firebase-app":      "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js",
-        "firebase-database": "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js"
+        "firebase-database": "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js",
+        "firebase-auth":     "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js"
     }
 }
 </script>
@@ -890,10 +847,11 @@
 <script type="module">
 import { initializeApp } from "firebase-app";
 import { getDatabase, ref, onValue, remove, push, set, update } from "firebase-database";
+import { getAuth, onAuthStateChanged } from "firebase-auth";
 
 // ── FIREBASE ──────────────────────────────────────────────────────────────
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
+    apiKey: "AIzaSyCu-4lEX3qQqPCow3nhvCHZNrpg5nbEUm0",
     authDomain: "camera-c436d.firebaseapp.com",
     databaseURL: "https://camera-c436d-default-rtdb.firebaseio.com",
     projectId: "camera-c436d",
@@ -901,14 +859,26 @@ const firebaseConfig = {
     messagingSenderId: "1024848910212",
     appId: "1:1024848910212:web:80a95f41281d1a920eafd1"
 };
-const app = initializeApp(firebaseConfig);
-const db  = getDatabase(app);
+const app  = initializeApp(firebaseConfig);
+const db   = getDatabase(app);
+const auth = getAuth(app);
+
+// ── AUTH GUARD — redirect to login.html if not signed in ──────────────────
+onAuthStateChanged(auth, (user) => {
+    if (!user) {
+        window.location.href = "login.html";
+    } else {
+        // User is authenticated — hide loading overlay and show dashboard
+        const overlay = document.getElementById('loginOverlay');
+        if (overlay) overlay.style.display = 'none';
+        askNotif();
+    }
+});
 
 // ── STATE ─────────────────────────────────────────────────────────────────
 let allLogsData    = null;
 let allLinksData   = null;
 let logsCache      = {};
-let adminPassword  = localStorage.getItem('adminPassword') || 'admin123';
 let prevLogCount   = null;
 let selectedCaptures = new Set();
 let activeBinType  = 'all';
@@ -995,22 +965,6 @@ function sendNotif(title, body) {
     if ('Notification' in window && Notification.permission === 'granted')
         new Notification(title, { body });
 }
-
-// ══════════════════════════════════════════════════════════
-// LOGIN
-// ══════════════════════════════════════════════════════════
-function doLogin() {
-    const v = document.getElementById('adminPass').value;
-    if (v === adminPassword) {
-        document.getElementById('loginOverlay').style.display = 'none';
-        askNotif();
-    } else {
-        document.getElementById('loginError').style.display = 'block';
-        document.getElementById('adminPass').value = '';
-    }
-}
-document.getElementById('loginBtn').onclick = doLogin;
-document.getElementById('adminPass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
 
 // ══════════════════════════════════════════════════════════
 // SIDEBAR NAVIGATION
@@ -1875,13 +1829,15 @@ document.getElementById('exportBtn').onclick = () => {
 };
 
 // ══════════════════════════════════════════════════════════
-// MODALS — PASSWORD
+// MODALS — SIGN OUT
 // ══════════════════════════════════════════════════════════
-document.getElementById('changePwBtn').onclick = () => {
-    document.getElementById('pwModal').classList.add('open');
-    document.getElementById('pwMsg').innerText = '';
+document.getElementById('signOutBtn').onclick = () => {
+    import("firebase-auth").then(({ signOut }) => {
+        signOut(auth).then(() => {
+            window.location.href = "login.html";
+        }).catch(e => toast('❌ Sign out failed: ' + e.message, 'var(--red)'));
+    });
 };
-document.getElementById('closePwModal').onclick = () => document.getElementById('pwModal').classList.remove('open');
 document.getElementById('closeEditLink').onclick = () => document.getElementById('editLinkModal').classList.remove('open');
 
 // saveEditLink wired ONCE — uses currentEditId set at rename time (fixes onclick-stacking bug)
@@ -1900,21 +1856,6 @@ document.getElementById('saveEditLink').onclick = () => {
         currentEditId = null;
         toast('✅ Link updated: ' + nm, 'var(--green)');
     }).catch(() => toast('❌ Save failed. Try again.', 'var(--red)'));
-};
-
-document.getElementById('savePwBtn').onclick = () => {
-    const old = document.getElementById('oldPw').value;
-    const nw  = document.getElementById('newPw').value;
-    const nw2 = document.getElementById('newPw2').value;
-    const msg = document.getElementById('pwMsg');
-    if (old !== adminPassword) { msg.style.color='var(--red)'; msg.innerText='❌ Wrong current password.'; return; }
-    if (nw.length < 4)         { msg.style.color='var(--red)'; msg.innerText='❌ Min 4 characters.'; return; }
-    if (nw !== nw2)            { msg.style.color='var(--red)'; msg.innerText='❌ Passwords do not match.'; return; }
-    adminPassword = nw;
-    localStorage.setItem('adminPassword', nw);
-    msg.style.color = 'var(--green)'; msg.innerText = '✅ Password updated!';
-    ['oldPw','newPw','newPw2'].forEach(id => document.getElementById(id).value = '');
-    setTimeout(() => document.getElementById('pwModal').classList.remove('open'), 1200);
 };
 
 // ══════════════════════════════════════════════════════════
