@@ -244,6 +244,7 @@ window.doLogin = async function () {
 };
 
 // ── Guest login ──────────────────────────────────────────────────────
+// ── Guest login ──────────────────────────────────────────────────────
 window.doGuestLogin = async function () {
     const pw  = document.getElementById('guestPassword').value;
     const btn = document.getElementById('guestBtn');
@@ -265,37 +266,43 @@ window.doGuestLogin = async function () {
         }
         btn.disabled = false; btn.innerHTML = '👤 Enter as Guest';
 
-        // Fetch fresh permissions
-        let perms = { view_captures: true, view_links: false, export_data: false, delete_data: false, manage_links: false };
+        // Always fetch FRESH permissions from Firebase
+        let perms = { view_captures: true, view_links: true, export_data: false, delete_data: false, manage_links: false };
         try {
             const permSnap = await get(ref(db, 'system_config/guest_access/permissions'));
             if (permSnap.val()) perms = permSnap.val();
         } catch(e) {}
 
-        // Store pending session (no name yet)
         window._pendingGuestPerms = perms;
 
-        // Show name modal — name is optional, guest can skip
-        document.getElementById('guestNameModal').classList.add('open');
-        setTimeout(() => document.getElementById('guestName').focus(), 200);
+        // FIX: Check if guest already entered their name before (persisted in localStorage)
+        const pwKey = 'gn_' + btoa(unescape(encodeURIComponent(pw))).replace(/[^a-zA-Z0-9]/g,'').slice(0, 20);
+        window._pendingPwKey = pwKey;
+        const savedName = localStorage.getItem(pwKey) || '';
+
+        if (savedName) {
+            // Name already known — skip modal, go straight to panel
+            await _completeGuestLogin(savedName, perms, pwKey);
+        } else {
+            // First login — show name modal
+            document.getElementById('guestNameModal').classList.add('open');
+            setTimeout(() => document.getElementById('guestName').focus(), 200);
+        }
     } catch(e) {
+        console.error('doGuestLogin error:', e);
         showError('❌ Error checking credentials. Try again.');
         btn.disabled = false; btn.innerHTML = '👤 Enter as Guest';
     }
 };
 
-window.confirmGuestName = async function() {
-    const name = document.getElementById('guestName').value.trim();
-    // Name is now optional — guest can proceed without entering one
+async function _completeGuestLogin(name, perms, pwKey) {
+    // Persist name so future logins skip the modal
+    if (name && pwKey) localStorage.setItem(pwKey, name);
 
-    const perms = window._pendingGuestPerms || { view_captures: true, view_links: false, export_data: false, delete_data: false, manage_links: false };
-
-    // Store session — name may be empty (will show as "Guest" in admin panel)
     sessionStorage.setItem('guest_session', JSON.stringify({
-        name: name || '', role: 'guest', loginTime: Date.now(), permissions: perms
+        name: name || '', role: 'guest', loginTime: Date.now(), permissions: perms, _pwKey: pwKey || ''
     }));
 
-    // Log to Firebase with device info
     set(ref(db, 'guest_sessions/' + Date.now()), {
         name: name || 'Anonymous Guest', loginTime: Date.now(),
         userAgent: navigator.userAgent.slice(0,120),
@@ -303,8 +310,16 @@ window.confirmGuestName = async function() {
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
     }).catch(() => {});
 
-    window.location.href = "admin.html?guest=1";
+    window.location.href = 'admin.html?guest=1';
+}
+
+window.confirmGuestName = async function() {
+    const name  = document.getElementById('guestName').value.trim();
+    const perms = window._pendingGuestPerms || { view_captures: true, view_links: true, export_data: false, delete_data: false, manage_links: false };
+    const pwKey = window._pendingPwKey || '';
+    await _completeGuestLogin(name, perms, pwKey);
 };
+
 
 document.addEventListener('keydown', e => {
     if (e.key !== 'Enter') return;
