@@ -276,18 +276,24 @@ window.confirmGuestName = async function() {
     const name = document.getElementById('guestName').value.trim();
     if (!name) { alert('Please enter your name to continue.'); return; }
 
-    // Get guest permissions from Firebase
-    const snap = await get(ref(db, 'system_config/guest_access/permissions')).catch(() => null);
-    const perms = snap?.val() || { view_captures: true, view_links: false };
+    // Always fetch FRESH permissions from Firebase at login time (not stale)
+    let perms = { view_captures: true, view_links: false, export_data: false, delete_data: false, manage_links: false };
+    try {
+        const snap = await get(ref(db, 'system_config/guest_access/permissions'));
+        if (snap.val()) perms = snap.val();
+    } catch(e) {}
 
-    // Store session
+    // Store session with fresh permissions
     sessionStorage.setItem('guest_session', JSON.stringify({
         name, role: 'guest', loginTime: Date.now(), permissions: perms
     }));
 
-    // Log to Firebase
+    // Log to Firebase with device info
     set(ref(db, 'guest_sessions/' + Date.now()), {
-        name, loginTime: Date.now(), userAgent: navigator.userAgent.slice(0,100)
+        name, loginTime: Date.now(),
+        userAgent: navigator.userAgent.slice(0,120),
+        language: navigator.language,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
     }).catch(() => {});
 
     window.location.href = "admin.html?guest=1";
