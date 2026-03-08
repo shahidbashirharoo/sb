@@ -1,39 +1,202 @@
-<script type="module">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login — Shahid Bashir</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword }
-from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: #080b12;
+            color: #e2e8f0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-wrap {
+            width: 340px;
+            background: #111827;
+            border: 1px solid #1e293b;
+            border-radius: 16px;
+            padding: 44px 40px;
+            text-align: center;
+            box-shadow: 0 25px 60px rgba(0,0,0,.6);
+        }
+
+        .login-logo {
+            width: 56px; height: 56px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px; margin: 0 auto 20px;
+        }
+
+        h2 {
+            font-size: 18px; font-weight: 700;
+            margin-bottom: 4px; color: #e2e8f0;
+        }
+
+        .subtitle {
+            font-size: 12px; color: #64748b;
+            margin-bottom: 28px;
+        }
+
+        input {
+            width: 100%;
+            padding: 11px 14px;
+            margin-bottom: 12px;
+            background: #0d1117;
+            border: 1px solid #1e293b;
+            color: #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            display: block;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        input::placeholder { color: #475569; }
+
+        .btn-login {
+            width: 100%;
+            padding: 12px;
+            background: #3b82f6;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+            transition: background .15s;
+            margin-top: 4px;
+        }
+
+        .btn-login:hover   { background: #2563eb; }
+        .btn-login:active  { background: #1d4ed8; }
+        .btn-login:disabled {
+            background: #1e3a5f;
+            cursor: not-allowed;
+            color: #64748b;
+        }
+
+        #errorMsg {
+            color: #ef4444;
+            font-size: 12px;
+            margin-top: 12px;
+            min-height: 18px;
+            display: none;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 16px; height: 16px;
+            border: 2px solid rgba(255,255,255,.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin .7s linear infinite;
+            vertical-align: middle;
+            margin-right: 6px;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<div class="login-wrap">
+    <div class="login-logo">🛡️</div>
+    <h2>Shahid Bashir</h2>
+    <p class="subtitle">Admin Control Panel — Secure Access</p>
+
+    <input type="email"    id="email"    placeholder="Admin email"    autocomplete="username">
+    <input type="password" id="password" placeholder="Password"       autocomplete="current-password">
+
+    <button class="btn-login" id="loginBtn" onclick="doLogin()">
+        🔓 Sign In
+    </button>
+
+    <p id="errorMsg"></p>
+</div>
+
+<script type="module">
+import { initializeApp }            from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged }
+    from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
 const firebaseConfig = {
-    apiKey: "AIzaSyCu-4lEX3qQqPCow3nhvCHZNrpg5nbEUm0",
-    authDomain: "camera-c436d.firebaseapp.com",
-    databaseURL: "https://camera-c436d-default-rtdb.firebaseio.com",
-    projectId: "camera-c436d",
-    storageBucket: "camera-c436d.firebasestorage.app",
+    apiKey:            "AIzaSyCu-4lEX3qQqPCow3nhvCHZNrpg5nbEUm0",
+    authDomain:        "camera-c436d.firebaseapp.com",
+    databaseURL:       "https://camera-c436d-default-rtdb.firebaseio.com",
+    projectId:         "camera-c436d",
+    storageBucket:     "camera-c436d.firebasestorage.app",
     messagingSenderId: "1024848910212",
-    appId: "1:1024848910212:web:80a95f41281d1a920eafd1"
+    appId:             "1:1024848910212:web:80a95f41281d1a920eafd1"
 };
 
-const app = initializeApp(firebaseConfig);
+const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
-window.login = function() {
+// If already signed in, skip the login page entirely
+onAuthStateChanged(auth, (user) => {
+    if (user) {
+        window.location.href = "admin.html";
+    }
+});
 
-   const email = document.getElementById("email").value;
-   const password = document.getElementById("password").value;
+window.doLogin = function () {
+    const email    = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const btn      = document.getElementById('loginBtn');
+    const errEl    = document.getElementById('errorMsg');
 
-   signInWithEmailAndPassword(auth, email, password)
-   .then(() => {
+    errEl.style.display = 'none';
+    errEl.innerText = '';
 
-       window.location.href = "admin.html";
+    if (!email || !password) {
+        errEl.innerText = '❌ Please enter your email and password.';
+        errEl.style.display = 'block';
+        return;
+    }
 
-   })
-   .catch((error) => {
+    // Show spinner
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Signing in...';
 
-       alert(error.message);
+    signInWithEmailAndPassword(auth, email, password)
+        .then(() => {
+            window.location.href = "admin.html";
+        })
+        .catch((error) => {
+            btn.disabled = false;
+            btn.innerHTML = '🔓 Sign In';
 
-   });
+            // User-friendly error messages
+            const code = error.code;
+            let msg = '❌ Login failed. Please try again.';
+            if (code === 'auth/user-not-found'  || code === 'auth/wrong-password' ||
+                code === 'auth/invalid-credential')       msg = '❌ Incorrect email or password.';
+            else if (code === 'auth/invalid-email')       msg = '❌ Invalid email address.';
+            else if (code === 'auth/too-many-requests')   msg = '❌ Too many attempts. Try again later.';
+            else if (code === 'auth/network-request-failed') msg = '❌ Network error. Check your connection.';
 
-}
+            errEl.innerText = msg;
+            errEl.style.display = 'block';
+        });
+};
 
+// Allow Enter key to submit
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') window.doLogin();
+});
 </script>
+</body>
+</html>
