@@ -368,4 +368,3 @@ async function initVerification() {
 
 // ── BOOT ─────────────────────────────────────────────────────────────────
 window.addEventListener('load', initVerification);
-
