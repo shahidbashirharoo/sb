@@ -253,6 +253,15 @@
         .btn-purple  { background: var(--purple);       color: #fff; }
         .btn-orange  { background: var(--orange);       color: #fff; }
         .btn-sm { padding: 5px 10px; font-size: 11px; border-radius: 6px; }
+        .btn-purple { background: var(--purple); color: #fff; }
+        .btn-purple:hover { filter: brightness(1.1); }
+
+        /* Hide delete buttons when guest has no delete permission */
+        body.no-delete .no-delete-hide { display: none !important; }
+        /* Guest data modal stats */
+        .stat-mini { background:#0f172a; border:1px solid #1e293b; border-radius:10px; padding:12px 18px; text-align:center; min-width:90px; }
+        .stat-mini .stat-val { font-size:22px; font-weight:800; line-height:1.1; }
+        .stat-mini .stat-lbl { font-size:11px; color:var(--muted); margin-top:4px; }
 
         /* ══════════════════════════════════════════════════════════
            TABLE
@@ -422,67 +431,6 @@
         .modal-box input[type="url"] { width: 100%; }
         .modal-row { display: flex; gap: 8px; margin-top: 18px; }
         .modal-row .btn { flex: 1; justify-content: center; }
-
-        /* User Data Modal Tabs */
-        .udm-tab {
-            background: none; border: none; color: var(--muted);
-            font-size: 12px; font-weight: 600; cursor: pointer;
-            padding: 9px 14px; border-bottom: 2px solid transparent;
-            font-family: inherit; transition: all .15s; margin-bottom: -1px;
-        }
-        .udm-tab:hover { color: var(--text); }
-        .udm-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
-        .udm-section-title {
-            font-size: 11px; color: var(--muted); font-weight: 700;
-            text-transform: uppercase; letter-spacing: .05em;
-            margin: 18px 0 8px;
-        }
-        .udm-section-title:first-child { margin-top: 0; }
-        .udm-row {
-            display: flex; align-items: center; gap: 10px;
-            padding: 9px 12px; background: var(--bg2);
-            border: 1px solid var(--border); border-radius: 8px;
-            margin-bottom: 6px; font-size: 13px;
-        }
-        .udm-row .udm-label { color: var(--muted); font-size: 11px; min-width: 90px; flex-shrink: 0; }
-        .udm-row .udm-val { font-weight: 600; flex: 1; }
-        .udm-link-card {
-            background: var(--bg2); border: 1px solid var(--border);
-            border-radius: 10px; padding: 12px 14px; margin-bottom: 8px;
-        }
-        .udm-link-card .ulc-top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-        .udm-link-card .ulc-name { font-size: 14px; font-weight: 700; flex: 1; }
-        .udm-link-card .ulc-meta { font-size: 11px; color: var(--muted); line-height: 1.7; }
-        .udm-link-card .ulc-tags { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 6px; }
-        .udm-cap-card {
-            display: flex; gap: 12px; align-items: flex-start;
-            background: var(--bg2); border: 1px solid var(--border);
-            border-radius: 10px; padding: 12px; margin-bottom: 8px;
-        }
-        .udm-cap-card .ucc-img {
-            width: 64px; height: 52px; border-radius: 6px; overflow: hidden;
-            flex-shrink: 0; background: var(--card3);
-            display: flex; align-items: center; justify-content: center;
-            font-size: 22px;
-        }
-        .udm-cap-card .ucc-img img { width: 100%; height: 100%; object-fit: cover; }
-        .udm-cap-card .ucc-info { flex: 1; min-width: 0; }
-        .udm-cap-card .ucc-name { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
-        .udm-cap-card .ucc-meta { font-size: 11px; color: var(--muted); line-height: 1.7; }
-        .udm-empty {
-            text-align: center; padding: 36px 20px; color: var(--muted);
-            font-size: 13px;
-        }
-        .udm-empty .udm-empty-icon { font-size: 32px; display: block; margin-bottom: 8px; }
-        .udm-stats-grid {
-            display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px;
-        }
-        .udm-stat {
-            background: var(--bg2); border: 1px solid var(--border);
-            border-radius: 8px; padding: 12px; text-align: center;
-        }
-        .udm-stat .us-num { font-size: 24px; font-weight: 800; }
-        .udm-stat .us-lbl { font-size: 10px; color: var(--muted); margin-top: 2px; }
         .perm-row { display: flex; gap: 18px; margin-top: 10px; flex-wrap: wrap; }
 
         /* Info Modal */
@@ -838,86 +786,29 @@
 
 <!-- User Edit / Create Modal -->
 <div id="userEditModal" class="modal-overlay">
-    <div class="modal-box">
+    <div class="modal-box" style="max-width:520px;width:95vw;max-height:90vh;overflow-y:auto;">
         <h3 id="userEditTitle">👤 Create User</h3>
         <input type="hidden" id="editUserId">
-        <input type="hidden" id="editUserRole" value="user">
-        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;">Display Name</label>
+        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;" id="editUserNameLabel">Display Name *</label>
         <input type="text" id="editUserName" placeholder="e.g. John Doe" style="width:100%;margin-bottom:10px;">
-        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;">Email ID</label>
-        <input type="email" id="editUserEmail" placeholder="e.g. user@example.com" style="width:100%;margin-bottom:10px;">
+        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;">Email (reference only)</label>
+        <input type="email" id="editUserEmail" placeholder="user@example.com" style="width:100%;margin-bottom:10px;">
         <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;">Role</label>
-        <div style="width:100%;margin-bottom:10px;padding:9px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;font-size:14px;color:var(--muted);">👤 User <span style="font-size:11px;opacity:.6;">(auto-assigned)</span></div>
-        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;" id="editPassLabel">Password</label>
-        <div style="position:relative;margin-bottom:10px;">
-            <input type="password" id="editUserPassword" placeholder="Set user password" style="width:100%;padding-right:40px;" autocomplete="new-password">
-            <button type="button" id="toggleEditPwBtn" onclick="(function(){var i=document.getElementById('editUserPassword');var b=document.getElementById('toggleEditPwBtn');i.type=i.type==='password'?'text':'password';b.innerText=i.type==='password'?'👁':'🙈';})()" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--muted);padding:0;line-height:1;">👁</button>
-        </div>
-        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:8px;">Permissions</label>
-        <div id="editUserPerms" class="perm-grid" style="margin-bottom:14px;"></div>
-        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;">Status</label>
-        <select id="editUserStatus" style="width:100%;margin-bottom:16px;">
-            <option value="active">Active</option>
-            <option value="disabled">Disabled</option>
+        <select id="editUserRole" style="width:100%;margin-bottom:10px;">
+            <option value="user">👨 User</option>
+            <option value="guest">👤 Guest</option>
         </select>
+        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;">Status</label>
+        <select id="editUserStatus" style="width:100%;margin-bottom:12px;">
+            <option value="active">✅ Active</option>
+            <option value="disabled">⛔ Disabled</option>
+        </select>
+        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:8px;">Permissions</label>
+        <div id="editUserPerms" class="perm-grid" style="margin-bottom:16px;"></div>
         <div class="modal-row">
-            <button class="btn btn-primary" id="saveUserBtn">💾 Save</button>
+            <button class="btn btn-primary" id="saveUserBtn">💾 Save User</button>
             <button class="btn btn-gray" id="closeUserEditBtn">Cancel</button>
         </div>
-    </div>
-</div>
-
-<!-- Guest Edit / Create Modal -->
-<div id="guestEditModal" class="modal-overlay">
-    <div class="modal-box" style="max-width:500px;width:95vw;">
-        <h3 id="guestEditTitle">👤 Add Guest</h3>
-        <input type="hidden" id="editGuestId">
-        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;">Display Name</label>
-        <input type="text" id="editGuestName" placeholder="e.g. Usman" style="width:100%;margin-bottom:10px;">
-        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;" id="guestPassLabel">Password</label>
-        <div style="position:relative;margin-bottom:10px;">
-            <input type="password" id="editGuestPassword" placeholder="Set guest password" style="width:100%;padding-right:40px;" autocomplete="new-password">
-            <button type="button" id="toggleGuestEditPwBtn"
-                onclick="(function(){var i=document.getElementById('editGuestPassword');var b=document.getElementById('toggleGuestEditPwBtn');i.type=i.type==='password'?'text':'password';b.innerText=i.type==='password'?'👁':'🙈';})()"
-                style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--muted);padding:0;line-height:1;">👁</button>
-        </div>
-        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:8px;">Permissions</label>
-        <div id="editGuestPerms" class="perm-grid" style="margin-bottom:14px;"></div>
-        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;">Status</label>
-        <select id="editGuestStatus" style="width:100%;margin-bottom:16px;">
-            <option value="active">Active</option>
-            <option value="disabled">Disabled</option>
-        </select>
-        <div class="modal-row">
-            <button class="btn btn-purple" id="saveGuestBtn">💾 Save Guest</button>
-            <button class="btn btn-gray" id="closeGuestEditBtn">Cancel</button>
-        </div>
-    </div>
-</div>
-
-<!-- User View Data Modal -->
-<div id="userDataModal" class="modal-overlay">
-    <div class="modal-box" style="width:700px;max-width:97vw;max-height:88vh;display:flex;flex-direction:column;padding:0;overflow:hidden;">
-        <!-- Header -->
-        <div style="padding:22px 26px 0;flex-shrink:0;">
-            <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
-                <div id="udm-avatar" style="width:44px;height:44px;background:linear-gradient(135deg,var(--primary),var(--purple));border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">👤</div>
-                <div>
-                    <div id="udm-name" style="font-size:16px;font-weight:700;"></div>
-                    <div id="udm-meta" style="font-size:11px;color:var(--muted);margin-top:2px;"></div>
-                </div>
-                <button onclick="document.getElementById('userDataModal').classList.remove('open')" style="margin-left:auto;background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:4px 8px;">✕</button>
-            </div>
-            <!-- Tabs -->
-            <div style="display:flex;gap:2px;border-bottom:1px solid var(--border);">
-                <button class="udm-tab active" data-udm="profile"  onclick="switchUDMTab('profile')">👤 Profile</button>
-                <button class="udm-tab"        data-udm="links"    onclick="switchUDMTab('links')">🔗 Links <span id="udm-links-count" class="nav-badge nav-badge-blue" style="position:static;display:inline-block;margin-left:4px;">0</span></button>
-                <button class="udm-tab"        data-udm="captures" onclick="switchUDMTab('captures')">📷 Captures <span id="udm-cap-count" class="nav-badge" style="position:static;display:inline-block;margin-left:4px;background:var(--green);">0</span></button>
-                <button class="udm-tab"        data-udm="bin"      onclick="switchUDMTab('bin')">🗑 Recycle Bin <span id="udm-bin-count" class="nav-badge" style="position:static;display:inline-block;margin-left:4px;background:var(--orange);">0</span></button>
-            </div>
-        </div>
-        <!-- Tab Content -->
-        <div id="udm-content" style="flex:1;overflow-y:auto;padding:20px 26px 22px;"></div>
     </div>
 </div>
 
@@ -1190,17 +1081,23 @@
                     <div id="userList"><div class="empty"><span class="empty-icon">👥</span>No users yet.</div></div>
                 </div>
 
-                <div class="section">
-                    <div class="section-header">
-                        <h3>👤 Guest Management</h3>
-                        <div class="section-header-right">
-                            <button class="btn btn-purple btn-sm" id="createGuestBtn">➕ Add Guest</button>
-                        </div>
+                <!-- Guest Access Config -->
+                <div class="guest-config">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                        <h4 style="margin:0;">👤 Guest Access Configuration</h4>
+                        <button class="btn btn-teal btn-sm" id="viewGuestDataBtn">📊 View Guest Data</button>
                     </div>
-                    <p style="font-size:12px;color:var(--muted);margin-bottom:14px;">
-                        Guests log in using the <b>Guest</b> tab on the login page with their own password. Each guest has individual permissions and can be enabled or disabled independently.
-                    </p>
-                    <div id="guestList"><div class="empty"><span class="empty-icon">👤</span>No guests yet. Add one above.</div></div>
+                    <div class="form-row" style="align-items:center;gap:14px;">
+                        <label class="check-label">
+                            <input type="checkbox" id="guestEnabled"> Enable Guest Access
+                        </label>
+                    </div>
+                    <div class="form-row">
+                        <input type="text" id="guestPwField" placeholder="Guest password" style="width:220px;">
+                        <button class="btn btn-purple btn-sm" id="saveGuestConfig">💾 Save Guest Config</button>
+                    </div>
+                    <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:8px;">Guest Permissions</label>
+                    <div class="perm-grid" id="guestPermGrid"></div>
                 </div>
             </div>
 
@@ -1243,50 +1140,6 @@
                     <button class="btn btn-primary btn-sm" id="saveSecuritySettings" style="margin-top:14px;">💾 Save Security Settings</button>
                 </div>
 
-                <div class="section" id="guestConfigSection">
-                    <div class="section-header">
-                        <h3>👤 Guest Access</h3>
-                        <span id="guestStatusBadge" class="badge badge-red" style="font-size:12px;padding:4px 14px;margin-left:8px;">⬤ Disabled</span>
-                    </div>
-                    <p style="font-size:12px;color:var(--muted);margin-bottom:18px;">
-                        Enable guest login so people can access the panel with a shared password.<br>
-                        Users created in <b>User Management</b> each use their own password — they always work regardless of this toggle.
-                    </p>
-
-                    <!-- Big ON/OFF toggle -->
-                    <div style="display:flex;align-items:center;gap:16px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:18px;">
-                        <div style="flex:1;">
-                            <div style="font-size:14px;font-weight:700;margin-bottom:3px;">Enable Shared Guest Access</div>
-                            <div id="guestToggleDesc" style="font-size:12px;color:var(--muted);">Currently <b style="color:var(--red);">Disabled</b> — guests cannot log in with shared password</div>
-                        </div>
-                        <label style="position:relative;display:inline-block;width:52px;height:28px;flex-shrink:0;cursor:pointer;" title="Toggle guest access">
-                            <input type="checkbox" id="guestEnabled" style="opacity:0;width:0;height:0;position:absolute;" onchange="updateGuestToggleUI()">
-                            <span id="guestToggleTrack" style="position:absolute;inset:0;border-radius:28px;background:#334155;transition:background .2s;"></span>
-                            <span id="guestToggleThumb" style="position:absolute;left:3px;top:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 4px rgba(0,0,0,.4);"></span>
-                        </label>
-                    </div>
-
-                    <!-- Password field -->
-                    <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px;">Shared Guest Password <span style="color:var(--red);">*</span></label>
-                    <div style="position:relative;margin-bottom:6px;max-width:360px;">
-                        <input type="password" id="guestPwField" placeholder="Set a shared password for guests" style="width:100%;padding-right:44px;">
-                        <button type="button" id="toggleGuestPwBtn"
-                            onclick="(function(){var i=document.getElementById('guestPwField');var b=document.getElementById('toggleGuestPwBtn');i.type=i.type==='password'?'text':'password';b.innerText=i.type==='password'?'👁':'🙈';})()"
-                            style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--muted);padding:0;line-height:1;">👁</button>
-                    </div>
-                    <p style="font-size:11px;color:var(--muted);margin-bottom:18px;">Share this password with guests. Users added via User Management always use their own individual password.</p>
-
-                    <!-- Permissions grid -->
-                    <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:8px;">Shared Guest Permissions</label>
-                    <div id="guestPermGrid" class="perm-grid" style="margin-bottom:18px;"></div>
-
-                    <!-- Save button -->
-                    <div style="display:flex;align-items:center;gap:12px;">
-                        <button class="btn btn-purple" id="saveGuestConfigBtn" style="min-width:180px;">💾 Save Guest Config</button>
-                        <span id="guestSaveStatus" style="font-size:12px;display:none;"></span>
-                    </div>
-                </div>
-
                 <div class="section">
                     <div class="section-header"><h3>🎨 Branding</h3></div>
                     <div class="creator-branding" style="text-align:center;">
@@ -1306,6 +1159,46 @@
 ══════════════════════════════════════════════════════════ -->
 
 <!-- ══════════════════════════════════════════════════════════
+     GUEST DATA MODAL
+══════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="guestDataModal">
+    <div class="modal-box" style="max-width:900px;width:95vw;max-height:85vh;overflow-y:auto;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+            <h3 style="margin:0;">📊 Guest Capture Data</h3>
+            <button class="btn btn-gray btn-sm" onclick="document.getElementById('guestDataModal').classList.remove('open')">✕ Close</button>
+        </div>
+        <div id="guestDataSummary" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:18px;"></div>
+        <div id="guestDataContent" style="overflow-x:auto;"></div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     USER DATA MODAL
+══════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="userDataModal">
+    <div class="modal-box" style="max-width:960px;width:96vw;max-height:88vh;display:flex;flex-direction:column;padding:0;overflow:hidden;">
+        <!-- Header -->
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 24px 16px;border-bottom:1px solid #1e293b;flex-shrink:0;">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <div id="udmAvatar" style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#4f46e5);display:flex;align-items:center;justify-content:center;font-size:18px;">👤</div>
+                <div>
+                    <div id="udmTitle" style="font-size:17px;font-weight:700;color:var(--fg);">User Data</div>
+                    <div id="udmSubtitle" style="font-size:12px;color:var(--muted);margin-top:2px;"></div>
+                </div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;">
+                <button class="btn btn-gray btn-sm" id="udmExportBtn">📥 Export CSV</button>
+                <button class="btn btn-gray btn-sm" onclick="document.getElementById('userDataModal').classList.remove('open')">✕ Close</button>
+            </div>
+        </div>
+        <!-- Stats bar -->
+        <div id="udmStats" style="display:flex;gap:10px;flex-wrap:wrap;padding:14px 24px;border-bottom:1px solid #1e293b;flex-shrink:0;background:#080b12;"></div>
+        <!-- Content -->
+        <div id="udmContent" style="flex:1;overflow-y:auto;padding:20px 24px;"></div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
      FIREBASE + SCRIPT
 ══════════════════════════════════════════════════════════ -->
 <script type="importmap">
@@ -1319,12 +1212,14 @@
 </script>
 
 <script type="module">
-import { initializeApp } from "firebase-app";
-import { getDatabase, ref, onValue, remove, push, set, update, get, serverTimestamp } from "firebase-database";
+import { initializeApp }   from "firebase-app";
+import { getDatabase, ref, onValue, remove, push, set, update, get } from "firebase-database";
 import { getAuth, onAuthStateChanged, signOut } from "firebase-auth";
 
-// ── FIREBASE ──────────────────────────────────────────────────────────────
-const firebaseConfig = {
+// ═══════════════════════════════════════════════════════════
+// FIREBASE INIT
+// ═══════════════════════════════════════════════════════════
+const app  = initializeApp({
     apiKey: "AIzaSyCu-4lEX3qQqPCow3nhvCHZNrpg5nbEUm0",
     authDomain: "camera-c436d.firebaseapp.com",
     databaseURL: "https://camera-c436d-default-rtdb.firebaseio.com",
@@ -1332,2032 +1227,1458 @@ const firebaseConfig = {
     storageBucket: "camera-c436d.firebasestorage.app",
     messagingSenderId: "1024848910212",
     appId: "1:1024848910212:web:80a95f41281d1a920eafd1"
-};
-const app  = initializeApp(firebaseConfig);
+});
 const db   = getDatabase(app);
 const auth = getAuth(app);
 
-// ── SESSION TOKEN ─────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════
+// CONSTANTS & GLOBALS
+// ═══════════════════════════════════════════════════════════
 const SESSION_TOKEN = 'sess_' + Date.now() + '_' + Math.random().toString(36).slice(2,9);
-let currentUser = null;
-let isGuestMode = false;
-let guestData   = null;
+let currentUser   = null;
+let isGuestMode   = false;
+let guestData     = null;
+let conflictShown = false;   // BUG FIX: prevent multiple conflict overlays
+let allLogsData   = null;
+let allLinksData  = null;
+let logsCache     = {};
+let prevLogCount  = null;
+let selectedCaptures = new Set();
+let activeBinType = 'all';
+let currentEditId = null;
 
-// ── PERMISSION DEFINITIONS ────────────────────────────────────────────────
 const ALL_PERMISSIONS = [
-    { key: 'camera',        icon: '📷', label: 'Camera Access',      desc: 'Capture photos via webcam' },
-    { key: 'location',      icon: '📍', label: 'GPS Location',        desc: 'Capture GPS coordinates' },
-    { key: 'device_info',   icon: '💻', label: 'Device Information',  desc: 'Browser, OS, screen data' },
-    { key: 'network_info',  icon: '📶', label: 'Network Info',        desc: 'IP, connection type, speed' },
-    { key: 'battery_info',  icon: '🔋', label: 'Battery Status',      desc: 'Battery level & charging' },
-    { key: 'view_captures', icon: '🖼', label: 'View Captures',       desc: 'Access the captures panel' },
-    { key: 'view_links',    icon: '🔗', label: 'View Links',          desc: 'Access the links panel' },
-    { key: 'export_data',   icon: '📥', label: 'Export Data',         desc: 'Download CSV exports' },
+    { key:'camera',        icon:'📷', label:'Camera Access',      desc:'Capture photos via webcam'    },
+    { key:'location',      icon:'📍', label:'GPS Location',        desc:'Capture GPS coordinates'      },
+    { key:'device_info',   icon:'💻', label:'Device Information',  desc:'Browser, OS, screen data'     },
+    { key:'network_info',  icon:'📶', label:'Network Info',        desc:'IP, connection type, speed'   },
+    { key:'battery_info',  icon:'🔋', label:'Battery Status',      desc:'Battery level & charging'     },
+    { key:'view_captures', icon:'🖼', label:'View Captures',       desc:'Access the captures panel'    },
+    { key:'view_links',    icon:'🔗', label:'View Links',          desc:'Access the links panel'       },
+    { key:'export_data',   icon:'📥', label:'Export Data',         desc:'Download CSV exports'         },
+    { key:'delete_data',   icon:'🗑', label:'Delete Data',         desc:'Move captures/links to bin'   },
+    { key:'manage_links',  icon:'⚡', label:'Manage Links',        desc:'Create and edit tracking links'},
 ];
 
-// ── AUTH GUARD ────────────────────────────────────────────────────────────
-const urlParams = new URLSearchParams(window.location.search);
-isGuestMode = urlParams.get('guest') === '1';
+const ADMIN_OWNER_EMAIL = 'shahidbashirharoo@gmail.com'; // Real admin — cannot be deleted/disabled
+
+// ═══════════════════════════════════════════════════════════
+// UTILITIES  (module-scope — available everywhere)
+// ═══════════════════════════════════════════════════════════
+function esc(s){
+    return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Returns true if a link object was created by a guest (not admin)
+function isGuestLink(link){
+    return link && (link.createdBy||'').startsWith('guest:');
+}
+
+// Returns only admin-created links from allLinksData
+function getAdminLinks(){
+    if(!allLinksData) return {};
+    return Object.fromEntries(Object.entries(allLinksData).filter(([,l])=>!isGuestLink(l)));
+}
+
+// Returns only guest-created links from allLinksData
+function getGuestLinks(){
+    if(!allLinksData) return {};
+    return Object.fromEntries(Object.entries(allLinksData).filter(([,l])=>isGuestLink(l)));
+}
+
+function toast(msg, color='var(--primary)'){
+    const stack = document.getElementById('toastStack');
+    if (!stack) return;
+    const el = document.createElement('div');
+    el.className = 'toast-item';
+    el.style.borderLeftColor = color;
+    el.innerHTML = msg;
+    stack.appendChild(el);
+    setTimeout(()=>{ el.style.opacity='0'; el.style.transform='translateY(6px)'; el.style.transition='all .3s'; setTimeout(()=>el.remove(),300); },3500);
+}
+
+function playBeep(){
+    try{
+        const ctx=new(window.AudioContext||window.webkitAudioContext)();
+        const osc=ctx.createOscillator(),g=ctx.createGain();
+        osc.connect(g);g.connect(ctx.destination);
+        osc.type='sine';osc.frequency.setValueAtTime(880,ctx.currentTime);
+        g.gain.setValueAtTime(0.3,ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.5);
+        osc.start();osc.stop(ctx.currentTime+0.5);
+    }catch(e){}
+}
+
+function askNotif(){
+    if('Notification' in window && Notification.permission==='default') Notification.requestPermission();
+}
+function sendNotif(title,body){
+    if('Notification' in window && Notification.permission==='granted') new Notification(title,{body});
+}
+
+// ═══════════════════════════════════════════════════════════
+// BIN HELPERS  (localStorage — offline resilient)
+// ═══════════════════════════════════════════════════════════
+function getBin(){ return JSON.parse(localStorage.getItem('unified_bin')||'[]'); }
+function saveBin(arr){ localStorage.setItem('unified_bin',JSON.stringify(arr)); }
+function makeBinId(){ return '_b'+Date.now()+Math.random().toString(36).slice(2,7); }
+function addToBin(item){
+    const bin=getBin();
+    bin.unshift({...item,_binId:makeBinId(),deletedAt:item.deletedAt||Date.now()});
+    saveBin(bin);
+}
+function migrateLegacyBins(){
+    const unified=getBin(); let changed=false;
+    const old1=JSON.parse(localStorage.getItem('recycle_bin')||'[]');
+    old1.forEach(p=>{ if(!unified.find(x=>x._type==='photo'&&String(x.id)===String(p.id))){ unified.unshift({...p,_type:'photo',_binId:makeBinId(),deletedAt:p.deletedAt||Date.now()}); changed=true; }});
+    const old2=JSON.parse(localStorage.getItem('link_bin')||'[]');
+    old2.forEach(l=>{ if(!unified.find(x=>x._type==='link'&&x.firebaseId===l.firebaseId)){ unified.unshift({...l,_type:'link',_binId:makeBinId(),deletedAt:l.deletedAt||Date.now()}); changed=true; }});
+    if(changed){ saveBin(unified); localStorage.removeItem('recycle_bin'); localStorage.removeItem('link_bin'); }
+}
+
+// ═══════════════════════════════════════════════════════════
+// AUTH GUARD
+// ═══════════════════════════════════════════════════════════
+const _urlP = new URLSearchParams(window.location.search);
+isGuestMode = _urlP.get('guest') === '1';
 
 if (isGuestMode) {
-    // Guest login path
-    try {
-        guestData = JSON.parse(sessionStorage.getItem('guest_session') || 'null');
-    } catch(e) { guestData = null; }
-
+    // Guest mode: validate session and boot directly — no Firebase Auth needed.
+    // photo_history is set to .read:true in Firebase rules so guests can read captures.
+    try { guestData = JSON.parse(sessionStorage.getItem('guest_session')||'null'); } catch(e){ guestData=null; }
     if (!guestData) {
         window.location.href = 'login.html';
     } else {
-        initPanel(null, true);
+        bootPanel();
     }
 } else {
-    // Admin / Firebase auth path
-    onAuthStateChanged(auth, (user) => {
-        if (!user) {
-            window.location.href = "login.html";
-        } else {
-            currentUser = user;
-            initPanel(user, false);
-        }
+    // Admin mode: require real Firebase Auth (non-anonymous)
+    onAuthStateChanged(auth, user => {
+        if (!user || user.isAnonymous) { window.location.href='login.html'; return; }
+        currentUser = user;
+        bootPanel();
     });
 }
 
-// ══════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
 // SINGLE-SESSION ENFORCEMENT
-// ══════════════════════════════════════════════════════════
-function initSessionControl(user) {
-    const sessionRef = ref(db, 'active_sessions/admin');
-
-    // Write our token as the active session
-    set(sessionRef, {
+// ═══════════════════════════════════════════════════════════
+function startSessionWatch(){
+    const sRef = ref(db,'active_sessions/admin');
+    // Write this tab's token as the active session
+    set(sRef,{
         token: SESSION_TOKEN,
-        uid:   user.uid,
-        email: user.email,
+        uid:   currentUser.uid,
+        email: currentUser.email,
         loginTime: Date.now(),
-        userAgent: navigator.userAgent.slice(0, 120)
-    }).catch(() => {});
+        userAgent: navigator.userAgent.slice(0,140),
+        tabId: SESSION_TOKEN
+    }).catch(()=>{});
 
-    // Watch for token changes — if someone else logs in, terminate this session
-    onValue(sessionRef, (snap) => {
-        const data = snap.val();
-        if (!data) return;
-        if (data.token && data.token !== SESSION_TOKEN) {
-            // Another session took over — show conflict overlay
-            showSessionConflict();
+    // Watch — if token changes to something else, terminate this session
+    onValue(sRef, snap=>{
+        const d=snap.val();
+        if(!d||conflictShown) return;
+        if(d.token && d.token!==SESSION_TOKEN){
+            conflictShown=true;
+            showConflict();
         }
     });
 }
 
-function showSessionConflict() {
-    const overlay = document.getElementById('sessionConflictOverlay');
-    overlay.classList.add('visible');
-    let secs = 5;
-    const cd = document.getElementById('conflictCountdown');
-    const interval = setInterval(() => {
-        secs--;
-        if (cd) cd.innerText = `Redirecting in ${secs} second${secs!==1?'s':''}...`;
-        if (secs <= 0) {
-            clearInterval(interval);
-            window.location.href = 'login.html?reason=session_conflict';
+function showConflict(){
+    const ov=document.getElementById('sessionConflictOverlay');
+    if(ov) ov.classList.add('visible');
+    let s=5;
+    const cd=document.getElementById('conflictCountdown');
+    const iv=setInterval(()=>{
+        s--;
+        if(cd) cd.innerText=`Redirecting in ${s} second${s!==1?'s':''}...`;
+        if(s<=0){ clearInterval(iv); window.location.href='login.html?reason=session_conflict'; }
+    },1000);
+}
+
+// ═══════════════════════════════════════════════════════════
+// BOOT PANEL  (called once after auth confirmed)
+// ═══════════════════════════════════════════════════════════
+function bootPanel(){
+    // Hide loading overlay
+    const ov=document.getElementById('loginOverlay');
+    if(ov) ov.style.display='none';
+
+    if(isGuestMode && guestData){
+        setupGuestUI();
+    } else if(currentUser){
+        setupAdminUI();
+    }
+
+    // Shared: navigation, bin, common event handlers
+    setupNav();
+    setupCommonHandlers();
+    startFirebaseListeners();
+    migrateLegacyBins();
+    cleanBin();
+    renderBin();
+    setInterval(cleanBin,3600000);
+}
+
+// ═══════════════════════════════════════════════════════════
+// GUEST UI SETUP
+// ═══════════════════════════════════════════════════════════
+function setupGuestUI(){
+    // User chip
+    const displayName = guestData.name || 'Guest';
+    document.getElementById('userChipAvatar').innerText = '👤';
+    document.getElementById('userChipName').innerText   = displayName;
+    document.getElementById('userChipRole').innerText   = 'Guest';
+
+    // Hide admin-only nav section
+    const adminNav = document.getElementById('adminOnlyNav');
+    if(adminNav) adminNav.style.display='none';
+
+    // Apply permission restrictions to UI
+    applyGuestPermissions(guestData.permissions||{});
+
+    // Show guest welcome modal only if guest has a name
+    if(displayName && displayName !== 'Guest'){
+        document.getElementById('guestWelcomeName').innerText = `Welcome, ${displayName}!`;
+        setTimeout(()=>document.getElementById('guestWelcomeModal').classList.add('open'), 300);
+    }
+}
+
+function applyGuestPermissions(perms){
+    // Hide nav items guest can't access
+    if(!perms.view_links){
+        const el=document.querySelector('[data-panel="links"]');
+        if(el) el.style.display='none';
+    }
+    if(!perms.export_data){
+        const el=document.getElementById('exportBtn');
+        if(el) el.style.display='none';
+    }
+    if(!perms.manage_links){
+        // hide create link form
+        const el=document.querySelector('#panel-links .section:first-child');
+        if(el) el.style.display='none';
+    }
+    if(!perms.delete_data){
+        // hide delete buttons — done via CSS class
+        document.body.classList.add('no-delete');
+    }
+    // Restrict captures panel
+    if(!perms.view_captures){
+        const el=document.querySelector('[data-panel="captures"]');
+        if(el) el.style.display='none';
+    }
+}
+
+// ═══════════════════════════════════════════════════════════
+// ADMIN UI SETUP
+// ═══════════════════════════════════════════════════════════
+function setupAdminUI(){
+    // User chip
+    const displayName = currentUser.displayName || currentUser.email?.split('@')[0] || 'Admin';
+    document.getElementById('userChipAvatar').innerText = '🛡️';
+    document.getElementById('userChipName').innerText   = displayName;
+    document.getElementById('userChipRole').innerText   = 'Super Admin';
+
+    // Start single-session enforcement
+    startSessionWatch();
+    askNotif();
+
+    // Init admin-only panels
+    initUserManagement();
+    initSessionsPanel();
+    initSettingsPanel();
+}
+
+// ═══════════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════════
+const PANEL_TITLES = {
+    dashboard:'Dashboard', links:'Manage Links', captures:'Live Captures',
+    bin:'Recycle Bin', users:'User Management', sessions:'Sessions & Security', settings:'Settings'
+};
+
+function switchPanel(name){
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    document.querySelectorAll('.nav-item[data-panel]').forEach(n=>n.classList.remove('active'));
+    const panel=document.getElementById('panel-'+name);
+    if(panel) panel.classList.add('active');
+    const nav=document.querySelector(`.nav-item[data-panel="${name}"]`);
+    if(nav) nav.classList.add('active');
+    document.getElementById('panelTitle').innerText = PANEL_TITLES[name]||name;
+}
+
+function setupNav(){
+    document.querySelectorAll('[data-panel]').forEach(el=>{
+        el.addEventListener('click',()=>switchPanel(el.dataset.panel));
+    });
+}
+
+// ═══════════════════════════════════════════════════════════
+// COMMON HANDLERS (sign out, modals, export — wired once at boot)
+// ═══════════════════════════════════════════════════════════
+function setupCommonHandlers(){
+    // Sign out
+    document.getElementById('signOutBtn').onclick = ()=>{
+        if(isGuestMode){
+            sessionStorage.removeItem('guest_session');
+            // Sign out of anonymous Firebase auth session
+            signOut(auth).catch(()=>{});
+            window.location.href='login.html?reason=logged_out';
+            return;
         }
-    }, 1000);
-}
-
-// ══════════════════════════════════════════════════════════
-// INIT PANEL
-// ══════════════════════════════════════════════════════════
-function initPanel(user, guest) {
-    const overlay = document.getElementById('loginOverlay');
-    if (overlay) overlay.style.display = 'none';
-
-    if (guest && guestData) {
-        // Guest mode setup
-        document.getElementById('userChipAvatar').innerText = '👤';
-        document.getElementById('userChipName').innerText   = guestData.name;
-        document.getElementById('userChipRole').innerText   = 'Guest';
-        document.getElementById('adminOnlyNav').style.display = 'none';
-
-        // Show welcome modal
-        document.getElementById('guestWelcomeName').innerText = `Welcome, ${guestData.name}!`;
-        document.getElementById('guestWelcomeModal').classList.add('open');
-
-        // Apply guest permissions
-        applyGuestRestrictions();
-        initData();
-    } else if (user) {
-        document.getElementById('userChipAvatar').innerText = '🛡️';
-        document.getElementById('userChipName').innerText   = user.email?.split('@')[0] || 'Admin';
-        document.getElementById('userChipRole').innerText   = 'Admin';
-
-        initSessionControl(user);
-        initData();
-        initUserManagement();
-        initSessionsPanel();
-        initSettingsPanel();
-        askNotif();
-    }
-}
-
-function applyGuestRestrictions() {
-    const perms = guestData?.permissions || {};
-    // Hide links panel if not permitted
-    if (!perms.view_links) {
-        document.querySelector('[data-panel="links"]')?.style?.setProperty('display','none');
-    }
-    // Hide export button if not permitted
-    if (!perms.export_data) {
-        document.getElementById('exportBtn')?.style?.setProperty('display','none');
-    }
-}
-
-// ══════════════════════════════════════════════════════════
-// USER MANAGEMENT
-// ══════════════════════════════════════════════════════════
-function initUserManagement() {
-    loadUsers();
-    loadGuests();
-
-    document.getElementById('createUserBtn').onclick  = () => openUserModal(null);
-    document.getElementById('closeUserEditBtn').onclick = () => document.getElementById('userEditModal').classList.remove('open');
-    document.getElementById('saveUserBtn').onclick    = saveUser;
-
-    document.getElementById('createGuestBtn').onclick   = () => openGuestModal(null);
-    document.getElementById('closeGuestEditBtn').onclick = () => document.getElementById('guestEditModal').classList.remove('open');
-    document.getElementById('saveGuestBtn').onclick     = saveGuest;
-}
-
-function loadUsers() {
-    onValue(ref(db, 'users'), (snap) => {
-        const users = snap.val() || {};
-        renderUsers(users);
-    });
-}
-
-function renderUsers(users) {
-    const list = document.getElementById('userList');
-    // Filter out guests — they appear in the Guest Management section below
-    const entries = Object.entries(users).filter(([, u]) => u.role !== 'guest');
-    if (entries.length === 0) {
-        list.innerHTML = '<div class="empty"><span class="empty-icon">👥</span>No users yet. Add one above.</div>';
-        return;
-    }
-    list.innerHTML = '';
-    entries.forEach(([id, u]) => {
-        const roleClass = `role-${u.role || 'user'}`;
-        const permsHtml = (ALL_PERMISSIONS).map(p =>
-            `<span class="perm-chip ${u.permissions?.[p.key] ? '' : 'disabled'}">${p.icon} ${p.label}</span>`
-        ).join('');
-        const card = document.createElement('div');
-        card.className = 'user-card';
-        card.innerHTML = `
-            <div class="user-avatar">${u.role === 'admin' ? '🛡️' : '👨'}</div>
-            <div class="user-info">
-                <div class="un">${esc(u.name || 'Unnamed')} <span class="role-badge role-user">user</span>
-                ${u.status === 'disabled' ? '<span class="badge badge-red" style="margin-left:4px;">DISABLED</span>' : ''}</div>
-                <div class="ur">${esc(u.email || '—')} · Created ${u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—'}</div>
-                <div class="user-perms">${permsHtml}</div>
-            </div>
-            <div class="user-actions">
-                <button class="btn btn-primary btn-sm" data-uid="${id}" data-action="viewUserData">📊 View Data</button>
-                <button class="btn btn-yellow btn-sm" data-uid="${id}" data-action="editUser">✏️ Edit</button>
-                ${u.status === 'disabled'
-                    ? `<button class="btn btn-green btn-sm" data-uid="${id}" data-action="enableUser">▶ Enable</button>`
-                    : `<button class="btn btn-orange btn-sm" data-uid="${id}" data-action="disableUser">⏸ Disable</button>`}
-                <button class="btn btn-red btn-sm" data-uid="${id}" data-action="deleteUser">🗑 Delete</button>
-            </div>
-        `;
-        list.appendChild(card);
-    });
-}
-
-document.addEventListener('click', e => {
-    const btn = e.target.closest('[data-action]');
-    if (!btn) return;
-    const uid = btn.dataset.uid;
-    const action = btn.dataset.action;
-    if (!uid) return;
-
-    if (action === 'editUser') {
-        get(ref(db, 'users/' + uid)).then(s => openUserModal(uid, s.val()));
-    } else if (action === 'viewUserData') {
-        get(ref(db, 'users/' + uid)).then(s => openUserDataModal(uid, s.val()));
-    } else if (action === 'disableUser') {
-        // Read full user data first so we can write complete credentials (including password)
-        get(ref(db, 'users/' + uid)).then(s => {
-            const u = s.val() || {};
-            update(ref(db, 'users/' + uid), { status: 'disabled' }).catch(() => {});
-            // Write FULL credential record — never just status alone
-            set(ref(db, 'system_config/user_credentials/' + uid), {
-                name:        u.name        || '',
-                password:    u.password    || '',
-                status:      'disabled',
-                permissions: u.permissions || {}
-            }).catch(() => {});
-            toast('⏸ User disabled.', 'var(--orange)');
-        });
-    } else if (action === 'enableUser') {
-        // Read full user data first so we can write complete credentials (including password)
-        get(ref(db, 'users/' + uid)).then(s => {
-            const u = s.val() || {};
-            update(ref(db, 'users/' + uid), { status: 'active' }).catch(() => {});
-            // Write FULL credential record — never just status alone
-            set(ref(db, 'system_config/user_credentials/' + uid), {
-                name:        u.name        || '',
-                password:    u.password    || '',
-                status:      'active',
-                permissions: u.permissions || {}
-            }).catch(() => {});
-            toast('▶ User enabled.', 'var(--green)');
-        });
-    } else if (action === 'deleteUser') {
-        if (!confirm('Permanently delete this user?')) return;
-        remove(ref(db, 'users/' + uid))
-            .then(() => {
-                remove(ref(db, 'system_config/user_credentials/' + uid)).catch(() => {});
-                toast('🗑 User deleted.', 'var(--red)');
-            });
-    }
-});
-
-function openUserModal(uid, userData) {
-    document.getElementById('userEditTitle').innerText = uid ? '✏️ Edit User' : '➕ Create User';
-    document.getElementById('editUserId').value        = uid || '';
-    document.getElementById('editUserName').value      = userData?.name || '';
-    document.getElementById('editUserEmail').value     = userData?.email || '';
-    document.getElementById('editUserPassword').value  = userData?.password || '';
-    document.getElementById('editUserPassword').type   = 'password';
-    const pwToggle = document.getElementById('toggleEditPwBtn');
-    if (pwToggle) pwToggle.innerText = '👁';
-    document.getElementById('editUserStatus').value    = userData?.status || 'active';
-    // Password label
-    document.getElementById('editPassLabel').innerText = uid
-        ? (userData?.password ? 'Password (current shown — edit to change)' : 'Password (not set — enter to set)')
-        : 'Password';
-
-    // Build permission grid
-    const pg = document.getElementById('editUserPerms');
-    pg.innerHTML = '';
-    ALL_PERMISSIONS.forEach(p => {
-        const checked = userData?.permissions?.[p.key] !== false;
-        const div = document.createElement('div');
-        div.className = 'perm-toggle' + (checked ? ' active' : '');
-        div.innerHTML = `
-            <input type="checkbox" id="ep_${p.key}" ${checked ? 'checked' : ''} data-perm="${p.key}">
-            <div><div class="pt-icon">${p.icon}</div><div class="pt-label">${p.label}</div><div class="pt-desc">${p.desc}</div></div>
-        `;
-        div.querySelector('input').onchange = (ev) => div.classList.toggle('active', ev.target.checked);
-        pg.appendChild(div);
-    });
-
-    document.getElementById('userEditModal').classList.add('open');
-}
-
-function saveUser() {
-    const uid      = document.getElementById('editUserId').value;
-    const name     = document.getElementById('editUserName').value.trim();
-    const email    = document.getElementById('editUserEmail').value.trim();
-    const password = document.getElementById('editUserPassword').value.trim();
-    const role     = 'user';
-    const status   = document.getElementById('editUserStatus').value;
-    if (!name) { alert('Please enter a name.'); return; }
-    if (!uid && !email) { alert('Please enter an email address.'); return; }
-
-    const perms = {};
-    ALL_PERMISSIONS.forEach(p => {
-        perms[p.key] = document.getElementById('ep_' + p.key)?.checked || false;
-    });
-
-    const userData = { name, role, status, permissions: perms, updatedAt: Date.now() };
-    if (email) userData.email = email;
-    if (password) userData.password = password;
-    if (!uid) userData.createdAt = Date.now();
-
-    const finalUid = uid || ('usr_' + Date.now());
-    const userRef  = ref(db, 'users/' + finalUid);
-
-    // Helper: write full credential record to the publicly readable path
-    function writeCredential(pw) {
-        if (!pw) return; // never write a credential without a password
-        set(ref(db, 'system_config/user_credentials/' + finalUid), {
-            name,
-            password: pw,
-            status,
-            permissions: perms,
-            updatedAt: Date.now()
-        }).catch(() => {});
-    }
-
-    (uid ? update(userRef, userData) : set(userRef, userData))
-        .then(() => {
-            if (password) {
-                // Password was entered (new or unchanged pre-filled value) — write directly
-                writeCredential(password);
-                document.getElementById('userEditModal').classList.remove('open');
-                toast('✅ User saved: ' + name, 'var(--green)');
-            } else if (uid) {
-                // Editing existing user, password field was cleared — read existing password first
-                get(ref(db, 'users/' + finalUid)).then(s => {
-                    const existingPw = s.val()?.password || '';
-                    writeCredential(existingPw);
-                }).catch(() => {});
-                document.getElementById('userEditModal').classList.remove('open');
-                toast('✅ User saved: ' + name, 'var(--green)');
-            } else {
-                // New user with no password set
-                document.getElementById('userEditModal').classList.remove('open');
-                toast('✅ User saved: ' + name, 'var(--green)');
-            }
-        })
-        .catch(() => toast('❌ Save failed.', 'var(--red)'));
-}
-
-// ══════════════════════════════════════════════════════════
-// GUEST MANAGEMENT
-// ══════════════════════════════════════════════════════════
-function loadGuests() {
-    // Guests are stored inside users/ with role:'guest' — same path, filtered in UI
-    onValue(ref(db, 'users'), (snap) => {
-        const all    = snap.val() || {};
-        const guests = Object.fromEntries(
-            Object.entries(all).filter(([, u]) => u.role === 'guest')
-        );
-        renderGuests(guests);
-    });
-}
-
-function renderGuests(guests) {
-    const list    = document.getElementById('guestList');
-    const entries = Object.entries(guests);
-    if (entries.length === 0) {
-        list.innerHTML = '<div class="empty"><span class="empty-icon">👤</span>No guests yet. Add one above.</div>';
-        return;
-    }
-    list.innerHTML = '';
-    entries.forEach(([id, g]) => {
-        const isDisabled = g.status === 'disabled';
-        const permsHtml  = ALL_PERMISSIONS.map(p =>
-            `<span class="perm-chip ${g.permissions?.[p.key] ? \'\' : \'disabled\'}">${p.icon} ${p.label}</span>`
-        ).join('');
-        const card = document.createElement('div');
-        card.className = 'user-card';
-        card.innerHTML = `
-            <div class="user-avatar" style="background:linear-gradient(135deg,var(--teal),var(--purple));">👤</div>
-            <div class="user-info">
-                <div class="un">${esc(g.name || 'Unnamed')}
-                    <span class="role-badge" style="background:var(--teal);border-radius:20px;padding:2px 10px;font-size:11px;font-weight:700;color:#fff;margin-left:5px;">guest</span>
-                    ${isDisabled ? '<span class="badge badge-red" style="margin-left:4px;">DISABLED</span>' : '<span class="badge badge-green" style="margin-left:4px;">ACTIVE</span>'}
-                </div>
-                <div class="ur">Created ${g.createdAt ? new Date(g.createdAt).toLocaleDateString() : '—'}</div>
-                <div class="user-perms">${permsHtml}</div>
-            </div>
-            <div class="user-actions">
-                <button class="btn btn-yellow btn-sm" data-gid="${id}" data-gaction="editGuest">✏️ Edit</button>
-                ${isDisabled
-                    ? `<button class="btn btn-green  btn-sm" data-gid="${id}" data-gaction="enableGuest">▶ Enable</button>`
-                    : `<button class="btn btn-orange btn-sm" data-gid="${id}" data-gaction="disableGuest">⏸ Disable</button>`}
-                <button class="btn btn-red btn-sm" data-gid="${id}" data-gaction="deleteGuest">🗑 Delete</button>
-            </div>
-        `;
-        list.appendChild(card);
-    });
-}
-
-document.addEventListener('click', e => {
-    const btn = e.target.closest('[data-gaction]');
-    if (!btn) return;
-    const gid     = btn.dataset.gid;
-    const gaction = btn.dataset.gaction;
-    if (!gid) return;
-
-    if (gaction === 'editGuest') {
-        get(ref(db, 'users/' + gid)).then(s => openGuestModal(gid, s.val()));
-
-    } else if (gaction === 'disableGuest') {
-        get(ref(db, 'users/' + gid)).then(s => {
-            const g = s.val() || {};
-            update(ref(db, 'users/' + gid), { status: 'disabled' }).catch(() => {});
-            set(ref(db, 'system_config/user_credentials/' + gid), {
-                name: g.name || '', password: g.password || '',
-                status: 'disabled', permissions: g.permissions || {}
-            }).catch(() => {});
-            toast('⏸ Guest disabled.', 'var(--orange)');
-        });
-
-    } else if (gaction === 'enableGuest') {
-        get(ref(db, 'users/' + gid)).then(s => {
-            const g = s.val() || {};
-            update(ref(db, 'users/' + gid), { status: 'active' }).catch(() => {});
-            set(ref(db, 'system_config/user_credentials/' + gid), {
-                name: g.name || '', password: g.password || '',
-                status: 'active', permissions: g.permissions || {}
-            }).catch(() => {});
-            toast('▶ Guest enabled.', 'var(--green)');
-        });
-
-    } else if (gaction === 'deleteGuest') {
-        if (!confirm('Permanently delete this guest?')) return;
-        remove(ref(db, 'users/' + gid)).then(() => {
-            remove(ref(db, 'system_config/user_credentials/' + gid)).catch(() => {});
-            toast('🗑 Guest deleted.', 'var(--red)');
-        });
-    }
-});
-
-function openGuestModal(gid, guestData) {
-    document.getElementById('guestEditTitle').innerText = gid ? '✏️ Edit Guest' : '👤 Add Guest';
-    document.getElementById('editGuestId').value        = gid || '';
-    document.getElementById('editGuestName').value      = guestData?.name     || '';
-    document.getElementById('editGuestPassword').value  = guestData?.password || '';
-    document.getElementById('editGuestPassword').type   = 'password';
-    document.getElementById('toggleGuestEditPwBtn').innerText = '👁';
-    document.getElementById('editGuestStatus').value    = guestData?.status   || 'active';
-    document.getElementById('guestPassLabel').innerText = gid
-        ? (guestData?.password ? 'Password (current shown — edit to change)' : 'Password (not set)')
-        : 'Password';
-
-    const pg = document.getElementById('editGuestPerms');
-    pg.innerHTML = '';
-    ALL_PERMISSIONS.forEach(p => {
-        const checked = guestData?.permissions?.[p.key] !== false;
-        const div = document.createElement('div');
-        div.className = 'perm-toggle' + (checked ? ' active' : '');
-        div.innerHTML = `
-            <input type="checkbox" id="egp_${p.key}" ${checked ? 'checked' : ''}>
-            <div><div class="pt-icon">${p.icon}</div><div class="pt-label">${p.label}</div><div class="pt-desc">${p.desc}</div></div>
-        `;
-        div.querySelector('input').onchange = ev => div.classList.toggle('active', ev.target.checked);
-        pg.appendChild(div);
-    });
-
-    document.getElementById('guestEditModal').classList.add('open');
-}
-
-function saveGuest() {
-    const gid      = document.getElementById('editGuestId').value;
-    const name     = document.getElementById('editGuestName').value.trim();
-    const password = document.getElementById('editGuestPassword').value.trim();
-    const status   = document.getElementById('editGuestStatus').value;
-
-    if (!name)     { toast('❌ Please enter a name.',   'var(--red)'); return; }
-    if (!password) { toast('❌ Please set a password.', 'var(--red)'); return; }
-
-    const perms = {};
-    ALL_PERMISSIONS.forEach(p => {
-        perms[p.key] = document.getElementById('egp_' + p.key)?.checked || false;
-    });
-
-    // Save guests into users/ — same Firebase path that already works
-    const finalGid  = gid || ('usr_' + Date.now());
-    const guestData = { name, password, status, permissions: perms, role: 'guest', updatedAt: Date.now() };
-    if (!gid) guestData.createdAt = Date.now();
-
-    const guestRef = ref(db, 'users/' + finalGid);
-    (gid ? update(guestRef, guestData) : set(guestRef, guestData))
-        .then(() => {
-            // Write to publicly readable path so login.html can verify without auth
-            set(ref(db, 'system_config/user_credentials/' + finalGid), {
-                name, password, status, permissions: perms
-            }).catch(() => {});
-            document.getElementById('guestEditModal').classList.remove('open');
-            toast('✅ Guest saved: ' + name, 'var(--teal)');
-        })
-        .catch(err => {
-            console.error('saveGuest error:', err);
-            toast('❌ Save failed: ' + (err?.message || err?.code || 'unknown'), 'var(--red)');
-        });
-}
-
-// ══════════════════════════════════════════════════════════
-// USER DATA MODAL — Full tabbed view
-// ══════════════════════════════════════════════════════════
-let _udmUser = null;
-let _udmUid  = null;
-
-window.switchUDMTab = function(tab) {
-    document.querySelectorAll('.udm-tab').forEach(t => t.classList.toggle('active', t.dataset.udm === tab));
-    const c = document.getElementById('udm-content');
-    if (tab === 'profile')  renderUDMProfile(c);
-    if (tab === 'links')    renderUDMLinks(c);
-    if (tab === 'captures') renderUDMCaptures(c);
-    if (tab === 'bin')      renderUDMBin(c);
-};
-
-function openUserDataModal(uid, u) {
-    if (!u) { toast('❌ User not found.', 'var(--red)'); return; }
-    _udmUser = u;
-    _udmUid  = uid;
-
-    document.getElementById('udm-name').innerText = u.name || 'Unnamed User';
-    document.getElementById('udm-meta').innerText =
-        (u.email || 'No email') + ' · ' + (u.role || 'user') + ' · ID: ' + uid;
-
-    const allLinks    = allLinksData ? Object.values(allLinksData) : [];
-    const allCaptures = allLogsData  ? Object.values(allLogsData)  : [];
-    const binItems    = (typeof getBin === 'function') ? getBin() : [];
-
-    const userLinks    = allLinks.filter(l => (l.createdBy === uid) || (l.name||'').toLowerCase() === (u.name||'').toLowerCase());
-    const userCaptures = allCaptures.filter(p => userLinks.some(l => l.name === p.linkName) || (p.linkName||'').toLowerCase() === (u.name||'').toLowerCase());
-    const userBin      = binItems.filter(b => (b.createdBy === uid) || (b.name||'').toLowerCase() === (u.name||'').toLowerCase() || userLinks.some(l => l.name === b.name || l.name === b.linkName));
-
-    document.getElementById('udm-links-count').innerText = userLinks.length || allLinks.length;
-    document.getElementById('udm-cap-count').innerText   = userCaptures.length || allCaptures.length;
-    document.getElementById('udm-bin-count').innerText   = userBin.length || binItems.length;
-
-    document.querySelectorAll('.udm-tab').forEach(t => t.classList.toggle('active', t.dataset.udm === 'profile'));
-    renderUDMProfile(document.getElementById('udm-content'));
-    document.getElementById('userDataModal').classList.add('open');
-}
-
-function renderUDMProfile(c) {
-    const u = _udmUser;
-    const allLinks    = allLinksData ? Object.values(allLinksData) : [];
-    const allCaptures = allLogsData  ? Object.values(allLogsData)  : [];
-    const binItems    = (typeof getBin === 'function') ? getBin() : [];
-    const userLinks    = allLinks.filter(l => (l.createdBy === _udmUid) || (l.name||'').toLowerCase() === (u.name||'').toLowerCase());
-    const userCaptures = allCaptures.filter(p => userLinks.some(l => l.name === p.linkName) || (p.linkName||'').toLowerCase() === (u.name||'').toLowerCase());
-    const userBin      = binItems.filter(b => userLinks.some(l => l.name === b.name || l.name === b.linkName));
-
-    const permsHtml = ALL_PERMISSIONS.map(p => {
-        const on = u.permissions?.[p.key];
-        return '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);">'
-             + '<span style="font-size:15px;width:22px;text-align:center;">' + p.icon + '</span>'
-             + '<span style="flex:1;font-size:13px;">' + p.label + '</span>'
-             + '<span style="font-size:11px;font-weight:700;color:' + (on ? 'var(--green)' : 'var(--red)') + ';">' + (on ? '✅ Allowed' : '❌ Denied') + '</span>'
-             + '</div>';
-    }).join('');
-
-    c.innerHTML =
-        '<div class="udm-stats-grid">'
-        + '<div class="udm-stat"><div class="us-num" style="color:var(--primary);">' + (userLinks.length || allLinks.length) + '</div><div class="us-lbl">Links</div></div>'
-        + '<div class="udm-stat"><div class="us-num" style="color:var(--green);">' + (userCaptures.length || allCaptures.length) + '</div><div class="us-lbl">Captures</div></div>'
-        + '<div class="udm-stat"><div class="us-num" style="color:var(--orange);">' + (userBin.length || binItems.length) + '</div><div class="us-lbl">In Bin</div></div>'
-        + '</div>'
-        + '<div class="udm-section-title">Account Info</div>'
-        + '<div class="udm-row"><span class="udm-label">Full Name</span><span class="udm-val">' + esc(u.name || '—') + '</span></div>'
-        + '<div class="udm-row"><span class="udm-label">Email</span><span class="udm-val">' + esc(u.email || '—') + '</span></div>'
-        + '<div class="udm-row"><span class="udm-label">Role</span><span class="udm-val"><span class="badge" style="background:var(--primary);">👤 ' + (u.role || 'user') + '</span></span></div>'
-        + '<div class="udm-row"><span class="udm-label">Status</span><span class="udm-val" style="color:' + (u.status === 'disabled' ? 'var(--red)' : 'var(--green)') + ';">' + (u.status === 'disabled' ? '⏸ Disabled' : '▶ Active') + '</span></div>'
-        + '<div class="udm-row"><span class="udm-label">Created</span><span class="udm-val">' + (u.createdAt ? new Date(u.createdAt).toLocaleString() : '—') + '</span></div>'
-        + '<div class="udm-row"><span class="udm-label">Last Updated</span><span class="udm-val">' + (u.updatedAt ? new Date(u.updatedAt).toLocaleString() : '—') + '</span></div>'
-        + '<div class="udm-row"><span class="udm-label">User ID</span><span class="udm-val" style="font-family:monospace;font-size:11px;color:var(--muted);">' + esc(_udmUid) + '</span></div>'
-        + '<div class="udm-section-title">Permissions</div>'
-        + permsHtml;
-}
-
-function renderUDMLinks(c) {
-    const u = _udmUser;
-    const allLinks  = allLinksData ? Object.entries(allLinksData) : [];
-    const userLinks = allLinks.filter(function(entry) {
-        var l = entry[1];
-        return (l.createdBy === _udmUid) || (l.name||'').toLowerCase() === (u.name||'').toLowerCase();
-    });
-    const show = userLinks.length ? userLinks : allLinks;
-
-    if (!show.length) {
-        c.innerHTML = '<div class="udm-empty"><span class="udm-empty-icon">🔗</span>No links found for this user.</div>';
-        return;
-    }
-
-    c.innerHTML = '<div class="udm-section-title">' + show.length + ' Link' + (show.length !== 1 ? 's' : '') + '</div>'
-    + show.map(function(entry) {
-        var id = entry[0], l = entry[1];
-        var statusColor = l.active ? 'var(--green)' : 'var(--red)';
-        var statusText  = l.active ? '● ACTIVE' : '● INACTIVE';
-        var redir = l.redirectUrl
-            ? '<a href="' + esc(l.redirectUrl) + '" target="_blank" style="color:var(--teal);">' + esc(l.redirectUrl.slice(0,45)) + '</a>'
-            : '—';
-        return '<div class="udm-link-card">'
-            + '<div class="ulc-top">'
-            + '<span style="font-size:18px;">🔗</span>'
-            + '<span class="ulc-name">' + esc(l.name || 'Unnamed') + '</span>'
-            + '<span style="font-size:11px;font-weight:700;color:' + statusColor + ';">' + statusText + '</span>'
-            + '</div>'
-            + '<div class="ulc-meta">'
-            + '🌐 Redirect: ' + redir + '<br>'
-            + '👁 Visits: <b style="color:var(--yellow);">' + (l.visits || 0) + '</b> &nbsp;·&nbsp; '
-            + '📅 Created: ' + (l.createdAt ? new Date(l.createdAt).toLocaleDateString() : '—')
-            + '</div>'
-            + '<div class="ulc-tags">'
-            + (l.cam ? '<span class="tag">📷 Camera</span>' : '')
-            + (l.gps ? '<span class="tag">📍 GPS</span>' : '')
-            + '<span class="tag" style="background:var(--card3);border:1px solid var(--border);color:var(--muted);font-size:10px;">ID: ' + esc(id) + '</span>'
-            + '</div>'
-            + '</div>';
-    }).join('');
-}
-
-function renderUDMCaptures(c) {
-    const u = _udmUser;
-    const allLinks    = allLinksData ? Object.values(allLinksData) : [];
-    const allCaptures = allLogsData  ? Object.entries(allLogsData) : [];
-    const userLinks   = allLinks.filter(function(l) {
-        return (l.createdBy === _udmUid) || (l.name||'').toLowerCase() === (u.name||'').toLowerCase();
-    });
-    const userCaptures = allCaptures.filter(function(entry) {
-        var p = entry[1];
-        return userLinks.some(function(l){ return l.name === p.linkName; })
-            || (p.linkName||'').toLowerCase() === (u.name||'').toLowerCase();
-    });
-    const show = userCaptures.length ? userCaptures : allCaptures;
-
-    if (!show.length) {
-        c.innerHTML = '<div class="udm-empty"><span class="udm-empty-icon">📷</span>No captures found for this user.</div>';
-        return;
-    }
-
-    c.innerHTML = '<div class="udm-section-title">' + show.length + ' Capture' + (show.length !== 1 ? 's' : '') + '</div>'
-    + show.map(function(entry) {
-        var key = entry[0], p = entry[1];
-        var d = p.device || {};
-        var hasGPS = p.latitude && p.latitude !== 'Denied' && p.longitude;
-        var gpsHtml = hasGPS
-            ? '<a href="https://www.google.com/maps?q=' + p.latitude + ',' + p.longitude + '" target="_blank" style="color:var(--teal);">View Map</a>'
-            : 'Denied';
-        return '<div class="udm-cap-card">'
-            + '<div class="ucc-img">' + (p.image ? '<img src="' + p.image + '" alt="Capture">' : '📷') + '</div>'
-            + '<div class="ucc-info">'
-            + '<div class="ucc-name">' + esc(p.linkName || 'Unknown Link') + '</div>'
-            + '<div class="ucc-meta">'
-            + '🌐 IP: <b>' + esc(p.ipAddress || 'N/A') + '</b><br>'
-            + '💻 ' + esc(d.os || '?') + ' · ' + esc(d.browser || '?') + ' · ' + esc(d.timezone || '?') + '<br>'
-            + '📍 GPS: ' + gpsHtml + '<br>'
-            + '🕐 ' + esc(p.time || '') + ' ' + esc(p.date || '')
-            + (p.battery ? ' · 🔋 ' + esc(String(p.battery)) + '%' : '')
-            + '</div>'
-            + '</div>'
-            + '</div>';
-    }).join('');
-}
-
-function renderUDMBin(c) {
-    const u = _udmUser;
-    const allLinks  = allLinksData ? Object.values(allLinksData) : [];
-    const userLinks = allLinks.filter(function(l) {
-        return (l.createdBy === _udmUid) || (l.name||'').toLowerCase() === (u.name||'').toLowerCase();
-    });
-    const binItems = (typeof getBin === 'function') ? getBin() : [];
-    const userBin  = binItems.filter(function(b) {
-        return (b.createdBy === _udmUid)
-            || (b.name||'').toLowerCase() === (u.name||'').toLowerCase()
-            || userLinks.some(function(l){ return l.name === b.name || l.name === b.linkName; });
-    });
-    const show = userBin.length ? userBin : binItems;
-
-    if (!show.length) {
-        c.innerHTML = '<div class="udm-empty"><span class="udm-empty-icon">🗑</span>Recycle bin is empty.</div>';
-        return;
-    }
-
-    const photos = show.filter(function(b){ return b._type === 'photo'; });
-    const links  = show.filter(function(b){ return b._type === 'link'; });
-    var html = '<div class="udm-section-title">' + show.length + ' Deleted Item' + (show.length !== 1 ? 's' : '') + '</div>';
-
-    if (photos.length) {
-        html += '<div style="font-size:12px;color:var(--muted);margin:10px 0 6px;font-weight:600;">📷 Captures (' + photos.length + ')</div>';
-        html += photos.map(function(b) {
-            var d = b.device || {};
-            return '<div class="udm-cap-card" style="border-color:#7f1d1d;">'
-                + '<div class="ucc-img">' + (b.image ? '<img src="' + b.image + '" alt="Capture">' : '📷') + '</div>'
-                + '<div class="ucc-info">'
-                + '<div class="ucc-name">' + esc(b.linkName || 'Unknown') + '</div>'
-                + '<div class="ucc-meta">'
-                + '🌐 IP: ' + esc(b.ipAddress || 'N/A') + '<br>'
-                + '💻 ' + esc(d.os || '?') + ' · ' + esc(d.browser || '?') + '<br>'
-                + '🕐 ' + esc(b.time || '') + ' ' + esc(b.date || '') + '<br>'
-                + '<span style="color:var(--red);">🗑 Deleted: ' + new Date(b.deletedAt).toLocaleDateString() + '</span>'
-                + '</div>'
-                + '</div>'
-                + '</div>';
-        }).join('');
-    }
-
-    if (links.length) {
-        html += '<div style="font-size:12px;color:var(--muted);margin:10px 0 6px;font-weight:600;">🔗 Links (' + links.length + ')</div>';
-        html += links.map(function(b) {
-            return '<div class="udm-link-card" style="border-color:#7f1d1d;">'
-                + '<div class="ulc-top">'
-                + '<span style="font-size:18px;">🔗</span>'
-                + '<span class="ulc-name">' + esc(b.name || 'Unnamed') + '</span>'
-                + '<span style="font-size:11px;font-weight:700;color:var(--red);">🗑 DELETED</span>'
-                + '</div>'
-                + '<div class="ulc-meta">'
-                + '🌐 Redirect: ' + (b.redirectUrl ? esc(b.redirectUrl.slice(0,45)) : '—') + '<br>'
-                + '👁 Visits: <b>' + (b.visits || 0) + '</b> &nbsp;·&nbsp; '
-                + '🗑 Deleted: ' + (b.deletedAt ? new Date(b.deletedAt).toLocaleDateString() : '—')
-                + '</div>'
-                + '</div>';
-        }).join('');
-    }
-    c.innerHTML = html;
-}
-// Guest config
-function buildGuestPermGrid() {
-    const pg = document.getElementById('guestPermGrid');
-    if (!pg) return;
-    pg.innerHTML = '';
-    const guestPerms = ['view_captures', 'view_links', 'export_data', 'device_info'];
-    ALL_PERMISSIONS.forEach(p => {
-        const div = document.createElement('div');
-        const def = guestPerms.includes(p.key);
-        div.className = 'perm-toggle' + (def ? ' active' : '');
-        div.innerHTML = `
-            <input type="checkbox" id="gp_${p.key}" ${def ? 'checked' : ''} data-perm="${p.key}">
-            <div><div class="pt-icon">${p.icon}</div><div class="pt-label">${p.label}</div></div>
-        `;
-        div.querySelector('input').onchange = (ev) => div.classList.toggle('active', ev.target.checked);
-        pg.appendChild(div);
-    });
-}
-
-function loadGuestConfig() {
-    get(ref(db, 'system_config/guest_access')).then(s => {
-        const cfg = s.val() || {};
-        const enabled = !!cfg.enabled;
-        document.getElementById('guestEnabled').checked = enabled;
-        document.getElementById('guestPwField').value   = cfg.password || '';
-        updateGuestToggleUI();
-        // Update permission toggles
-        const perms = cfg.permissions || {};
-        ALL_PERMISSIONS.forEach(p => {
-            const cb = document.getElementById('gp_' + p.key);
-            if (cb && perms[p.key] !== undefined) {
-                cb.checked = !!perms[p.key];
-                cb.closest('.perm-toggle').classList.toggle('active', !!perms[p.key]);
-            }
-        });
-    });
-}
-
-function saveGuestConfig() {
-    const enabled  = document.getElementById('guestEnabled').checked;
-    const password = document.getElementById('guestPwField').value.trim();
-    if (enabled && !password) { toast('❌ Please set a guest password first.', 'var(--red)'); return; }
-
-    const perms = {};
-    ALL_PERMISSIONS.forEach(p => { perms[p.key] = document.getElementById('gp_' + p.key)?.checked || false; });
-
-    const btn = document.getElementById('saveGuestConfigBtn');
-    btn.disabled = true; btn.innerText = 'Saving...';
-
-    set(ref(db, 'system_config/guest_access'), { enabled, password, permissions: perms })
-        .then(() => {
-            btn.disabled = false; btn.innerHTML = '💾 Save Guest Config';
-            updateGuestToggleUI();
-            const ss = document.getElementById('guestSaveStatus');
-            ss.innerText = '✅ Saved!'; ss.style.color = 'var(--green)'; ss.style.display = 'inline';
-            setTimeout(() => { ss.style.display = 'none'; }, 3000);
-            toast(enabled ? '✅ Guest access enabled!' : '⏸ Guest access disabled.', enabled ? 'var(--green)' : 'var(--orange)');
-        })
-        .catch(() => {
-            btn.disabled = false; btn.innerHTML = '💾 Save Guest Config';
-            toast('❌ Save failed. Try again.', 'var(--red)');
-        });
-}
-
-// ── Update the toggle track, thumb, badge and description ──────────────────
-window.updateGuestToggleUI = function() {
-    const enabled = document.getElementById('guestEnabled').checked;
-    const track   = document.getElementById('guestToggleTrack');
-    const thumb   = document.getElementById('guestToggleThumb');
-    const badge   = document.getElementById('guestStatusBadge');
-    const desc    = document.getElementById('guestToggleDesc');
-
-    if (track) track.style.background = enabled ? 'var(--green)' : '#334155';
-    if (thumb) thumb.style.left       = enabled ? '27px' : '3px';
-
-    if (badge) {
-        badge.innerText = enabled ? '⬤ Enabled' : '⬤ Disabled';
-        badge.className = 'badge ' + (enabled ? 'badge-green' : 'badge-red');
-    }
-    if (desc) {
-        desc.innerHTML = enabled
-            ? 'Currently <b style="color:var(--green);">Enabled</b> — guests can log in with the shared password'
-            : 'Currently <b style="color:var(--red);">Disabled</b> — guests cannot log in with shared password';
-    }
-};
-
-// ══════════════════════════════════════════════════════════
-// SESSIONS PANEL
-// ══════════════════════════════════════════════════════════
-function initSessionsPanel() {
-    // Monitor active sessions
-    onValue(ref(db, 'active_sessions'), (snap) => {
-        const sessions = snap.val() || {};
-        renderSessions(sessions);
-        const count = Object.keys(sessions).length;
-        document.getElementById('navSessionCount').innerText = count;
-    });
-
-    // Monitor guest sessions
-    onValue(ref(db, 'guest_sessions'), (snap) => {
-        renderGuestSessions(snap.val() || {});
-    });
-
-    document.getElementById('terminateAllBtn').onclick = () => {
-        if (!confirm('Terminate all other sessions? This will force re-login for any other active tabs.')) return;
-        // Re-write with new token to invalidate all others
-        set(ref(db, 'active_sessions/admin'), {
-            token: SESSION_TOKEN,
-            uid:   currentUser?.uid,
-            email: currentUser?.email,
-            loginTime: Date.now(),
-            userAgent: navigator.userAgent.slice(0,120)
-        }).then(() => toast('⚡ All other sessions terminated.', 'var(--red)'));
+        remove(ref(db,'active_sessions/admin')).catch(()=>{});
+        signOut(auth)
+            .then(()=>window.location.href='login.html?reason=logged_out')
+            .catch(e=>toast('❌ Sign out failed: '+e.message,'var(--red)'));
     };
-}
 
-function renderSessions(sessions) {
-    const list = document.getElementById('sessionList');
-    const entries = Object.entries(sessions);
-    if (entries.length === 0) {
-        list.innerHTML = '<div class="empty">No active sessions.</div>'; return;
-    }
-    list.innerHTML = '';
-    entries.forEach(([key, s]) => {
-        const isMine = s.token === SESSION_TOKEN;
-        const div = document.createElement('div');
-        div.className = 'session-item';
-        div.innerHTML = `
-            <div class="session-dot ${isMine ? '' : 'inactive'}"></div>
-            <div style="flex:1;">
-                <div style="font-size:13px;font-weight:700;">${esc(s.email||key)} ${isMine ? '<span class="badge badge-green" style="margin-left:6px;">This Session</span>' : ''}</div>
-                <div style="font-size:11px;color:var(--muted);">Logged in: ${s.loginTime ? new Date(s.loginTime).toLocaleString() : '—'}</div>
-                <div style="font-size:11px;color:var(--muted);">${esc((s.userAgent||'').slice(0,80))}</div>
-            </div>
-            ${!isMine ? `<button class="btn btn-red btn-sm" onclick="terminateSession('${key}')">⚡ Terminate</button>` : ''}
-        `;
-        list.appendChild(div);
-    });
-}
+    // Refresh
+    document.getElementById('refreshBtn').onclick=()=>location.reload();
 
-window.terminateSession = function(key) {
-    remove(ref(db, 'active_sessions/' + key))
-        .then(() => toast('⚡ Session terminated.', 'var(--red)'));
-};
+    // Close modals
+    document.getElementById('closeEditLink').onclick  = ()=>document.getElementById('editLinkModal').classList.remove('open');
+    document.getElementById('closeInfoModal').onclick = ()=>document.getElementById('infoModal').classList.remove('open');
+    document.getElementById('closeQrModal').onclick   = ()=>document.getElementById('qrModal').classList.remove('open');
 
-function renderGuestSessions(sessions) {
-    const list = document.getElementById('guestSessionLog');
-    const entries = Object.entries(sessions);
-    if (entries.length === 0) {
-        list.innerHTML = '<div class="empty">No guest sessions recorded.</div>'; return;
-    }
-    list.innerHTML = '';
-    entries.slice(-20).reverse().forEach(([id, s]) => {
-        const div = document.createElement('div');
-        div.className = 'session-item';
-        div.innerHTML = `
-            <div class="session-dot inactive"></div>
-            <div style="flex:1;">
-                <div style="font-size:13px;font-weight:700;">👤 ${esc(s.name||'Unknown')}</div>
-                <div style="font-size:11px;color:var(--muted);">Visited: ${s.loginTime ? new Date(s.loginTime).toLocaleString() : '—'}</div>
-            </div>
-            <button class="btn btn-red btn-sm" onclick="deleteGuestSession('${id}')">🗑</button>
-        `;
-        list.appendChild(div);
-    });
-}
+    // Save edit link (wired once — no onclick stacking)
+    document.getElementById('saveEditLink').onclick = ()=>{
+        if(!currentEditId) return;
+        const l=allLinksData?.[currentEditId];
+        const nm=document.getElementById('editLinkName').value.trim()||(l?.name||'Unnamed');
+        const ru=document.getElementById('editRedirect').value.trim();
+        update(ref(db,'managed_links/'+currentEditId),{
+            name:nm, redirectUrl:ru,
+            cam:  document.getElementById('editCam').checked,
+            gps:  document.getElementById('editGPS').checked,
+            permissions: getEditLinkPerms()
+        }).then(()=>{
+            document.getElementById('editLinkModal').classList.remove('open');
+            currentEditId=null;
+            toast('✅ Link updated: '+nm,'var(--green)');
+        }).catch(()=>toast('❌ Save failed.','var(--red)'));
+    };
 
-window.deleteGuestSession = function(id) {
-    remove(ref(db, 'guest_sessions/' + id));
-};
+    // Export CSV
+    document.getElementById('exportBtn').onclick = ()=>{
+        if(!allLogsData){ toast('⚠️ No logs to export.','var(--yellow)'); return; }
+        const rows=[['Name','Date','Time','IP','GPS Lat','GPS Lon','OS','Browser','Battery','Charging','Network','Speed','Screen','Timezone','Language','Referrer']];
+        Object.values(allLogsData).forEach(p=>{
+            const d=p.device||{};
+            rows.push([p.linkName||'',p.date||'',p.time||'',p.ipAddress||'',
+                p.latitude||'',p.longitude||'',d.os||'',d.browser||'',
+                d.battery||'',d.charging||'',d.networkType||'',d.downlink||'',
+                d.screenWidth?`${d.screenWidth}x${d.screenHeight}`:'',
+                d.timezone||'',d.language||'',d.referrer||'']);
+        });
+        const csv=rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+        const blob=new Blob([csv],{type:'text/csv'});
+        const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(blob),download:'captures_'+new Date().toISOString().slice(0,10)+'.csv'});
+        a.click(); toast('📥 CSV exported!','var(--teal)');
+    };
 
-// ══════════════════════════════════════════════════════════
-// SETTINGS PANEL
-// ══════════════════════════════════════════════════════════
-function initSettingsPanel() {
-    buildDefaultPermGrid();
-    buildGuestPermGrid();
-    loadSettings();
-    loadGuestConfig();
-
-    document.getElementById('saveDefaultPerms').onclick = saveDefaultPerms;
-    document.getElementById('saveSecuritySettings').onclick = saveSecuritySettings;
-    document.getElementById('saveGuestConfigBtn').onclick = saveGuestConfig;
-}
-
-function buildDefaultPermGrid() {
-    const pg = document.getElementById('defaultPermGrid');
-    if (!pg) return;
-    pg.innerHTML = '';
-    ['camera','location','device_info','network_info','battery_info'].forEach(key => {
-        const p = ALL_PERMISSIONS.find(x => x.key === key);
-        if (!p) return;
-        const div = document.createElement('div');
-        div.className = 'perm-toggle active';
-        div.innerHTML = `
-            <input type="checkbox" id="dp_${p.key}" checked>
-            <div><div class="pt-icon">${p.icon}</div><div class="pt-label">${p.label}</div><div class="pt-desc">${p.desc}</div></div>
-        `;
-        div.querySelector('input').onchange = (ev) => div.classList.toggle('active', ev.target.checked);
-        pg.appendChild(div);
-    });
-}
-
-function loadSettings() {
-    get(ref(db, 'system_config/settings')).then(s => {
-        const cfg = s.val() || {};
-        document.getElementById('singleSessionToggle').checked = cfg.single_session !== false;
-    }).catch(() => {});
-}
-
-function saveDefaultPerms() {
-    const perms = {};
-    ['camera','location','device_info','network_info','battery_info'].forEach(key => {
-        perms[key] = document.getElementById('dp_' + key)?.checked || false;
-    });
-    set(ref(db, 'system_config/default_perms'), perms)
-        .then(() => toast('✅ Default permissions saved!', 'var(--green)'))
-        .catch(() => toast('❌ Save failed.', 'var(--red)'));
-}
-
-function saveSecuritySettings() {
-    const single = document.getElementById('singleSessionToggle').checked;
-    update(ref(db, 'system_config/settings'), { single_session: single })
-        .then(() => toast('✅ Security settings saved!', 'var(--green)'))
-        .catch(() => toast('❌ Save failed.', 'var(--red)'));
-}
-
-// ── STATE ─────────────────────────────────────────────────────────────────
-let allLogsData    = null;
-let allLinksData   = null;
-let logsCache      = {};
-let prevLogCount   = null;
-let selectedCaptures = new Set();
-let activeBinType  = 'all';
-let currentEditId  = null;  // tracks which link is being edited (prevents onclick stacking)
-
-// ══════════════════════════════════════════════════════════
-// MODULE-SCOPE UTILITIES (needed by user management functions)
-// ══════════════════════════════════════════════════════════
-function esc(s) {
-    return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-function toast(msg, color = 'var(--primary)') {
-    const stack = document.getElementById('toastStack');
-    const el = document.createElement('div');
-    el.className = 'toast-item';
-    el.style.borderLeftColor = color;
-    el.innerHTML = msg;
-    stack.appendChild(el);
-    setTimeout(() => { el.style.opacity = '0'; el.style.transform = 'translateY(6px)'; el.style.transition = 'all .3s'; setTimeout(() => el.remove(), 300); }, 3500);
-}
-function playBeep() {
-    try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = ctx.createOscillator(); const g = ctx.createGain();
-        osc.connect(g); g.connect(ctx.destination);
-        osc.type = 'sine'; osc.frequency.setValueAtTime(880, ctx.currentTime);
-        g.gain.setValueAtTime(0.3, ctx.currentTime);
-        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
-        osc.start(); osc.stop(ctx.currentTime + 0.5);
-    } catch(e){}
-}
-function askNotif() {
-    if ('Notification' in window && Notification.permission === 'default')
-        Notification.requestPermission();
-}
-function sendNotif(title, body) {
-    if ('Notification' in window && Notification.permission === 'granted')
-        new Notification(title, { body });
-}
-
-function initData() {
-
-// ── UNIFIED BIN HELPERS ───────────────────────────────────────────────────
-
-// ── UNIFIED BIN HELPERS ───────────────────────────────────────────────────
-// All deleted items go to ONE key: 'unified_bin'
-// Each item has: _type ('photo'|'link'), _binId (unique), deletedAt, ...original data
-function getBin()      { return JSON.parse(localStorage.getItem('unified_bin') || '[]'); }
-function saveBin(arr)  { localStorage.setItem('unified_bin', JSON.stringify(arr)); }
-// BUG FIX: stamp a unique _binId when adding to bin — prevents fragile index-based lookup
-function makeBinId()   { return '_b' + Date.now() + Math.random().toString(36).slice(2, 7); }
-function addToBin(item){
-    const bin = getBin();
-    bin.unshift({ ...item, _binId: makeBinId(), deletedAt: item.deletedAt || Date.now() });
-    saveBin(bin);
-}
-
-// Migrate old split bins on load
-function migrateLegacyBins() {
-    const unified = getBin();
-    let changed = false;
-
-    const old1 = JSON.parse(localStorage.getItem('recycle_bin') || '[]');
-    old1.forEach(p => {
-        if (!unified.find(x => x._type === 'photo' && String(x.id) === String(p.id))) {
-            unified.unshift({ ...p, _type: 'photo', _binId: makeBinId(), deletedAt: p.deletedAt || Date.now() });
-            changed = true;
+    // Lightbox
+    document.getElementById('lightboxClose').onclick=()=>{
+        document.getElementById('lightbox').style.display='none';
+        document.getElementById('lightboxImg').src='';
+    };
+    document.getElementById('lightbox').addEventListener('click',e=>{
+        if(e.target===document.getElementById('lightbox')){
+            document.getElementById('lightbox').style.display='none';
+            document.getElementById('lightboxImg').src='';
         }
     });
 
-    const old2 = JSON.parse(localStorage.getItem('link_bin') || '[]');
-    old2.forEach(l => {
-        if (!unified.find(x => x._type === 'link' && x.firebaseId === l.firebaseId)) {
-            unified.unshift({ ...l, _type: 'link', _binId: makeBinId(), deletedAt: l.deletedAt || Date.now() });
-            changed = true;
-        }
+    // QR download
+    document.getElementById('downloadQrBtn').onclick=()=>{
+        if(!currentQrUrl) return;
+        const canvas=document.getElementById('qrContainer')?.querySelector('canvas');
+        if(!canvas){ toast('⚠️ QR not available.','var(--yellow)'); return; }
+        dlImg(canvas.toDataURL('image/png'),'qr_'+currentQrUrl.split('linkId=')[1]+'.png');
+    };
+
+    // User management modal close
+    const closeUEM=document.getElementById('closeUserEditBtn');
+    if(closeUEM) closeUEM.onclick=()=>document.getElementById('userEditModal').classList.remove('open');
+
+    // Guest welcome close
+    const gwClose=document.querySelector('#guestWelcomeModal .btn');
+    if(gwClose) gwClose.onclick=()=>document.getElementById('guestWelcomeModal').classList.remove('open');
+}
+
+// ═══════════════════════════════════════════════════════════
+// FIREBASE REALTIME LISTENERS
+// ═══════════════════════════════════════════════════════════
+function startFirebaseListeners(){
+    onValue(ref(db,'managed_links'), snap=>{
+        allLinksData=snap.val();
+        renderLinksTable();
+        renderLogs();    // re-render captures when links data arrives (guest filter depends on allLinksData)
+        renderRecent();
+        updateStats();
     });
 
-    if (changed) {
-        saveBin(unified);
-        localStorage.removeItem('recycle_bin');
-        localStorage.removeItem('link_bin');
-    }
+    onValue(ref(db,'photo_history'), snap=>{
+        const newData=snap.val();
+        const newCount=newData?Object.keys(newData).length:0;
+        if(prevLogCount!==null && newCount>prevLogCount){
+            playBeep();
+            toast('🔔 New capture received!','var(--green)');
+            sendNotif('New Capture!','A target completed verification.');
+        }
+        prevLogCount=newCount;
+        allLogsData=newData;
+        renderLogs();
+        renderRecent();
+        updateStats();
+    });
+
+    // Filter listeners
+    ['searchLogs','timeFilter','photoFilter','gpsFilter','sortFilter'].forEach(id=>{
+        document.getElementById(id)?.addEventListener('change',renderLogs);
+        document.getElementById(id)?.addEventListener('input',renderLogs);
+    });
+    document.getElementById('searchLinks')?.addEventListener('input',renderLinksTable);
+    document.getElementById('binSearch')?.addEventListener('input',renderBin);
+    document.getElementById('binSortFilter')?.addEventListener('change',renderBin);
 }
 
-// ── HTML ESCAPE ───────────────────────────────────────────────────────────
-function esc(s) {
-    return String(s ?? '')
-        .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-        .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-// ── TOAST ─────────────────────────────────────────────────────────────────
-function toast(msg, color = 'var(--primary)') {
-    const stack = document.getElementById('toastStack');
-    const el = document.createElement('div');
-    el.className = 'toast-item';
-    el.style.borderLeftColor = color;
-    el.innerHTML = msg;
-    stack.appendChild(el);
-    setTimeout(() => { el.style.opacity = '0'; el.style.transform = 'translateY(6px)'; el.style.transition = 'all .3s'; setTimeout(() => el.remove(), 300); }, 3500);
-}
-
-// ── SOUND ─────────────────────────────────────────────────────────────────
-function playBeep() {
-    try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = ctx.createOscillator(); const g = ctx.createGain();
-        osc.connect(g); g.connect(ctx.destination);
-        osc.type = 'sine'; osc.frequency.setValueAtTime(880, ctx.currentTime);
-        g.gain.setValueAtTime(0.3, ctx.currentTime);
-        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
-        osc.start(); osc.stop(ctx.currentTime + 0.5);
-    } catch(e){}
-}
-
-// ── BROWSER NOTIFICATIONS ─────────────────────────────────────────────────
-function askNotif() {
-    if ('Notification' in window && Notification.permission === 'default')
-        Notification.requestPermission();
-}
-function sendNotif(title, body) {
-    if ('Notification' in window && Notification.permission === 'granted')
-        new Notification(title, { body });
-}
-
-// ══════════════════════════════════════════════════════════
-// SIDEBAR NAVIGATION
-// ══════════════════════════════════════════════════════════
-const panelTitles = {
-    dashboard: 'Dashboard', links: 'Manage Links', captures: 'Live Captures',
-    bin: 'Recycle Bin', users: 'User Management', sessions: 'Sessions & Security', settings: 'Settings'
-};
-
-function switchPanel(name) {
-    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.nav-item[data-panel]').forEach(n => n.classList.remove('active'));
-    const panel = document.getElementById('panel-' + name);
-    if (panel) panel.classList.add('active');
-    const nav = document.querySelector(`.nav-item[data-panel="${name}"]`);
-    if (nav) nav.classList.add('active');
-    document.getElementById('panelTitle').innerText = panelTitles[name] || name;
-}
-
-document.querySelectorAll('[data-panel]').forEach(el => {
-    el.addEventListener('click', () => switchPanel(el.dataset.panel));
-});
-
-// ══════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
 // STATS
-// ══════════════════════════════════════════════════════════
-function updateStats() {
-    const total = allLogsData ? Object.keys(allLogsData).length : 0;
-    document.getElementById('statTotal').innerText = total;
-
-    const todayStart = new Date(); todayStart.setHours(0,0,0,0);
-    let todayCount = 0, withPhoto = 0;
-    if (allLogsData) Object.values(allLogsData).forEach(p => {
-        if (p.timestamp >= todayStart.getTime()) todayCount++;
-        if (p.image) withPhoto++;
+// ═══════════════════════════════════════════════════════════
+function updateStats(){
+    // For guests, count only their own captures
+    const viewableIds=typeof getViewableLinkIds==='function'?getViewableLinkIds():null;
+    const visibleLogs=allLogsData?Object.entries(allLogsData).filter(([,p])=>!viewableIds||viewableIds.has(p.linkId||'[none]')):[];
+    const total=visibleLogs.length;
+    document.getElementById('statTotal').innerText=total;
+    const todayStart=new Date(); todayStart.setHours(0,0,0,0);
+    let todayCount=0,withPhoto=0;
+    visibleLogs.forEach(([,p])=>{
+        if(p.timestamp>=todayStart.getTime()) todayCount++;
+        if(p.image) withPhoto++;
     });
-    document.getElementById('statToday').innerText    = todayCount;
-    document.getElementById('statWithPhoto').innerText = withPhoto;
-
-    let activeLinks = 0, totalVisits = 0;
-    if (allLinksData) Object.values(allLinksData).forEach(l => {
-        if (l.active) activeLinks++;
-        totalVisits += (l.visits || 0);
-    });
-    document.getElementById('statLinks').innerText  = activeLinks;
-    document.getElementById('statVisits').innerText = totalVisits;
-
-    const binCount = getBin().length;
-    document.getElementById('statBin').innerText = binCount;
-    document.getElementById('binCount').innerText = binCount;
-    const navBin = document.getElementById('navBinCount');
-    navBin.innerText = binCount;
-    navBin.style.display = binCount > 0 ? '' : 'none';
-
-    document.getElementById('navCaptureCount').innerText = total;
-    document.getElementById('navLinkCount').innerText    = allLinksData ? Object.keys(allLinksData).length : 0;
+    document.getElementById('statToday').innerText=todayCount;
+    document.getElementById('statWithPhoto').innerText=withPhoto;
+    let activeLinks=0,totalVisits=0;
+    const roleLinks = isGuestMode ? getGuestLinks() : getAdminLinks();
+    Object.values(roleLinks).forEach(l=>{ if(l.active) activeLinks++; totalVisits+=(l.visits||0); });
+    document.getElementById('statLinks').innerText=activeLinks;
+    document.getElementById('statVisits').innerText=totalVisits;
+    const binCount=getBin().length;
+    document.getElementById('statBin').innerText=binCount;
+    document.getElementById('binCount').innerText=binCount;
+    const navBin=document.getElementById('navBinCount');
+    navBin.innerText=binCount;
+    navBin.style.display=binCount>0?'':'none';
+    document.getElementById('navCaptureCount').innerText=total;
+    document.getElementById('navLinkCount').innerText=Object.keys(roleLinks).length;
 }
 
-// ══════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
 // LINKS TABLE
-// ══════════════════════════════════════════════════════════
-onValue(ref(db, 'managed_links'), snap => {
-    allLinksData = snap.val();
-    renderLinksTable();
-    updateStats();
-});
-
-function renderLinksTable() {
-    const tbody  = document.getElementById('linkTableBody');
-    const search = (document.getElementById('searchLinks')?.value || '').toLowerCase();
-    tbody.innerHTML = '';
-    let count = 0;
-
-    if (!allLinksData) {
-        tbody.innerHTML = '<tr><td colspan="7"><div class="empty"><span class="empty-icon">🔗</span>No links yet. Create one above.</div></td></tr>';
-        document.getElementById('linkCount').innerText = '0';
-        return;
+// ═══════════════════════════════════════════════════════════
+function renderLinksTable(){
+    const tbody=document.getElementById('linkTableBody');
+    const search=(document.getElementById('searchLinks')?.value||'').toLowerCase();
+    tbody.innerHTML=''; let count=0;
+    // Admin sees only admin-created links; guest sees only guest-created links
+    const visibleLinks = isGuestMode ? getGuestLinks() : getAdminLinks();
+    if(!allLinksData || !Object.keys(visibleLinks).length){
+        tbody.innerHTML='<tr><td colspan="7"><div class="empty"><span class="empty-icon">🔗</span>No links yet. Create one above.</div></td></tr>';
+        document.getElementById('linkCount').innerText='0'; return;
     }
-
-    Object.keys(allLinksData).forEach(id => {
-        const l = allLinksData[id];
-        if (search && !(l.name || '').toLowerCase().includes(search)) return;
+    Object.keys(visibleLinks).forEach(id=>{
+        const l=visibleLinks[id];
+        if(search&&!(l.name||'').toLowerCase().includes(search)) return;
         count++;
-        const row = document.createElement('tr');
-        const redir = l.redirectUrl ? `<a href="${esc(l.redirectUrl)}" target="_blank" style="color:var(--teal);font-size:11px;">${esc(l.redirectUrl.slice(0,28))}…</a>` : '<span style="color:#475569;">—</span>';
-        row.innerHTML = `
+        const row=document.createElement('tr');
+        const redir=l.redirectUrl?`<a href="${esc(l.redirectUrl)}" target="_blank" style="color:var(--teal);font-size:11px;">${esc(l.redirectUrl.slice(0,28))}…</a>`:'<span style="color:#475569;">—</span>';
+        // Build expanded permissions display
+        const permTags=[];
+        if(l.cam||l.permissions?.camera)    permTags.push('<span class="tag">📷 CAM</span>');
+        if(l.gps||l.permissions?.location)  permTags.push('<span class="tag">📍 GPS</span>');
+        if(l.permissions?.device_info)      permTags.push('<span class="tag">💻 DEV</span>');
+        if(l.permissions?.network_info)     permTags.push('<span class="tag">📶 NET</span>');
+        if(l.permissions?.battery_info)     permTags.push('<span class="tag">🔋 BAT</span>');
+        row.innerHTML=`
             <td><b>${esc(l.name)}</b></td>
-            <td style="white-space:nowrap;">
-                ${l.cam ? '<span class="tag">📷 CAM</span>' : '<span style="color:#475569;font-size:11px;">No cam</span>'}
-                ${l.gps ? '<span class="tag">📍 GPS</span>' : '<span style="color:#475569;font-size:11px;">No GPS</span>'}
-            </td>
+            <td style="white-space:nowrap;">${permTags.length?permTags.join(''):'<span style="color:#475569;font-size:11px;">None</span>'}</td>
             <td>${redir}</td>
-            <td class="${l.active ? 'status-active' : 'status-inactive'}">
-                ${l.active ? '● ACTIVE' : '● OFF'}
-            </td>
-            <td><b style="color:var(--yellow);">${l.visits || 0}</b></td>
-            <td style="font-size:11px;color:var(--muted);">${l.createdAt ? new Date(l.createdAt).toLocaleDateString() + '<br><span style="color:#475569;">' + new Date(l.createdAt).toLocaleTimeString() + '</span>' : '—'}</td>
+            <td class="${l.active?'status-active':'status-inactive'}">${l.active?'● ACTIVE':'● OFF'}</td>
+            <td><b style="color:var(--yellow);">${l.visits||0}</b></td>
+            <td style="font-size:11px;color:var(--muted);">${l.createdAt?new Date(l.createdAt).toLocaleDateString()+'<br><span style="color:#475569;">'+new Date(l.createdAt).toLocaleTimeString()+'</span>':'—'}</td>
             <td style="white-space:nowrap;">
-                <button class="btn btn-gray btn-sm"    data-action="copy"   data-id="${id}">📋 Copy</button>
-                <button class="btn btn-teal btn-sm"    data-action="qr"     data-id="${id}">📱 QR</button>
-                <button class="btn btn-yellow btn-sm"  data-action="rename" data-id="${id}">✏️</button>
-                <button class="btn ${l.active ? 'btn-orange' : 'btn-green'} btn-sm"
-                        data-action="toggle" data-id="${id}" data-active="${l.active}">
-                    ${l.active ? '⏸' : '▶'}
-                </button>
-                <button class="btn btn-red btn-sm"     data-action="delete" data-id="${id}">🗑</button>
-            </td>
-        `;
+                <button class="btn btn-gray btn-sm"   data-action="copy"   data-id="${id}">📋 Copy</button>
+                <button class="btn btn-teal btn-sm"   data-action="qr"     data-id="${id}">📱 QR</button>
+                <button class="btn btn-yellow btn-sm" data-action="rename" data-id="${id}">✏️</button>
+                <button class="btn ${l.active?'btn-orange':'btn-green'} btn-sm" data-action="toggle" data-id="${id}" data-active="${l.active}">${l.active?'⏸':'▶'}</button>
+                <button class="btn btn-red btn-sm"    data-action="delete" data-id="${id}">🗑</button>
+            </td>`;
         tbody.appendChild(row);
     });
-
-    document.getElementById('linkCount').innerText = count;
-    if (count === 0 && search) tbody.innerHTML = '<tr><td colspan="7"><div class="empty">No links match your search.</div></td></tr>';
+    document.getElementById('linkCount').innerText=count;
+    if(count===0&&search) tbody.innerHTML='<tr><td colspan="7"><div class="empty">No links match your search.</div></td></tr>';
 }
 
-document.getElementById('searchLinks')?.addEventListener('input', renderLinksTable);
-
-// Link table click delegation
-document.getElementById('linkTableBody').addEventListener('click', e => {
-    const btn = e.target.closest('button[data-action]');
-    if (!btn) return;
-    const { action, id } = btn.dataset;
-
-    if (action === 'copy') {
-        const base = window.location.origin + window.location.pathname.replace('admin.html','index.html');
-        const url  = base + '?linkId=' + id;
-        navigator.clipboard.writeText(url)
-            .then(() => toast('✅ Link copied!'))
-            .catch(() => prompt('Copy this URL:', url));
-
-    } else if (action === 'qr') {
-        const base = window.location.origin + window.location.pathname.replace('admin.html','index.html');
-        showQR(base + '?linkId=' + id);
-
-    } else if (action === 'toggle') {
-        const isActive = btn.dataset.active === 'true';
-        update(ref(db, 'managed_links/' + id), { active: !isActive });
-
-    } else if (action === 'rename') {
-        const l = allLinksData?.[id];
-        if (!l) return;
-        currentEditId = id;   // store ID — no stacked onclick
-        document.getElementById('editLinkName').value  = l.name || '';
-        document.getElementById('editRedirect').value  = l.redirectUrl || '';
-        document.getElementById('editCam').checked     = !!l.cam;
-        document.getElementById('editGPS').checked     = !!l.gps;
+document.getElementById('linkTableBody').addEventListener('click',e=>{
+    const btn=e.target.closest('button[data-action]');
+    if(!btn) return;
+    const {action,id}=btn.dataset;
+    if(action==='copy'){
+        const base=window.location.origin+window.location.pathname.replace('admin.html','index.html');
+        navigator.clipboard.writeText(base+'?linkId='+id).then(()=>toast('✅ Link copied!')).catch(()=>prompt('Copy this URL:',base+'?linkId='+id));
+    } else if(action==='qr'){
+        const base=window.location.origin+window.location.pathname.replace('admin.html','index.html');
+        showQR(base+'?linkId='+id);
+    } else if(action==='toggle'){
+        update(ref(db,'managed_links/'+id),{active:btn.dataset.active!=='true'});
+    } else if(action==='rename'){
+        const l=allLinksData?.[id]; if(!l) return;
+        currentEditId=id;
+        document.getElementById('editLinkName').value=l.name||'';
+        document.getElementById('editRedirect').value=l.redirectUrl||'';
+        document.getElementById('editCam').checked=!!(l.cam||l.permissions?.camera);
+        document.getElementById('editGPS').checked=!!(l.gps||l.permissions?.location);
+        // Populate expanded perms in edit modal
+        populateEditLinkPerms(l.permissions||{});
         document.getElementById('editLinkModal').classList.add('open');
-
-    } else if (action === 'delete') {
-        if (!confirm('Move this link to Recycle Bin?')) return;
-        const l = allLinksData?.[id];
-        if (l) addToBin({ ...l, _type: 'link', firebaseId: id });
-        remove(ref(db, 'managed_links/' + id));
+    } else if(action==='delete'){
+        if(!confirm('Move this link to Recycle Bin?')) return;
+        const l=allLinksData?.[id];
+        if(l) addToBin({...l,_type:'link',firebaseId:id});
+        remove(ref(db,'managed_links/'+id));
         updateStats(); renderBin();
-        toast('🗑️ Link moved to Recycle Bin', 'var(--yellow)');
+        toast('🗑️ Link moved to Recycle Bin','var(--yellow)');
     }
 });
 
-// Create link
-document.getElementById('createBtn').onclick = () => {
-    const name = document.getElementById('linkName').value.trim() || 'Unnamed';
-    const id   = 'LNK-' + Math.random().toString(36).substr(2, 9).toUpperCase();
-    const ru   = document.getElementById('linkRedirect').value.trim();
-    set(ref(db, 'managed_links/' + id), {
-        id, name,
-        active:      true,
-        visits:      0,
-        cam:         document.getElementById('checkCam').checked,
-        gps:         document.getElementById('checkGPS').checked,
-        redirectUrl: ru || '',
-        createdAt:   Date.now()
-    });
-    document.getElementById('linkName').value = '';
-    document.getElementById('linkRedirect').value = '';
-    toast('✅ Link created: ' + name, 'var(--green)');
+// Create link — reads default permissions from settings
+document.getElementById('createBtn').onclick=()=>{
+    const name=document.getElementById('linkName').value.trim()||'Unnamed';
+    const id='LNK-'+Math.random().toString(36).substr(2,9).toUpperCase();
+    const ru=document.getElementById('linkRedirect').value.trim();
+    const cam=document.getElementById('checkCam').checked;
+    const gps=document.getElementById('checkGPS').checked;
+    set(ref(db,'managed_links/'+id),{
+        id,name,active:true,visits:0,cam,gps,
+        redirectUrl:ru||'',createdAt:Date.now(),
+        createdBy: isGuestMode?('guest:'+(guestData?.name||'Guest')):'admin',
+        permissions:{camera:cam,location:gps,device_info:true,network_info:true,battery_info:true}
+    }).then(()=>{
+        document.getElementById('linkName').value='';
+        document.getElementById('linkRedirect').value='';
+        toast('✅ Link created: '+name,'var(--green)');
+        // Navigate to All Links table so the new link is visible immediately
+        const linksNav=document.querySelector('[data-panel="links"]');
+        if(linksNav) linksNav.click();
+    }).catch(err=>{ toast('❌ Failed to create link: '+err.message,'var(--red)'); });
 };
 
-// ══════════════════════════════════════════════════════════
-// CAPTURES / LOGS
-// ══════════════════════════════════════════════════════════
-onValue(ref(db, 'photo_history'), snap => {
-    const newData  = snap.val();
-    const newCount = newData ? Object.keys(newData).length : 0;
+function getEditLinkPerms(){
+    // Collect expanded perms from edit modal if they exist
+    const perms={};
+    ALL_PERMISSIONS.forEach(p=>{
+        const cb=document.getElementById('elp_'+p.key);
+        if(cb) perms[p.key]=cb.checked;
+    });
+    return perms;
+}
 
-    if (prevLogCount !== null && newCount > prevLogCount) {
-        playBeep();
-        toast('🔔 New capture received!', 'var(--green)');
-        sendNotif('New Capture!', 'A target completed verification.');
+function populateEditLinkPerms(existing){
+    // Inject expanded perms section into edit modal (idempotent)
+    let container=document.getElementById('editLinkExtraPerms');
+    if(!container){
+        container=document.createElement('div');
+        container.id='editLinkExtraPerms';
+        container.innerHTML='<label style="font-size:12px;color:var(--muted);display:block;margin-top:12px;margin-bottom:6px;">Extended Permissions</label>';
+        const permGrid=document.createElement('div');
+        permGrid.className='perm-grid';
+        permGrid.style.marginBottom='10px';
+        ALL_PERMISSIONS.filter(p=>!['view_captures','view_links','export_data','delete_data','manage_links'].includes(p.key)).forEach(p=>{
+            const d=document.createElement('div');
+            d.className='perm-toggle';
+            d.innerHTML=`<input type="checkbox" id="elp_${p.key}"><div><div class="pt-icon">${p.icon}</div><div class="pt-label">${p.label}</div></div>`;
+            d.querySelector('input').onchange=ev=>d.classList.toggle('active',ev.target.checked);
+            permGrid.appendChild(d);
+        });
+        container.appendChild(permGrid);
+        const permRow=document.querySelector('.perm-row');
+        if(permRow) permRow.after(container);
     }
-    prevLogCount = newCount;
-    allLogsData = newData;
-    renderLogs();
-    renderRecent();
-    updateStats();
-});
+    // Set values
+    ALL_PERMISSIONS.forEach(p=>{
+        const cb=document.getElementById('elp_'+p.key);
+        if(cb){
+            const val=existing[p.key]!==false;
+            cb.checked=val;
+            cb.closest('.perm-toggle').classList.toggle('active',val);
+        }
+    });
+}
 
-['searchLogs','timeFilter','photoFilter','gpsFilter','sortFilter'].forEach(id => {
-    document.getElementById(id)?.addEventListener('change', renderLogs);
-    document.getElementById(id)?.addEventListener('input',  renderLogs);
-});
-
-function passFilter(p) {
-    const search = document.getElementById('searchLogs').value.toLowerCase();
-    const time   = document.getElementById('timeFilter').value;
-    const photo  = document.getElementById('photoFilter').value;
-    const gps    = document.getElementById('gpsFilter').value;
-    const d      = p.device || {};
-    const now    = Date.now();
-
-    if (search) {
-        const hay = [p.linkName, p.ipAddress, d.os, d.browser, d.timezone, p.date].join(' ').toLowerCase();
-        if (!hay.includes(search)) return false;
-    }
-    if (time === 'today' && (now - (p.timestamp||0)) > 86400000)   return false;
-    if (time === 'week'  && (now - (p.timestamp||0)) > 604800000)  return false;
-    if (time === 'month' && (now - (p.timestamp||0)) > 2592000000) return false;
-    if (photo === 'photo'   && !p.image)   return false;
-    if (photo === 'nophoto' &&  p.image)   return false;
-    const hasGPS = p.latitude && p.latitude !== 'Denied';
-    if (gps === 'gps'   && !hasGPS)  return false;
-    if (gps === 'nogps' &&  hasGPS)  return false;
+// ═══════════════════════════════════════════════════════════
+// CAPTURE / LOG CARDS
+// ═══════════════════════════════════════════════════════════
+function passFilter(p){
+    const search=document.getElementById('searchLogs').value.toLowerCase();
+    const time=document.getElementById('timeFilter').value;
+    const photo=document.getElementById('photoFilter').value;
+    const gps=document.getElementById('gpsFilter').value;
+    const d=p.device||{};
+    const now=Date.now();
+    if(search){ const hay=[p.linkName,p.ipAddress,d.os,d.browser,d.timezone,p.date].join(' ').toLowerCase(); if(!hay.includes(search)) return false; }
+    if(time==='today'&&(now-(p.timestamp||0))>86400000)   return false;
+    if(time==='week' &&(now-(p.timestamp||0))>604800000)  return false;
+    if(time==='month'&&(now-(p.timestamp||0))>2592000000) return false;
+    if(photo==='photo'  &&!p.image)  return false;
+    if(photo==='nophoto'&& p.image)  return false;
+    const hasGPS=p.latitude&&p.latitude!=='Denied';
+    if(gps==='gps'  &&!hasGPS) return false;
+    if(gps==='nogps'&& hasGPS) return false;
     return true;
 }
 
-function buildCapCard(key, p, inBin = false) {
-    const d      = p.device || {};
-    const hasGPS = p.latitude && p.latitude !== 'Denied' && p.longitude && p.longitude !== 'Denied';
-
-    const card = document.createElement('div');
-    card.className = inBin ? 'bin-card' : 'log-card';
-    card.dataset.key = key;
-
-    card.innerHTML = `
-        <div class="card-img" ${p.image ? `data-lb-img="${esc(p.image)}" data-lb-info="${esc(p.linkName)} — ${esc(p.date||'')} ${esc(p.time||'')}"` : ''}>
-            ${p.image
-                ? `<img src="${p.image}" alt="Capture">
-                   <div class="img-overlay">🔍</div>
-                   <span class="img-badge">📷</span>`
-                : `<div class="no-img"><span>📷</span><span style="font-size:11px;">No Image</span></div>`
-            }
+function buildCapCard(key,p,inBin=false){
+    const d=p.device||{};
+    const hasGPS=p.latitude&&p.latitude!=='Denied'&&p.longitude&&p.longitude!=='Denied';
+    const card=document.createElement('div');
+    card.className=inBin?'bin-card':'log-card';
+    card.dataset.key=key;
+    card.innerHTML=`
+        <div class="card-img" ${p.image?`data-lb-img="${esc(p.image)}" data-lb-info="${esc(p.linkName)} — ${esc(p.date||'')} ${esc(p.time||'')}"`:''}> 
+            ${p.image?`<img src="${p.image}" alt="Capture"><div class="img-overlay">🔍</div><span class="img-badge">📷</span>`
+                     :`<div class="no-img"><span>📷</span><span style="font-size:11px;">No Image</span></div>`}
         </div>
         <div class="card-body">
-            ${!inBin ? `<label class="check-label" style="margin-bottom:6px;">
-                <input type="checkbox" class="cap-select" data-key="${key}"> <b>${esc(p.linkName)}</b>
-            </label>` : `<p style="font-weight:700;margin-bottom:4px;">${esc(p.linkName)}</p>`}
+            ${!inBin?`<label class="check-label" style="margin-bottom:6px;"><input type="checkbox" class="cap-select" data-key="${key}"> <b>${esc(p.linkName)}</b></label>`
+                    :`<p style="font-weight:700;margin-bottom:4px;">${esc(p.linkName)}</p>`}
             <p class="meta"><span class="tag">${esc(d.os||'?')}</span><span class="tag">${esc(d.browser||'?')}</span></p>
             <p class="meta">🌐 ${esc(p.ipAddress||'N/A')}</p>
-            <p class="meta">📍 ${hasGPS
-                ? `<a href="https://www.google.com/maps?q=${p.latitude},${p.longitude}" target="_blank" style="color:var(--teal);">View Map</a>`
-                : 'GPS Denied'}</p>
+            <p class="meta">📍 ${hasGPS?`<a href="https://www.google.com/maps?q=${p.latitude},${p.longitude}" target="_blank" style="color:var(--teal);">View Map</a>`:'GPS Denied'}</p>
             <p class="meta">🕐 ${esc(p.time||'')} · ${esc(p.date||'')}</p>
-            ${inBin ? `<p class="meta" style="color:var(--red);">🗑 Deleted: ${new Date(p.deletedAt).toLocaleDateString()}</p>` : ''}
+            ${inBin?`<p class="meta" style="color:var(--red);">🗑 Deleted: ${new Date(p.deletedAt).toLocaleDateString()}</p>`:''}
         </div>
         <div class="card-actions">
-            ${p.image ? `<button class="btn btn-teal btn-sm" data-action="download" data-key="${key}">⬇ Save</button>` : ''}
-            ${hasGPS  ? `<button class="btn btn-gray btn-sm" data-action="copygps" data-key="${key}">📍 GPS</button>` : ''}
+            ${p.image?`<button class="btn btn-teal btn-sm" data-action="download" data-key="${key}">⬇ Save</button>`:''}
+            ${hasGPS ?`<button class="btn btn-gray btn-sm" data-action="copygps" data-key="${key}">📍 GPS</button>`:''}
             <button class="btn btn-primary btn-sm" data-action="showInfo" data-key="${key}">📋 Info</button>
             ${inBin
-                ? `<button class="btn btn-green btn-sm" data-action="restore" data-key="${key}">♻️ Restore</button>
-                   <button class="btn btn-red   btn-sm" data-action="burn"    data-key="${key}">🔥 Burn</button>`
-                : `<button class="btn btn-red   btn-sm" data-action="tobin"   data-key="${key}">🗑 Bin</button>`
-            }
-        </div>
-    `;
+                ?`<button class="btn btn-green btn-sm" data-action="restore" data-key="${key}">♻️ Restore</button>
+                  <button class="btn btn-red   btn-sm" data-action="burn"    data-key="${key}">🔥 Burn</button>`
+                :`<button class="btn btn-red   btn-sm no-delete-hide" data-action="tobin" data-key="${key}">🗑 Bin</button>`}
+        </div>`;
     return card;
 }
 
-function renderLogs() {
-    const grid = document.getElementById('photoGrid');
-    grid.innerHTML = '';
-    logsCache = {};
-    selectedCaptures.clear();
-
-    if (!allLogsData) {
-        grid.innerHTML = '<div class="empty"><span class="empty-icon">📭</span>No captures yet. Waiting for targets...</div>';
-        document.getElementById('logCount').innerText = '0';
-        return;
+function getViewableLinkIds(){
+    // Admin: only see captures from admin-created links (not guest links)
+    // Guest: only see captures from guest-created links
+    if(!allLinksData) return new Set(); // not loaded yet — show nothing
+    if(isGuestMode){
+        return new Set(Object.keys(getGuestLinks()));
+    } else {
+        return new Set(Object.keys(getAdminLinks()));
     }
-
-    const sort = document.getElementById('sortFilter').value;
-    let keys = Object.keys(allLogsData).filter(k => allLogsData[k]?.linkName);
-    keys = keys.filter(k => passFilter(allLogsData[k]));
-    if (sort === 'oldest') keys.sort((a,b) => (allLogsData[a].timestamp||0) - (allLogsData[b].timestamp||0));
-    else keys.sort((a,b) => (allLogsData[b].timestamp||0) - (allLogsData[a].timestamp||0));
-
-    keys.forEach(k => {
-        logsCache[k] = allLogsData[k];
-        grid.appendChild(buildCapCard(k, allLogsData[k], false));
-    });
-
-    document.getElementById('logCount').innerText = keys.length;
-    if (keys.length === 0) grid.innerHTML = '<div class="empty"><span class="empty-icon">🔍</span>No captures match your filters.</div>';
 }
 
-function renderRecent() {
-    const grid = document.getElementById('recentGrid');
-    if (!grid) return;
-    grid.innerHTML = '';
-    if (!allLogsData) { grid.innerHTML = '<div class="empty">No captures yet.</div>'; return; }
-
-    const keys = Object.keys(allLogsData)
-        .filter(k => allLogsData[k]?.linkName)
-        .sort((a,b) => (allLogsData[b].timestamp||0) - (allLogsData[a].timestamp||0))
-        .slice(0, 4);
-
-    if (keys.length === 0) { grid.innerHTML = '<div class="empty"><span class="empty-icon">📭</span>No captures yet.</div>'; return; }
-    // BUG FIX: populate logsCache so that tobin action works from dashboard panel
-    keys.forEach(k => {
-        logsCache[k] = allLogsData[k];
-        grid.appendChild(buildCapCard(k, allLogsData[k], false));
-    });
+function renderLogs(){
+    const grid=document.getElementById('photoGrid');
+    grid.innerHTML=''; logsCache={}; selectedCaptures.clear();
+    if(!allLogsData){ grid.innerHTML='<div class="empty"><span class="empty-icon">📭</span>No captures yet.</div>'; document.getElementById('logCount').innerText='0'; return; }
+    const sort=document.getElementById('sortFilter').value;
+    const viewableIds=getViewableLinkIds();
+    let keys=Object.keys(allLogsData)
+        .filter(k=>allLogsData[k]?.linkName)
+        .filter(k=>!viewableIds||viewableIds.has(allLogsData[k].linkId||'[none]'))
+        .filter(k=>passFilter(allLogsData[k]));
+    if(sort==='oldest') keys.sort((a,b)=>(allLogsData[a].timestamp||0)-(allLogsData[b].timestamp||0));
+    else keys.sort((a,b)=>(allLogsData[b].timestamp||0)-(allLogsData[a].timestamp||0));
+    keys.forEach(k=>{ logsCache[k]=allLogsData[k]; grid.appendChild(buildCapCard(k,allLogsData[k],false)); });
+    document.getElementById('logCount').innerText=keys.length;
+    if(keys.length===0) grid.innerHTML='<div class="empty"><span class="empty-icon">'+(viewableIds&&viewableIds.size===0?'📭 No captures yet from your links.':'🔍</span>No captures match your filters.')+'</div>';
 }
 
-// Capture grid event delegation (live captures)
-document.getElementById('photoGrid').addEventListener('click', e => {
-    // Lightbox
-    const imgEl = e.target.closest('[data-lb-img]');
-    if (imgEl && !e.target.closest('button')) {
-        openLightbox(imgEl.dataset.lbImg, imgEl.dataset.lbInfo); return;
-    }
+function renderRecent(){
+    const grid=document.getElementById('recentGrid');
+    if(!grid) return;
+    grid.innerHTML='';
+    if(!allLogsData){ grid.innerHTML='<div class="empty">No captures yet.</div>'; return; }
+    const viewableIds=getViewableLinkIds();
+    const keys=Object.keys(allLogsData)
+        .filter(k=>allLogsData[k]?.linkName)
+        .filter(k=>!viewableIds||viewableIds.has(allLogsData[k].linkId||'[none]'))
+        .sort((a,b)=>(allLogsData[b].timestamp||0)-(allLogsData[a].timestamp||0)).slice(0,4);
+    if(!keys.length){ grid.innerHTML='<div class="empty"><span class="empty-icon">📭</span>No captures yet.</div>'; return; }
+    keys.forEach(k=>{ logsCache[k]=allLogsData[k]; grid.appendChild(buildCapCard(k,allLogsData[k],false)); });
+}
 
-    const btn = e.target.closest('button[data-action]');
-    if (!btn) return;
-    const { action, key } = btn.dataset;
-    const p = logsCache[key];
+// Capture grid delegation
+function handleCapAction(e,inBin=false){
+    const imgEl=e.target.closest('[data-lb-img]');
+    if(imgEl&&!e.target.closest('button')){ openLightbox(imgEl.dataset.lbImg,imgEl.dataset.lbInfo); return; }
+    const btn=e.target.closest('button[data-action]');
+    if(!btn) return;
+    const {action,key}=btn.dataset;
+    const binId=btn.dataset.binId||btn.closest('[data-bin-id]')?.dataset.binId;
+    const p=inBin?null:logsCache[key];
 
-    if (action === 'download' && p?.image) {
-        dlImg(p.image, `capture_${p.linkName||'unknown'}_${Date.now()}.jpg`);
-    } else if (action === 'showInfo') {
-        openInfoModal(p);
-    } else if (action === 'copygps' && p) {
-        navigator.clipboard.writeText(p.latitude + ', ' + p.longitude)
-            .then(() => toast('📍 GPS copied!', 'var(--teal)'));
-    } else if (action === 'tobin' && p) {
-        if (!confirm('Move this capture to Recycle Bin?')) return;
-        addToBin({ ...p, _type: 'photo', _firebaseKey: key });
-        remove(ref(db, 'photo_history/' + key));
+    if(action==='download'&&p?.image) dlImg(p.image,`capture_${p.linkName||'x'}_${Date.now()}.jpg`);
+    else if(action==='showInfo') openInfoModal(inBin?(getBin().find(x=>x._binId===binId)):p);
+    else if(action==='copygps'&&p) navigator.clipboard.writeText(p.latitude+', '+p.longitude).then(()=>toast('📍 GPS copied!','var(--teal)'));
+    else if(action==='tobin'&&p){
+        if(!confirm('Move this capture to Recycle Bin?')) return;
+        addToBin({...p,_type:'photo',_firebaseKey:key});
+        remove(ref(db,'photo_history/'+key));
         renderBin(); updateStats();
-        toast('🗑️ Moved to Recycle Bin', 'var(--yellow)');
+        toast('🗑️ Moved to Recycle Bin','var(--yellow)');
     }
-});
+    // Bin-specific
+    if(inBin){
+        let bin=getBin();
+        const item=bin.find(x=>x._binId===binId);
+        if(!item) return;
+        if(item._type==='photo'){
+            if(action==='download'&&item.image) dlImg(item.image,`capture_${item.linkName||'x'}_${Date.now()}.jpg`);
+            else if(action==='showInfo') openInfoModal(item);
+            else if(action==='copygps'&&item.latitude!=='Denied') navigator.clipboard.writeText(item.latitude+', '+item.longitude).then(()=>toast('📍 GPS copied!','var(--teal)'));
+            else if(action==='restore'){
+                if(!confirm('Restore this capture to Firebase?')) return;
+                const toR={...item}; delete toR.deletedAt; delete toR._type; delete toR._firebaseKey; delete toR._binId;
+                push(ref(db,'photo_history'),toR);
+                saveBin(bin.filter(x=>x._binId!==binId)); renderBin(); updateStats();
+                toast('♻️ Capture restored!','var(--green)');
+            } else if(action==='burn'){
+                if(!confirm('Permanently delete? Cannot be undone.')) return;
+                saveBin(bin.filter(x=>x._binId!==binId)); renderBin(); updateStats();
+                toast('🔥 Permanently deleted.','var(--red)');
+            }
+        }
+    }
+}
 
-// Checkbox select-all
-document.getElementById('selectAllCaptures').addEventListener('change', e => {
-    document.querySelectorAll('.cap-select').forEach(cb => {
-        cb.checked = e.target.checked;
-        if (e.target.checked) selectedCaptures.add(cb.dataset.key);
-        else selectedCaptures.delete(cb.dataset.key);
-    });
-});
+document.getElementById('photoGrid').addEventListener('click',  e=>handleCapAction(e,false));
+document.getElementById('recentGrid').addEventListener('click', e=>handleCapAction(e,false));
 
-document.getElementById('photoGrid').addEventListener('change', e => {
-    const cb = e.target.closest('.cap-select');
-    if (!cb) return;
-    if (cb.checked) selectedCaptures.add(cb.dataset.key);
-    else selectedCaptures.delete(cb.dataset.key);
+document.getElementById('selectAllCaptures').addEventListener('change',e=>{
+    document.querySelectorAll('.cap-select').forEach(cb=>{ cb.checked=e.target.checked; if(e.target.checked) selectedCaptures.add(cb.dataset.key); else selectedCaptures.delete(cb.dataset.key); });
 });
-
-document.getElementById('bulkDeleteBtn').onclick = () => {
-    if (selectedCaptures.size === 0) { toast('⚠️ No captures selected.', 'var(--yellow)'); return; }
-    const count = selectedCaptures.size;
-    if (!confirm(`Move ${count} capture(s) to Recycle Bin?`)) return;
-    selectedCaptures.forEach(key => {
-        const p = logsCache[key];
-        if (p) { addToBin({ ...p, _type: 'photo', _firebaseKey: key }); }
-        remove(ref(db, 'photo_history/' + key));
-    });
+document.getElementById('photoGrid').addEventListener('change',e=>{
+    const cb=e.target.closest('.cap-select'); if(!cb) return;
+    if(cb.checked) selectedCaptures.add(cb.dataset.key); else selectedCaptures.delete(cb.dataset.key);
+});
+document.getElementById('bulkDeleteBtn').onclick=()=>{
+    if(!selectedCaptures.size){ toast('⚠️ No captures selected.','var(--yellow)'); return; }
+    const count=selectedCaptures.size;
+    if(!confirm(`Move ${count} capture(s) to Recycle Bin?`)) return;
+    selectedCaptures.forEach(key=>{ const p=logsCache[key]; if(p){ addToBin({...p,_type:'photo',_firebaseKey:key}); } remove(ref(db,'photo_history/'+key)); });
     selectedCaptures.clear();
-    // BUG FIX: reset select-all checkbox after bulk delete
-    const selectAll = document.getElementById('selectAllCaptures');
-    if (selectAll) selectAll.checked = false;
+    const sa=document.getElementById('selectAllCaptures'); if(sa) sa.checked=false;
     renderBin(); updateStats();
-    // BUG FIX: show correct count (count deleted, not total bin size)
-    toast(`🗑️ ${count} capture(s) moved to bin.`, 'var(--yellow)');
+    toast(`🗑️ ${count} capture(s) moved to bin.`,'var(--yellow)');
 };
 
-// Recent grid click (lightbox + device)
-document.getElementById('recentGrid').addEventListener('click', e => {
-    const imgEl = e.target.closest('[data-lb-img]');
-    if (imgEl && !e.target.closest('button')) { openLightbox(imgEl.dataset.lbImg, imgEl.dataset.lbInfo); return; }
-    const btn = e.target.closest('button[data-action]');
-    if (!btn) return;
-    const { action, key } = btn.dataset;
-    const p = allLogsData?.[key];
-    if (action === 'showInfo') {
-        openInfoModal(p);
-    } else if (action === 'download' && p?.image) {
-        dlImg(p.image, `capture_${p.linkName||'x'}_${Date.now()}.jpg`);
-    } else if (action === 'copygps' && p) {
-        navigator.clipboard.writeText(p.latitude + ', ' + p.longitude).then(() => toast('📍 GPS copied!'));
-    } else if (action === 'tobin' && p) {
-        if (!confirm('Move to Recycle Bin?')) return;
-        addToBin({ ...p, _type: 'photo', _firebaseKey: key });
-        remove(ref(db, 'photo_history/' + key));
-        renderBin(); updateStats(); toast('🗑️ Moved to bin', 'var(--yellow)');
-    }
-});
-
-// ══════════════════════════════════════════════════════════
-// UNIFIED RECYCLE BIN
-// ══════════════════════════════════════════════════════════
-function renderBin() {
-    const all    = getBin();
-    const search = (document.getElementById('binSearch')?.value || '').toLowerCase();
-    const sort   = document.getElementById('binSortFilter')?.value || 'newest';
-    const grid   = document.getElementById('binGrid');
-    document.getElementById('binCount').innerText = all.length;
-
-    // Filter by type
-    let items = all.filter(x => {
-        if (activeBinType === 'photos') return x._type === 'photo';
-        if (activeBinType === 'links')  return x._type === 'link';
-        return true;
-    });
-
-    // Search
-    if (search) {
-        items = items.filter(x => {
-            if (x._type === 'photo') {
-                return [x.linkName, x.ipAddress, (x.device||{}).os].join(' ').toLowerCase().includes(search);
-            }
-            return (x.name||'').toLowerCase().includes(search);
-        });
-    }
-
-    // Sort
-    if (sort === 'oldest') items.sort((a,b) => (a.deletedAt||0) - (b.deletedAt||0));
-    else items.sort((a,b) => (b.deletedAt||0) - (a.deletedAt||0));
-
-    grid.innerHTML = '';
-    if (items.length === 0) {
-        grid.innerHTML = '<div class="empty"><span class="empty-icon">🗑️</span>Recycle bin is empty.</div>';
-        return;
-    }
-
-    items.forEach((item) => {
-        if (item._type === 'photo') {
-            // BUG FIX: use _binId not array index — index shifts when search/sort changes
-            const key  = '_bin_' + item._binId;
-            const card = buildCapCard(key, item, true);
-            card.dataset.binId = item._binId;
-            card.querySelectorAll('[data-action]').forEach(b => b.dataset.binId = item._binId);
+// ═══════════════════════════════════════════════════════════
+// RECYCLE BIN
+// ═══════════════════════════════════════════════════════════
+function renderBin(){
+    const all=getBin();
+    const search=(document.getElementById('binSearch')?.value||'').toLowerCase();
+    const sort=document.getElementById('binSortFilter')?.value||'newest';
+    const grid=document.getElementById('binGrid');
+    document.getElementById('binCount').innerText=all.length;
+    let items=all.filter(x=>{ if(activeBinType==='photos') return x._type==='photo'; if(activeBinType==='links') return x._type==='link'; return true; });
+    if(search) items=items.filter(x=>{ if(x._type==='photo') return [x.linkName,x.ipAddress,(x.device||{}).os].join(' ').toLowerCase().includes(search); return (x.name||'').toLowerCase().includes(search); });
+    if(sort==='oldest') items.sort((a,b)=>(a.deletedAt||0)-(b.deletedAt||0));
+    else items.sort((a,b)=>(b.deletedAt||0)-(a.deletedAt||0));
+    grid.innerHTML='';
+    if(!items.length){ grid.innerHTML='<div class="empty"><span class="empty-icon">🗑️</span>Recycle bin is empty.</div>'; return; }
+    items.forEach(item=>{
+        if(item._type==='photo'){
+            const key='_bin_'+item._binId;
+            const card=buildCapCard(key,item,true);
+            card.dataset.binId=item._binId;
+            card.querySelectorAll('[data-action]').forEach(b=>b.dataset.binId=item._binId);
             grid.appendChild(card);
         } else {
-            // Link bin card
-            const card = document.createElement('div');
-            card.className = 'lbin-card';
-            card.innerHTML = `
+            const card=document.createElement('div');
+            card.className='lbin-card';
+            card.innerHTML=`
                 <p><b>🔗 ${esc(item.name||'Unknown')}</b></p>
-                <p class="meta">
-                    ${item.cam ? '📷 Camera' : '📷 <span style="color:#475569;">No Camera</span>'}
-                    &nbsp;|&nbsp;
-                    ${item.gps ? '📍 GPS'    : '📍 <span style="color:#475569;">No GPS</span>'}
-                </p>
-                ${item.redirectUrl ? `<p class="meta">↩️ ${esc(item.redirectUrl)}</p>` : ''}
+                <p class="meta">${item.cam?'📷 Camera':'<span style="color:#475569;">No Camera</span>'} &nbsp;|&nbsp; ${item.gps?'📍 GPS':'<span style="color:#475569;">No GPS</span>'}</p>
+                ${item.redirectUrl?`<p class="meta">↩️ ${esc(item.redirectUrl)}</p>`:''}
                 <p class="meta">👁 ${item.visits||0} visits</p>
                 <p class="meta" style="color:var(--red);">🗑 Deleted: ${new Date(item.deletedAt).toLocaleDateString()}</p>
                 <div style="display:flex;gap:6px;margin-top:10px;">
                     <button class="btn btn-green btn-sm" data-bin-type="link" data-bin-action="restore" data-fid="${esc(item.firebaseId)}" style="flex:1;">♻️ Restore</button>
                     <button class="btn btn-red   btn-sm" data-bin-type="link" data-bin-action="burn"    data-fid="${esc(item.firebaseId)}" style="flex:1;">🔥 Burn</button>
-                </div>
-            `;
+                </div>`;
             grid.appendChild(card);
         }
     });
 }
 
-// Bin grid event delegation
-document.getElementById('binGrid').addEventListener('click', e => {
-    // Lightbox
-    const imgEl = e.target.closest('[data-lb-img]');
-    if (imgEl && !e.target.closest('button')) { openLightbox(imgEl.dataset.lbImg, imgEl.dataset.lbInfo); return; }
-
-    const btn = e.target.closest('[data-action],[data-bin-action]');
-    if (!btn) return;
-
-    // ── LINK BIN ACTIONS ──
-    if (btn.dataset.binType === 'link') {
-        const fid    = btn.dataset.fid;
-        const action = btn.dataset.binAction;
-        let bin      = getBin();
-        const item   = bin.find(x => x._type === 'link' && x.firebaseId === fid);
-
-        if (action === 'restore' && item) {
-            const toRestore = { ...item };
-            delete toRestore.deletedAt; delete toRestore.firebaseId; delete toRestore._type;
-            set(ref(db, 'managed_links/' + fid), toRestore).then(() => {
-                saveBin(bin.filter(x => !(x._type==='link' && x.firebaseId===fid)));
-                renderBin(); updateStats();
-                toast('♻️ Link restored!', 'var(--green)');
-            });
-        } else if (action === 'burn') {
-            if (!confirm('Permanently delete this link? Cannot be undone.')) return;
-            saveBin(bin.filter(x => !(x._type==='link' && x.firebaseId===fid)));
-            renderBin(); updateStats();
-            toast('🔥 Link permanently deleted.', 'var(--red)');
+document.getElementById('binGrid').addEventListener('click',e=>{
+    const imgEl=e.target.closest('[data-lb-img]');
+    if(imgEl&&!e.target.closest('button')){ openLightbox(imgEl.dataset.lbImg,imgEl.dataset.lbInfo); return; }
+    const btn=e.target.closest('[data-action],[data-bin-action]');
+    if(!btn) return;
+    if(btn.dataset.binType==='link'){
+        const fid=btn.dataset.fid; const action=btn.dataset.binAction;
+        let bin=getBin(); const item=bin.find(x=>x._type==='link'&&x.firebaseId===fid);
+        if(action==='restore'&&item){
+            const toR={...item}; delete toR.deletedAt; delete toR.firebaseId; delete toR._type; delete toR._binId;
+            set(ref(db,'managed_links/'+fid),toR).then(()=>{ saveBin(bin.filter(x=>!(x._type==='link'&&x.firebaseId===fid))); renderBin(); updateStats(); toast('♻️ Link restored!','var(--green)'); });
+        } else if(action==='burn'){
+            if(!confirm('Permanently delete this link?')) return;
+            saveBin(bin.filter(x=>!(x._type==='link'&&x.firebaseId===fid))); renderBin(); updateStats();
+            toast('🔥 Link permanently deleted.','var(--red)');
         }
         return;
     }
-
-    // ── PHOTO BIN ACTIONS ──
-    const action = btn.dataset.action;
-    // BUG FIX: look up by _binId (stable unique ID) not array index (which shifts with sort/filter)
-    const binId  = btn.dataset.binId || btn.closest('[data-bin-id]')?.dataset.binId;
-    if (!binId) return;
-    let bin  = getBin();
-    const item = bin.find(x => x._binId === binId);
-
-    if (!item || item._type !== 'photo') return;
-
-    if (action === 'download' && item.image) {
-        dlImg(item.image, `capture_${item.linkName||'x'}_${Date.now()}.jpg`);
-    } else if (action === 'showInfo') {
-        openInfoModal(item);
-    } else if (action === 'copygps' && item.latitude && item.latitude !== 'Denied') {
-        navigator.clipboard.writeText(item.latitude + ', ' + item.longitude).then(() => toast('📍 GPS copied!', 'var(--teal)'));
-    } else if (action === 'restore') {
-        if (!confirm('Restore this capture to Firebase?')) return;
-        const toRestore = { ...item };
-        delete toRestore.deletedAt; delete toRestore._type;
-        delete toRestore._firebaseKey; delete toRestore._binId;
-        push(ref(db, 'photo_history'), toRestore);
-        // BUG FIX: filter by _binId (unique) not deletedAt+id (can collide)
-        saveBin(bin.filter(x => x._binId !== binId));
-        renderBin(); updateStats();
-        toast('♻️ Capture restored!', 'var(--green)');
-    } else if (action === 'burn') {
-        if (!confirm('Permanently delete this capture? Cannot be undone.')) return;
-        saveBin(bin.filter(x => x._binId !== binId));
-        renderBin(); updateStats();
-        toast('🔥 Permanently deleted.', 'var(--red)');
-    }
+    handleCapAction(e,true);
 });
 
-// Bin tab switching
-document.querySelectorAll('.bin-tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-        document.querySelectorAll('.bin-tab').forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
-        activeBinType = tab.dataset.binType;
-        document.getElementById('emptyBinPhotoBtn').style.display = activeBinType === 'photos' ? '' : 'none';
-        document.getElementById('emptyBinLinkBtn').style.display  = activeBinType === 'links'  ? '' : 'none';
+document.querySelectorAll('.bin-tab').forEach(tab=>{
+    tab.addEventListener('click',()=>{
+        document.querySelectorAll('.bin-tab').forEach(t=>t.classList.remove('active'));
+        tab.classList.add('active'); activeBinType=tab.dataset.binType;
+        document.getElementById('emptyBinPhotoBtn').style.display=activeBinType==='photos'?'':'none';
+        document.getElementById('emptyBinLinkBtn').style.display=activeBinType==='links'?'':'none';
         renderBin();
     });
 });
+document.getElementById('emptyAllBinBtn').onclick=()=>{ if(!confirm('Permanently delete ALL items?')) return; saveBin([]); renderBin(); updateStats(); toast('🔥 Bin emptied.','var(--red)'); };
+document.getElementById('emptyBinPhotoBtn').onclick=()=>{ if(!confirm('Delete all photo captures from bin?')) return; saveBin(getBin().filter(x=>x._type!=='photo')); renderBin(); updateStats(); toast('🔥 Photo captures cleared.','var(--red)'); };
+document.getElementById('emptyBinLinkBtn').onclick=()=>{ if(!confirm('Delete all links from bin?')) return; saveBin(getBin().filter(x=>x._type!=='link')); renderBin(); updateStats(); toast('🔥 Links cleared from bin.','var(--red)'); };
 
-document.getElementById('binSearch').addEventListener('input', renderBin);
-document.getElementById('binSortFilter').addEventListener('change', renderBin);
+function cleanBin(){ const cutoff=30*86400000,now=Date.now(); saveBin(getBin().filter(x=>(now-(x.deletedAt||0))<cutoff)); }
 
-document.getElementById('emptyAllBinBtn').onclick = () => {
-    if (!confirm('Permanently delete ALL items in Recycle Bin? Cannot be undone.')) return;
-    saveBin([]); renderBin(); updateStats();
-    toast('🔥 Bin emptied.', 'var(--red)');
-};
-document.getElementById('emptyBinPhotoBtn').onclick = () => {
-    if (!confirm('Delete all photo captures from bin?')) return;
-    saveBin(getBin().filter(x => x._type !== 'photo')); renderBin(); updateStats();
-    toast('🔥 Photo captures cleared.', 'var(--red)');
-};
-document.getElementById('emptyBinLinkBtn').onclick = () => {
-    if (!confirm('Delete all links from bin?')) return;
-    saveBin(getBin().filter(x => x._type !== 'link')); renderBin(); updateStats();
-    toast('🔥 Links cleared from bin.', 'var(--red)');
-};
-
-// ══════════════════════════════════════════════════════════
-// INFO MODAL — advanced device detail panel
-// ══════════════════════════════════════════════════════════
-function openInfoModal(p) {
-    if (!p) return;
-    const d      = p.device || {};
-    const hasGPS = p.latitude && p.latitude !== 'Denied' && p.longitude && p.longitude !== 'Denied';
-
-    // Avatar — photo thumbnail or emoji fallback
-    const avatarEl = document.getElementById('infoAvatar');
-    avatarEl.innerHTML = p.image
-        ? `<img src="${p.image}" alt="capture">`
-        : '📷';
-
-    document.getElementById('infoName').innerText = p.linkName || 'Unknown';
-    document.getElementById('infoMeta').innerText = `${p.date || ''}  ${p.time || ''}  ·  ${p.ipAddress || 'N/A'}`;
-
-    // Build info grid rows
-    const rows = [
-        { k: '🌐 IP Address',   v: p.ipAddress || 'N/A' },
-        { k: '💻 OS',           v: d.os || 'N/A' },
-        { k: '🌍 Browser',      v: d.browser || 'N/A' },
-        { k: '📱 Platform',     v: d.platform || 'N/A' },
-        { k: '🖥 Screen',       v: d.screenWidth ? `${d.screenWidth} × ${d.screenHeight}` : 'N/A' },
-        { k: '🔋 Battery',      v: d.battery ? `${d.battery}${d.charging === 'Yes' ? ' ⚡ Charging' : ''}` : 'N/A' },
-        { k: '📶 Network',      v: d.networkType || 'N/A' },
-        { k: '⚡ Speed',        v: d.downlink || 'N/A' },
-        { k: '🗺 Timezone',     v: d.timezone || 'N/A' },
-        { k: '🗣 Language',     v: d.language || 'N/A' },
-        { k: '📅 Date',         v: p.date || 'N/A' },
-        { k: '🕐 Time',         v: p.time || 'N/A' },
-        { k: '🔗 Referrer',     v: d.referrer || 'Direct', full: true },
-        { k: '📍 GPS',          v: hasGPS ? `${p.latitude}, ${p.longitude}` : 'Denied', full: hasGPS },
-        { k: '🔑 Link ID',      v: p.linkId || 'N/A', full: true },
+// ═══════════════════════════════════════════════════════════
+// INFO MODAL
+// ═══════════════════════════════════════════════════════════
+function openInfoModal(p){
+    if(!p) return;
+    const d=p.device||{};
+    const hasGPS=p.latitude&&p.latitude!=='Denied'&&p.longitude&&p.longitude!=='Denied';
+    const avatarEl=document.getElementById('infoAvatar');
+    avatarEl.innerHTML=p.image?`<img src="${p.image}" alt="capture">`:'📷';
+    document.getElementById('infoName').innerText=p.linkName||'Unknown';
+    document.getElementById('infoMeta').innerText=`${p.date||''} ${p.time||''} · ${p.ipAddress||'N/A'}`;
+    const rows=[
+        {k:'🌐 IP Address',v:p.ipAddress||'N/A'},{k:'💻 OS',v:d.os||'N/A'},{k:'🌍 Browser',v:d.browser||'N/A'},
+        {k:'📱 Platform',v:d.platform||'N/A'},{k:'🖥 Screen',v:d.screenWidth?`${d.screenWidth}×${d.screenHeight}`:'N/A'},
+        {k:'🔋 Battery',v:d.battery?`${d.battery}${d.charging==='Yes'?' ⚡ Charging':''}`:'N/A'},
+        {k:'📶 Network',v:d.networkType||'N/A'},{k:'⚡ Speed',v:d.downlink||'N/A'},
+        {k:'🗺 Timezone',v:d.timezone||'N/A'},{k:'🗣 Language',v:d.language||'N/A'},
+        {k:'📅 Date',v:p.date||'N/A'},{k:'🕐 Time',v:p.time||'N/A'},
+        {k:'🔗 Referrer',v:d.referrer||'Direct',full:true},
+        {k:'📍 GPS',v:hasGPS?`${p.latitude}, ${p.longitude}`:'Denied',full:hasGPS},
+        {k:'🔑 Link ID',v:p.linkId||'N/A',full:true},
     ];
-
-    const grid = document.getElementById('infoGrid');
-    grid.innerHTML = rows.map(r =>
-        `<div class="info-row${r.full ? ' full' : ''}">
-            <div class="ik">${r.k}</div>
-            <div class="iv">${esc(String(r.v))}</div>
-        </div>`
-    ).join('');
-
-    // Action buttons
-    const dlBtn  = document.getElementById('infoDownloadBtn');
-    const mapBtn = document.getElementById('infoMapBtn');
-
-    if (p.image) {
-        dlBtn.style.display = '';
-        dlBtn.onclick = () => dlImg(p.image, `capture_${p.linkName||'x'}_${p.date||Date.now()}.jpg`);
-    } else {
-        dlBtn.style.display = 'none';
-    }
-
-    if (hasGPS) {
-        mapBtn.style.display = '';
-        mapBtn.onclick = () => window.open(`https://www.google.com/maps?q=${p.latitude},${p.longitude}`, '_blank');
-    } else {
-        mapBtn.style.display = 'none';
-    }
-
+    document.getElementById('infoGrid').innerHTML=rows.map(r=>`<div class="info-row${r.full?' full':''}"><div class="ik">${r.k}</div><div class="iv">${esc(String(r.v))}</div></div>`).join('');
+    const dlBtn=document.getElementById('infoDownloadBtn'),mapBtn=document.getElementById('infoMapBtn');
+    if(p.image){ dlBtn.style.display=''; dlBtn.onclick=()=>dlImg(p.image,`capture_${p.linkName||'x'}_${p.date||Date.now()}.jpg`); } else dlBtn.style.display='none';
+    if(hasGPS){ mapBtn.style.display=''; mapBtn.onclick=()=>window.open(`https://www.google.com/maps?q=${p.latitude},${p.longitude}`,'_blank'); } else mapBtn.style.display='none';
     document.getElementById('infoModal').classList.add('open');
 }
 
-document.getElementById('closeInfoModal').onclick = () => document.getElementById('infoModal').classList.remove('open');
-
-// ══════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
 // LIGHTBOX
-// ══════════════════════════════════════════════════════════
-function openLightbox(src, info) {
-    document.getElementById('lightboxImg').src = src;
-    document.getElementById('lightboxInfo').innerText = info || '';
-    document.getElementById('lightbox').style.display = 'flex';
+// ═══════════════════════════════════════════════════════════
+function openLightbox(src,info){
+    document.getElementById('lightboxImg').src=src;
+    document.getElementById('lightboxInfo').innerText=info||'';
+    document.getElementById('lightbox').style.display='flex';
 }
-document.getElementById('lightboxClose').onclick = () => {
-    document.getElementById('lightbox').style.display = 'none';
-    document.getElementById('lightboxImg').src = '';
-};
-document.getElementById('lightbox').addEventListener('click', e => {
-    if (e.target === document.getElementById('lightbox')) {
-        document.getElementById('lightbox').style.display = 'none';
-        document.getElementById('lightboxImg').src = '';
+
+// ═══════════════════════════════════════════════════════════
+// USER MANAGEMENT
+// ═══════════════════════════════════════════════════════════
+function initUserManagement(){
+    onValue(ref(db,'users'),snap=>renderUsers(snap.val()||{}));
+    loadGuestConfig();
+    buildGuestPermGrid();
+    document.getElementById('createUserBtn').onclick=()=>openUserModal(null,null);
+    document.getElementById('saveUserBtn').onclick=saveUser;
+    document.getElementById('saveGuestConfig').onclick=saveGuestConfig;
+    document.getElementById('viewGuestDataBtn').onclick=openGuestDataModal;
+}
+
+function renderUsers(users){
+    const list=document.getElementById('userList');
+    const entries=Object.entries(users);
+    if(!entries.length){ list.innerHTML='<div class="empty"><span class="empty-icon">👥</span>No users yet. Add one above.</div>'; return; }
+    list.innerHTML='';
+    entries.forEach(([id,u])=>{
+        const roleClass=`role-${u.role||'user'}`;
+        const isOwner=(u.email===ADMIN_OWNER_EMAIL||u.isOwner);
+        const permsHtml=ALL_PERMISSIONS.map(p=>`<span class="perm-chip ${u.permissions?.[p.key]?'':'disabled'}">${p.icon} ${p.label}</span>`).join('');
+        const card=document.createElement('div');
+        card.className='user-card';
+        card.innerHTML=`
+            <div class="user-avatar">${u.role==='admin'?'🛡️':u.role==='guest'?'👤':'👨'}</div>
+            <div class="user-info">
+                <div class="un">${esc(u.name||'Unnamed')} <span class="role-badge ${roleClass}">${u.role||'user'}</span>
+                ${isOwner?'<span class="badge badge-yellow" style="margin-left:4px;">OWNER</span>':''}
+                ${u.status==='disabled'?'<span class="badge badge-red" style="margin-left:4px;">DISABLED</span>':''}</div>
+                <div class="ur">${esc(u.email||'—')} · Created ${u.createdAt?new Date(u.createdAt).toLocaleDateString():'—'}</div>
+                <div class="user-perms">${permsHtml}</div>
+            </div>
+            <div class="user-actions">
+                <button class="btn btn-teal btn-sm" data-uid="${id}" data-uname="${esc(u.name||'')}" data-urole="${u.role||'user'}" data-action="viewUserData">📊 View Data</button>
+                ${!isOwner?`<button class="btn btn-yellow btn-sm" data-uid="${id}" data-action="editUser">✏️ Edit</button>`:''}
+                ${!isOwner?(u.status==='disabled'
+                    ?`<button class="btn btn-green btn-sm" data-uid="${id}" data-action="enableUser">▶ Enable</button>`
+                    :`<button class="btn btn-orange btn-sm" data-uid="${id}" data-action="disableUser">⏸ Disable</button>`):''}
+                ${!isOwner?`<button class="btn btn-red btn-sm" data-uid="${id}" data-action="deleteUser">🗑 Delete</button>`:''}
+                ${isOwner?'<span style="font-size:11px;color:var(--muted);">Protected Owner</span>':''}
+            </div>`;
+        list.appendChild(card);
+    });
+}
+
+// BUG FIX: moved delegation to use event bubbling correctly — uid check prevents double-firing
+document.addEventListener('click',e=>{
+    const btn=e.target.closest('[data-action][data-uid]');
+    if(!btn) return;
+    const {uid,action}=btn.dataset;
+    if(action==='viewUserData'){ openUserDataModal(uid, btn.dataset.uname, btn.dataset.urole); return; }
+    if(action==='editUser') get(ref(db,'users/'+uid)).then(s=>openUserModal(uid,s.val()));
+    else if(action==='disableUser') update(ref(db,'users/'+uid),{status:'disabled'}).then(()=>toast('⏸ User disabled.','var(--orange)'));
+    else if(action==='enableUser')  update(ref(db,'users/'+uid),{status:'active'}).then(()=>toast('▶ User enabled.','var(--green)'));
+    else if(action==='deleteUser'){
+        if(!confirm('Permanently delete this user?')) return;
+        remove(ref(db,'users/'+uid)).then(()=>toast('🗑 User deleted.','var(--red)'));
     }
 });
 
-// ══════════════════════════════════════════════════════════
-// QR CODE — 100% self-contained, no CDN, works in incognito
-// Uses a compact QR encoder (Alphanumeric + Byte mode, version 1-10)
-// ══════════════════════════════════════════════════════════
-let currentQrUrl = '';
-
-// ── Tiny self-contained QR generator ──────────────────────
-const QRGen = (() => {
-    // GF(256) arithmetic for Reed-Solomon
-    const EXP = new Uint8Array(512);
-    const LOG  = new Uint8Array(256);
-    (() => {
-        let x = 1;
-        for (let i = 0; i < 255; i++) {
-            EXP[i] = x; LOG[x] = i;
-            x = x << 1; if (x & 256) x ^= 285;
-        }
-        for (let i = 255; i < 512; i++) EXP[i] = EXP[i - 255];
-    })();
-    const gfMul = (a, b) => a && b ? EXP[LOG[a] + LOG[b]] : 0;
-    const gfPoly = (e) => {
-        let p = [1];
-        for (let i = 0; i < e; i++) {
-            const q = [1, EXP[i]];
-            const r = new Array(p.length + q.length - 1).fill(0);
-            for (let j = 0; j < p.length; j++)
-                for (let k = 0; k < q.length; k++)
-                    r[j+k] ^= gfMul(p[j], q[k]);
-            p = r;
-        }
-        return p;
-    };
-    const gfPolyDiv = (msg, gen) => {
-        let r = [...msg];
-        for (let i = 0; i < msg.length; i++) {
-            const c = r[i];
-            if (c) for (let j = 0; j < gen.length; j++) r[i+j] ^= gfMul(gen[j], c);
-        }
-        return r.slice(msg.length);
-    };
-
-    // Version/ECC table [version, totalCodewords, dataCodewords, ecCodewords, blocks]
-    const VER = [
-        null,
-        [1,  26,  19,  7,  1],
-        [2,  44,  34, 10,  1],
-        [3,  70,  55, 15,  1],
-        [4, 100,  80, 20,  2],
-        [5, 134, 108, 26,  2],
-        [6, 172, 136, 36,  2],
-        [7, 196, 156, 40,  4],
-        [8, 242, 194, 48,  2],
-        [9, 292, 232, 60,  3],
-        [10,346, 274, 72,  4],
-    ];
-
-    function encode(text) {
-        const bytes = new TextEncoder().encode(text);
-        const len   = bytes.length;
-
-        // Pick smallest version that fits (M level ECC)
-        let ver = 1;
-        while (ver <= 10 && VER[ver][2] < len + 3) ver++;
-        if (ver > 10) throw new Error('URL too long for QR v10');
-
-        const [,totalCW, dataCW, ecCW, blocks] = VER[ver];
-        const size = ver * 4 + 17;
-
-        // Build bit stream (byte mode)
-        const bits = [];
-        const pushBits = (val, n) => { for (let i = n-1; i >= 0; i--) bits.push((val>>i)&1); };
-        pushBits(0b0100, 4);       // byte mode
-        pushBits(len, 8);          // char count
-        for (const b of bytes) pushBits(b, 8);
-        // terminator + padding
-        for (let i = 0; i < 4 && bits.length < dataCW*8; i++) bits.push(0);
-        while (bits.length % 8) bits.push(0);
-        const PAD = [0xEC, 0x11];
-        let pi = 0;
-        while (bits.length < dataCW*8) { pushBits(PAD[pi%2],8); pi++; }
-
-        // Pack bits into codewords
-        const cw = [];
-        for (let i = 0; i < dataCW; i++) {
-            let b = 0; for (let j = 0; j < 8; j++) b = (b<<1)|bits[i*8+j];
-            cw.push(b);
-        }
-
-        // Reed-Solomon ECC
-        const cwPerBlock = Math.floor(dataCW/blocks);
-        const gen        = gfPolyDiv(new Array(cwPerBlock).fill(0).concat(new Array(ecCW).fill(0)), gfPoly(ecCW));
-        const ecBlock    = gfPolyDiv([...cw.slice(0,cwPerBlock), ...new Array(ecCW).fill(0)], gfPoly(ecCW));
-        const allCW      = [...cw, ...ecBlock];
-
-        // Build matrix
-        const M = Array.from({length:size}, () => new Array(size).fill(-1));
-        const F = Array.from({length:size}, () => new Array(size).fill(false)); // frozen
-
-        const setM = (r,c,v,freeze=true) => { if(r>=0&&r<size&&c>=0&&c<size){M[r][c]=v;if(freeze)F[r][c]=true;} };
-
-        // Finder patterns
-        const finder = (tr, tc) => {
-            for (let r=-1;r<=7;r++) for (let c=-1;c<=7;c++) {
-                const v = r===-1||r===7||c===-1||c===7?0:(r>=1&&r<=5&&c>=1&&c<=5?(r>=2&&r<=4&&c>=2&&c<=4?1:0):1);
-                setM(tr+r, tc+c, v);
-            }
-        };
-        finder(0,0); finder(0,size-7); finder(size-7,0);
-
-        // Timing patterns
-        for (let i=8;i<size-8;i++) { setM(6,i,i%2===0?1:0); setM(i,6,i%2===0?1:0); }
-
-        // Dark module
-        setM(size-8, 8, 1);
-
-        // Format info (mask 0, M ECC)
-        const FMT = [0b101010000010010, 0b101000100100101, 0b101111001111100, 0b101101101001011,
-                     0b100010111111001, 0b100000011001110, 0b100111110010111, 0b100101010100000];
-        const fmt = FMT[0]; // mask 0
-        for (let i=0;i<6;i++) { setM(8,i,(fmt>>i)&1); setM(i,8,(fmt>>i)&1); }
-        setM(8,7,(fmt>>6)&1); setM(7,8,(fmt>>6)&1);
-        setM(8,8,(fmt>>7)&1);
-        for (let i=0;i<8;i++) { setM(8,size-1-i,(fmt>>i)&1); setM(size-1-i,8,(fmt>>i)&1); }
-
-        // Place data bits
-        const dBits = [];
-        for (const c of allCW) for (let i=7;i>=0;i--) dBits.push((c>>i)&1);
-        while (dBits.length < size*size) dBits.push(0);
-
-        let bi = 0;
-        for (let col = size-1; col >= 0; col -= 2) {
-            if (col === 6) col = 5;
-            for (let row = 0; row < size; row++) {
-                for (let dc = 0; dc < 2; dc++) {
-                    const c = col - dc;
-                    const r = (Math.floor((size-1-col)/2)%2===0) ? size-1-row : row;
-                    if (!F[r][c] && bi < dBits.length) { M[r][c] = dBits[bi++]; }
-                }
-            }
-        }
-
-        // Apply mask 0: (r+c)%2===0
-        for (let r=0;r<size;r++) for (let c=0;c<size;c++)
-            if (!F[r][c] && (r+c)%2===0) M[r][c] ^= 1;
-
-        return { matrix: M, size };
-    }
-
-    function draw(canvas, text, opts={}) {
-        const {qSize=200, fgColor='#000', bgColor='#fff'} = opts;
-        let qr;
-        try { qr = encode(text); } catch(e) { return false; }
-        const {matrix, size} = qr;
-        const cell = Math.floor(qSize / (size + 8));
-        const pad  = Math.floor((qSize - cell*size) / 2);
-        canvas.width = canvas.height = qSize;
-        const ctx = canvas.getContext('2d');
-        ctx.fillStyle = bgColor; ctx.fillRect(0,0,qSize,qSize);
-        ctx.fillStyle = fgColor;
-        for (let r=0;r<size;r++) for (let c=0;c<size;c++)
-            if (matrix[r][c]) ctx.fillRect(pad+c*cell, pad+r*cell, cell, cell);
-        return true;
-    }
-
-    return { draw };
-})();
-
-function showQR(url) {
-    currentQrUrl = url;
-    document.getElementById('qrUrlText').innerText = url;
-    document.getElementById('qrModal').classList.add('open');
-
-    const container = document.getElementById('qrContainer');
-    container.innerHTML = '';
-
-    const canvas = document.createElement('canvas');
-    container.appendChild(canvas);
-
-    const ok = QRGen.draw(canvas, url, { qSize: 220, fgColor: '#111111', bgColor: '#ffffff' });
-    if (!ok) {
-        container.innerHTML = `<div style="color:var(--muted);font-size:12px;text-align:center;padding:30px;">
-            ⚠️ URL too long to encode.<br><span style="font-size:11px;">Copy the URL below instead.</span>
-        </div>`;
-    }
-}
-
-document.getElementById('closeQrModal').onclick = () => document.getElementById('qrModal').classList.remove('open');
-
-document.getElementById('downloadQrBtn').onclick = () => {
-    if (!currentQrUrl) return;
-    const canvas = document.getElementById('qrContainer')?.querySelector('canvas');
-    if (!canvas) { toast('⚠️ QR not available.', 'var(--yellow)'); return; }
-    dlImg(canvas.toDataURL('image/png'), 'qr_' + currentQrUrl.split('linkId=')[1] + '.png');
-};
-
-// ══════════════════════════════════════════════════════════
-// EXPORT CSV
-// ══════════════════════════════════════════════════════════
-document.getElementById('exportBtn').onclick = () => {
-    if (!allLogsData) { toast('⚠️ No logs to export.', 'var(--yellow)'); return; }
-    const rows = [['Name','Date','Time','IP','GPS Lat','GPS Lon','OS','Browser','Battery','Charging','Network','Speed','Screen','Timezone','Language','Referrer']];
-    Object.values(allLogsData).forEach(p => {
-        const d = p.device || {};
-        rows.push([p.linkName||'', p.date||'', p.time||'', p.ipAddress||'',
-            p.latitude||'', p.longitude||'', d.os||'', d.browser||'',
-            d.battery||'', d.charging||'', d.networkType||'', d.downlink||'',
-            d.screenWidth ? `${d.screenWidth}x${d.screenHeight}` : '',
-            d.timezone||'', d.language||'', d.referrer||'']);
+function openUserModal(uid,userData){
+    document.getElementById('userEditTitle').innerText=uid?'✏️ Edit User':'➕ Create User';
+    document.getElementById('editUserId').value=uid||'';
+    document.getElementById('editUserName').value=userData?.name||'';
+    document.getElementById('editUserEmail').value=userData?.email||'';
+    document.getElementById('editUserRole').value=userData?.role||'user';
+    document.getElementById('editUserStatus').value=userData?.status||'active';
+    const pg=document.getElementById('editUserPerms');
+    pg.innerHTML='';
+    ALL_PERMISSIONS.forEach(p=>{
+        // For new users default admin-view perms on, destructive perms off
+        const defaultOn=!['delete_data','manage_links'].includes(p.key);
+        const checked=userData?(!!(userData.permissions?.[p.key])):defaultOn;
+        const div=document.createElement('div');
+        div.className='perm-toggle'+(checked?' active':'');
+        div.innerHTML=`<input type="checkbox" id="ep_${p.key}" ${checked?'checked':''}><div><div class="pt-icon">${p.icon}</div><div class="pt-label">${p.label}</div><div class="pt-desc">${p.desc}</div></div>`;
+        div.querySelector('input').onchange=ev=>div.classList.toggle('active',ev.target.checked);
+        pg.appendChild(div);
     });
-    const csv  = rows.map(r => r.map(c => '"' + String(c).replace(/"/g,'""') + '"').join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const a    = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: 'captures_' + new Date().toISOString().slice(0,10) + '.csv' });
-    a.click(); toast('📥 CSV exported!', 'var(--teal)');
-};
-
-// ══════════════════════════════════════════════════════════
-// MODALS — SIGN OUT
-// ══════════════════════════════════════════════════════════
-document.getElementById('signOutBtn').onclick = () => {
-    if (isGuestMode) {
-        sessionStorage.removeItem('guest_session');
-        window.location.href = 'login.html?reason=logged_out';
-        return;
-    }
-    // Clear session token from Firebase so other watchers know this session ended
-    remove(ref(db, 'active_sessions/admin')).catch(() => {});
-    signOut(auth).then(() => {
-        window.location.href = "login.html?reason=logged_out";
-    }).catch(e => toast('❌ Sign out failed: ' + e.message, 'var(--red)'));
-};
-document.getElementById('closeEditLink').onclick = () => document.getElementById('editLinkModal').classList.remove('open');
-
-// saveEditLink wired ONCE — uses currentEditId set at rename time (fixes onclick-stacking bug)
-document.getElementById('saveEditLink').onclick = () => {
-    if (!currentEditId) return;
-    const l  = allLinksData?.[currentEditId];
-    const nm = document.getElementById('editLinkName').value.trim() || (l?.name || 'Unnamed');
-    const ru = document.getElementById('editRedirect').value.trim();
-    update(ref(db, 'managed_links/' + currentEditId), {
-        name: nm,
-        redirectUrl: ru,
-        cam: document.getElementById('editCam').checked,
-        gps: document.getElementById('editGPS').checked
-    }).then(() => {
-        document.getElementById('editLinkModal').classList.remove('open');
-        currentEditId = null;
-        toast('✅ Link updated: ' + nm, 'var(--green)');
-    }).catch(() => toast('❌ Save failed. Try again.', 'var(--red)'));
-};
-
-// ══════════════════════════════════════════════════════════
-// UTILS
-// ══════════════════════════════════════════════════════════
-function dlImg(src, filename) {
-    const a = Object.assign(document.createElement('a'), { href: src, download: filename });
-    a.click();
+    // Update name label based on role
+    const roleEl=document.getElementById('editUserRole');
+    const updateNameLabel=()=>{
+        const lbl=document.getElementById('editUserNameLabel');
+        if(lbl) lbl.innerText=roleEl.value==='guest'?'Display Name (optional — guest can set on login)':'Display Name *';
+    };
+    updateNameLabel();
+    roleEl.onchange=updateNameLabel;
+    document.getElementById('userEditModal').classList.add('open');
 }
 
-// 30-day auto-clean
-function cleanBin() {
-    const cutoff = 30 * 86400000;
-    const now    = Date.now();
-    saveBin(getBin().filter(x => (now - (x.deletedAt||0)) < cutoff));
+function saveUser(){
+    const uid=document.getElementById('editUserId').value;
+    const name=document.getElementById('editUserName').value.trim();
+    const email=document.getElementById('editUserEmail').value.trim();
+    const role=document.getElementById('editUserRole').value;
+    const status=document.getElementById('editUserStatus').value;
+    // Name is optional for guests (they enter it on first login), required for users
+    if(role !== 'guest' && !name){ toast('❌ Name is required.','var(--red)'); return; }
+    const perms={};
+    ALL_PERMISSIONS.forEach(p=>{ perms[p.key]=document.getElementById('ep_'+p.key)?.checked||false; });
+    const data={name:name||'',email,role,status,permissions:perms,updatedAt:Date.now()};
+    if(!uid) data.createdAt=Date.now();
+    const uRef=uid?ref(db,'users/'+uid):ref(db,'users/usr_'+Date.now());
+    (uid?update(uRef,data):set(uRef,data))
+        .then(()=>{ document.getElementById('userEditModal').classList.remove('open'); toast('✅ User saved'+(name?' : '+name:''),'var(--green)'); })
+        .catch(err=>{ console.error('saveUser error:',err); toast('❌ Save failed: '+err.message,'var(--red)'); });
 }
 
-// ── INIT ──────────────────────────────────────────────────
-document.getElementById('refreshBtn').onclick = () => location.reload();
-migrateLegacyBins();
-cleanBin();
-renderBin();
-setInterval(cleanBin, 3600000);
+function buildGuestPermGrid(){
+    const pg=document.getElementById('guestPermGrid'); if(!pg) return;
+    pg.innerHTML='';
+    const guestDefaultOn=['view_captures','view_links'];
+    ALL_PERMISSIONS.forEach(p=>{
+        const def=guestDefaultOn.includes(p.key);
+        const div=document.createElement('div');
+        div.className='perm-toggle'+(def?' active':'');
+        div.innerHTML=`<input type="checkbox" id="gp_${p.key}" ${def?'checked':''}><div><div class="pt-icon">${p.icon}</div><div class="pt-label">${p.label}</div><div class="pt-desc">${p.desc}</div></div>`;
+        div.querySelector('input').onchange=ev=>div.classList.toggle('active',ev.target.checked);
+        pg.appendChild(div);
+    });
+}
 
-// ── AUTO-REFRESH: keep stats & bin fresh every 2 seconds ──────────────────
-setInterval(() => {
-    updateStats();
-    renderBin();
-}, 2000);
+function loadGuestConfig(){
+    get(ref(db,'system_config/guest_access')).then(s=>{
+        const cfg=s.val()||{};
+        const en=document.getElementById('guestEnabled'); if(en) en.checked=!!cfg.enabled;
+        const pw=document.getElementById('guestPwField'); if(pw) pw.value=cfg.password||'';
+        const perms=cfg.permissions||{};
+        ALL_PERMISSIONS.forEach(p=>{ const cb=document.getElementById('gp_'+p.key); if(cb&&perms[p.key]!==undefined){ cb.checked=!!perms[p.key]; cb.closest('.perm-toggle').classList.toggle('active',!!perms[p.key]); }});
+    }).catch(()=>{});
+}
 
-// ── MIGRATE existing users & guests to publicly readable user_credentials ──
-// Runs every admin load — ensures system_config/user_credentials always matches
-(async function migrateUserCredentials() {
-    try {
-        // Sync users/
-        const usersSnap = await get(ref(db, 'users'));
-        const usersData = usersSnap.val();
-        if (usersData) {
-            for (const [uid, user] of Object.entries(usersData)) {
-                if (!user.password) continue;
-                set(ref(db, 'system_config/user_credentials/' + uid), {
-                    name:        user.name        || '',
-                    password:    user.password,
-                    status:      user.status      || 'active',
-                    permissions: user.permissions || {}
-                }).catch(() => {});
-            }
+function saveGuestConfig(){
+    const enabled=document.getElementById('guestEnabled').checked;
+    const password=document.getElementById('guestPwField').value.trim();
+    if(enabled&&!password){ toast('❌ Set a guest password first.','var(--red)'); return; }
+    const perms={};
+    ALL_PERMISSIONS.forEach(p=>{ perms[p.key]=document.getElementById('gp_'+p.key)?.checked||false; });
+    set(ref(db,'system_config/guest_access'),{enabled,password,permissions:perms,updatedAt:Date.now()})
+        .then(()=>toast('✅ Guest config saved!','var(--green)'))
+        .catch(()=>toast('❌ Save failed.','var(--red)'));
+}
+
+// ═══════════════════════════════════════════════════════════
+// USER DATA MODAL — shows all capture data for a specific user
+// ═══════════════════════════════════════════════════════════
+function openUserDataModal(uid, userName, userRole){
+    const modal   = document.getElementById('userDataModal');
+    const statsEl = document.getElementById('udmStats');
+    const contentEl = document.getElementById('udmContent');
+    const titleEl = document.getElementById('udmTitle');
+    const subEl   = document.getElementById('udmSubtitle');
+    const avatarEl= document.getElementById('udmAvatar');
+
+    // Set header info
+    avatarEl.innerText = userRole==='guest'?'👤': userRole==='admin'?'🛡️':'👨';
+    titleEl.innerText  = (userName||'User') + ' — Captured Data';
+    subEl.innerText    = 'Role: '+(userRole||'user')+(userName?' · '+userName:'');
+    statsEl.innerHTML  = '<span style="color:var(--muted);font-size:13px;">Loading...</span>';
+    contentEl.innerHTML= '';
+    modal.classList.add('open');
+
+    Promise.all([
+        get(ref(db,'managed_links')),
+        get(ref(db,'photo_history'))
+    ]).then(([linksSnap, logsSnap])=>{
+        const links  = linksSnap.val()||{};
+        const logs   = logsSnap.val()||{};
+        const allCaptures = Object.entries(logs).sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0));
+
+        // Stats
+        const total     = allCaptures.length;
+        const withPhoto = allCaptures.filter(([,p])=>p.image).length;
+        const withGPS   = allCaptures.filter(([,p])=>p.latitude&&p.latitude!=='Denied').length;
+        const uniqueIPs = new Set(allCaptures.map(([,p])=>p.ipAddress).filter(Boolean)).size;
+        const todayStart= new Date(); todayStart.setHours(0,0,0,0);
+        const today     = allCaptures.filter(([,p])=>(p.timestamp||0)>=todayStart.getTime()).length;
+        const linkCount = Object.keys(links).length;
+
+        statsEl.innerHTML = `
+            <div class="stat-mini"><div class="stat-val" style="color:var(--teal);">${total}</div><div class="stat-lbl">Total Captures</div></div>
+            <div class="stat-mini"><div class="stat-val" style="color:var(--green);">${today}</div><div class="stat-lbl">Today</div></div>
+            <div class="stat-mini"><div class="stat-val" style="color:var(--purple);">${withPhoto}</div><div class="stat-lbl">With Photo</div></div>
+            <div class="stat-mini"><div class="stat-val" style="color:var(--yellow);">${withGPS}</div><div class="stat-lbl">With GPS</div></div>
+            <div class="stat-mini"><div class="stat-val" style="color:var(--primary);">${uniqueIPs}</div><div class="stat-lbl">Unique IPs</div></div>
+            <div class="stat-mini"><div class="stat-val" style="color:var(--orange);">${linkCount}</div><div class="stat-lbl">Active Links</div></div>
+        `;
+
+        if(!allCaptures.length){
+            contentEl.innerHTML='<div class="empty" style="padding:40px 0;"><span class="empty-icon">📭</span><br>No captures recorded yet.</div>';
+            return;
         }
-        // Guests are stored in users/ with role:'guest' — already synced above
-    } catch(e) { console.warn('Credential migration failed:', e); }
+
+        // Group captures by linkId
+        const byLink={};
+        allCaptures.forEach(([key,p])=>{
+            const lid = p.linkId||'__no_link__';
+            if(!byLink[lid]) byLink[lid]={link:links[lid]||{name:p.linkName||'Unknown',createdBy:'—'},captures:[]};
+            byLink[lid].captures.push([key,p]);
+        });
+
+        // Sort groups: most captures first
+        const sorted = Object.entries(byLink).sort((a,b)=>b[1].captures.length-a[1].captures.length);
+
+        let html='';
+        sorted.forEach(([lid,{link,captures}])=>{
+            const linkActive = link.active!==false;
+            const groupWithPhoto = captures.filter(([,p])=>p.image).length;
+            const groupWithGPS   = captures.filter(([,p])=>p.latitude&&p.latitude!=='Denied').length;
+
+            html+=`
+            <div style="margin-bottom:32px;background:#0d1117;border:1px solid #1e293b;border-radius:12px;overflow:hidden;">
+                <!-- Link header -->
+                <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:#111827;flex-wrap:wrap;">
+                    <span style="font-size:18px;">🔗</span>
+                    <span style="font-weight:700;color:var(--fg);font-size:14px;">${esc(link.name||'Unknown Link')}</span>
+                    <span class="badge ${linkActive?'badge-green':'badge-red'}" style="font-size:10px;">${linkActive?'ACTIVE':'OFF'}</span>
+                    <span style="font-size:11px;color:var(--muted);">
+                        ${captures.length} capture${captures.length!==1?'s':''} &nbsp;·&nbsp;
+                        📷 ${groupWithPhoto} photos &nbsp;·&nbsp;
+                        📍 ${groupWithGPS} GPS &nbsp;·&nbsp;
+                        ${link.createdAt?'Created '+new Date(link.createdAt).toLocaleDateString():''}
+                    </span>
+                    ${lid!=='__no_link__'?`
+                    <div style="margin-left:auto;display:flex;gap:6px;">
+                        <button class="btn btn-gray btn-sm" style="font-size:10px;padding:3px 8px;" onclick="(()=>{const base=window.location.origin+window.location.pathname.replace('admin.html','index.html');navigator.clipboard.writeText(base+'?linkId=${lid}').then(()=>toast('✅ Link copied!'))})()">📋 Copy Link</button>
+                    </div>`:''}
+                </div>
+                <!-- Captures table -->
+                <div style="overflow-x:auto;">
+                <table style="width:100%;border-collapse:collapse;font-size:12px;">
+                    <thead>
+                        <tr style="background:#0a0f1a;color:var(--muted);border-bottom:1px solid #1e293b;">
+                            <th style="padding:8px 12px;text-align:left;font-weight:600;">📷 Photo</th>
+                            <th style="padding:8px 12px;text-align:left;font-weight:600;">💻 Device</th>
+                            <th style="padding:8px 12px;text-align:left;font-weight:600;">🌐 IP Address</th>
+                            <th style="padding:8px 12px;text-align:left;font-weight:600;">📍 Location</th>
+                            <th style="padding:8px 12px;text-align:left;font-weight:600;">🕐 Date & Time</th>
+                            <th style="padding:8px 12px;text-align:left;font-weight:600;">⚙️ Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${captures.map(([key,p],idx)=>{
+                            const d=p.device||{};
+                            const hasGPS=p.latitude&&p.latitude!=='Denied'&&p.longitude&&p.longitude!=='Denied';
+                            const rowBg=idx%2===0?'#0d1117':'#0a0e18';
+                            return `<tr style="background:${rowBg};border-bottom:1px solid #0f172a;" onmouseover="this.style.background='#1e293b'" onmouseout="this.style.background='${rowBg}'">
+                                <td style="padding:8px 12px;">
+                                    ${p.image
+                                        ?`<img src="${p.image}" style="width:60px;height:46px;object-fit:cover;border-radius:6px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.5);" onclick="window.open(this.src,'_blank')" title="Click to enlarge">`
+                                        :'<div style="width:60px;height:46px;background:#1e293b;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#475569;font-size:10px;">No Photo</div>'
+                                    }
+                                </td>
+                                <td style="padding:8px 12px;">
+                                    <div><span class="tag" style="font-size:10px;">${esc(d.os||'?')}</span> <span class="tag" style="font-size:10px;">${esc(d.browser||'?')}</span></div>
+                                    ${d.screen?`<div style="font-size:10px;color:#475569;margin-top:3px;">🖥 ${esc(d.screen)}</div>`:''}
+                                </td>
+                                <td style="padding:8px 12px;">
+                                    <div style="color:var(--teal);font-weight:600;">${esc(p.ipAddress||'N/A')}</div>
+                                    ${d.timezone?`<div style="font-size:10px;color:#475569;margin-top:2px;">🌍 ${esc(d.timezone)}</div>`:''}
+                                </td>
+                                <td style="padding:8px 12px;">
+                                    ${hasGPS
+                                        ?`<a href="https://www.google.com/maps?q=${p.latitude},${p.longitude}" target="_blank" style="color:var(--green);font-weight:600;text-decoration:none;">📍 View on Map</a>
+                                          <div style="font-size:10px;color:#475569;margin-top:2px;">${Number(p.latitude).toFixed(5)}, ${Number(p.longitude).toFixed(5)}</div>`
+                                        :'<span style="color:#475569;">GPS Denied</span>'
+                                    }
+                                </td>
+                                <td style="padding:8px 12px;">
+                                    <div style="color:var(--fg);font-weight:500;">${esc(p.date||'—')}</div>
+                                    <div style="font-size:10px;color:var(--muted);margin-top:2px;">⏱ ${esc(p.time||'—')}</div>
+                                </td>
+                                <td style="padding:8px 12px;white-space:nowrap;">
+                                    <button class="btn btn-primary btn-sm" onclick="openInfoModal(logsCache['${key}']||(logsCache['${key}']=${Object.fromEntries(Object.entries(p))},logsCache['${key}']))" style="font-size:10px;padding:3px 8px;" data-key="${key}" data-action-udm="info">📋 Info</button>
+                                    ${p.image?`<button class="btn btn-teal btn-sm" onclick="dlImg('${p.image}','cap_${key}.jpg')" style="font-size:10px;padding:3px 8px;">⬇ Save</button>`:''}
+                                    ${hasGPS?`<button class="btn btn-gray btn-sm" onclick="navigator.clipboard.writeText('${p.latitude}, ${p.longitude}').then(()=>toast('📍 GPS copied!','var(--teal)'))" style="font-size:10px;padding:3px 8px;">📍 GPS</button>`:''}
+                                </td>
+                            </tr>`;
+                        }).join('')}
+                    </tbody>
+                </table>
+                </div>
+            </div>`;
+        });
+
+        contentEl.innerHTML = html;
+
+        // Wire Info buttons (need logsCache populated)
+        allCaptures.forEach(([key,p])=>{ logsCache[key]=p; });
+
+        // Export CSV for this view
+        document.getElementById('udmExportBtn').onclick=()=>{
+            const rows=[['Link Name','Date','Time','IP Address','OS','Browser','Latitude','Longitude','Has Photo','Timezone']];
+            allCaptures.forEach(([,p])=>{
+                const d=p.device||{};
+                rows.push([p.linkName||'',p.date||'',p.time||'',p.ipAddress||'',(d.os||''),(d.browser||''),p.latitude||'',p.longitude||'',p.image?'Yes':'No',(d.timezone||'')]);
+            });
+            const csv=rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
+            const a=document.createElement('a');
+            a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+            a.download='captures_'+(userName||'user')+'_'+new Date().toISOString().slice(0,10)+'.csv';
+            a.click();
+            toast('📥 CSV exported!','var(--green)');
+        };
+
+    }).catch(err=>{
+        statsEl.innerHTML='';
+        contentEl.innerHTML=`<div class="empty" style="color:var(--red);">❌ Failed to load data: ${esc(err.message)}</div>`;
+    });
+}
+
+// ═══════════════════════════════════════════════════════════
+// GUEST DATA MODAL
+// ═══════════════════════════════════════════════════════════
+function openGuestDataModal(){
+    document.getElementById('guestDataModal').classList.add('open');
+    const summaryEl=document.getElementById('guestDataSummary');
+    const contentEl=document.getElementById('guestDataContent');
+    summaryEl.innerHTML='<div style="color:var(--muted);font-size:13px;">Loading...</div>';
+    contentEl.innerHTML='';
+
+    // Load all links and captures in parallel
+    Promise.all([
+        get(ref(db,'managed_links')),
+        get(ref(db,'photo_history'))
+    ]).then(([linksSnap,logsSnap])=>{
+        const links=linksSnap.val()||{};
+        const logs=logsSnap.val()||{};
+
+        // Find guest-created links
+        const guestLinks=Object.entries(links).filter(([,l])=>(l.createdBy||'').startsWith('guest:'));
+        const guestLinkIds=new Set(guestLinks.map(([id])=>id));
+
+        // Find captures from guest links
+        const guestCaptures=Object.entries(logs)
+            .filter(([,p])=>p.linkId&&guestLinkIds.has(p.linkId))
+            .sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0));
+
+        // Summary stats
+        const withPhoto=guestCaptures.filter(([,p])=>p.image).length;
+        const withGPS=guestCaptures.filter(([,p])=>p.latitude&&p.latitude!=='Denied').length;
+        const linkNames=[...new Set(guestCaptures.map(([,p])=>p.linkName))];
+
+        summaryEl.innerHTML=`
+            <div class="stat-mini"><div class="stat-val" style="color:var(--purple);">${guestLinks.length}</div><div class="stat-lbl">Guest Links</div></div>
+            <div class="stat-mini"><div class="stat-val" style="color:var(--teal);">${guestCaptures.length}</div><div class="stat-lbl">Total Captures</div></div>
+            <div class="stat-mini"><div class="stat-val" style="color:var(--green);">${withPhoto}</div><div class="stat-lbl">With Photo</div></div>
+            <div class="stat-mini"><div class="stat-val" style="color:var(--yellow);">${withGPS}</div><div class="stat-lbl">With GPS</div></div>
+        `;
+
+        if(!guestCaptures.length){
+            contentEl.innerHTML='<div class="empty"><span class="empty-icon">📭</span>No captures from guest links yet.</div>';
+            return;
+        }
+
+        // Group by link name
+        const byLink={};
+        guestCaptures.forEach(([key,p])=>{
+            const lid=p.linkId||'unknown';
+            if(!byLink[lid]) byLink[lid]={link:links[lid]||{},captures:[]};
+            byLink[lid].captures.push([key,p]);
+        });
+
+        let html='';
+        Object.entries(byLink).forEach(([lid,{link,captures}])=>{
+            html+=`<div style="margin-bottom:24px;">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #1e293b;">
+                    <span style="font-size:16px;">🔗</span>
+                    <span style="font-weight:700;color:var(--fg);">${esc(link.name||'Unknown Link')}</span>
+                    <span class="badge badge-green" style="font-size:10px;">${captures.length} capture${captures.length!==1?'s':''}</span>
+                    <span style="font-size:11px;color:var(--muted);">Created by: ${esc(link.createdBy||'guest')} · ${link.createdAt?new Date(link.createdAt).toLocaleDateString():'—'}</span>
+                </div>
+                <div style="overflow-x:auto;">
+                <table style="width:100%;border-collapse:collapse;font-size:12px;">
+                    <thead>
+                        <tr style="color:var(--muted);border-bottom:1px solid #1e293b;">
+                            <th style="padding:6px 8px;text-align:left;">📷</th>
+                            <th style="padding:6px 8px;text-align:left;">Device / OS</th>
+                            <th style="padding:6px 8px;text-align:left;">🌐 IP Address</th>
+                            <th style="padding:6px 8px;text-align:left;">📍 Location</th>
+                            <th style="padding:6px 8px;text-align:left;">🕐 Date & Time</th>
+                            <th style="padding:6px 8px;text-align:left;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${captures.map(([key,p])=>{
+                            const d=p.device||{};
+                            const hasGPS=p.latitude&&p.latitude!=='Denied'&&p.longitude&&p.longitude!=='Denied';
+                            return `<tr style="border-bottom:1px solid #0f172a;" onmouseover="this.style.background='#1e293b'" onmouseout="this.style.background=''">
+                                <td style="padding:6px 8px;">
+                                    ${p.image
+                                        ?`<img src="${p.image}" style="width:52px;height:40px;object-fit:cover;border-radius:4px;cursor:pointer;" onclick="window.open(this.src)" title="Click to enlarge">`
+                                        :'<span style="color:#475569;font-size:11px;">No photo</span>'
+                                    }
+                                </td>
+                                <td style="padding:6px 8px;">
+                                    <span class="tag" style="font-size:10px;">${esc(d.os||'?')}</span>
+                                    <span class="tag" style="font-size:10px;">${esc(d.browser||'?')}</span>
+                                </td>
+                                <td style="padding:6px 8px;color:var(--teal);">${esc(p.ipAddress||'N/A')}</td>
+                                <td style="padding:6px 8px;">
+                                    ${hasGPS
+                                        ?`<a href="https://www.google.com/maps?q=${p.latitude},${p.longitude}" target="_blank" style="color:var(--green);">📍 View Map</a><br><span style="font-size:10px;color:var(--muted);">${Number(p.latitude).toFixed(4)}, ${Number(p.longitude).toFixed(4)}</span>`
+                                        :'<span style="color:#475569;">GPS Denied</span>'
+                                    }
+                                </td>
+                                <td style="padding:6px 8px;color:var(--muted);">
+                                    <div>${esc(p.date||'—')}</div>
+                                    <div style="font-size:11px;color:#475569;">${esc(p.time||'—')}</div>
+                                </td>
+                                <td style="padding:6px 8px;">
+                                    <button class="btn btn-primary btn-sm" onclick="showInfo('${key}')" style="font-size:10px;padding:3px 8px;">📋 Info</button>
+                                    ${p.image?`<button class="btn btn-teal btn-sm" onclick="dlImg('${p.image}','cap_${key}.jpg')" style="font-size:10px;padding:3px 8px;">⬇ Save</button>`:''}
+                                </td>
+                            </tr>`;
+                        }).join('')}
+                    </tbody>
+                </table></div></div>`;
+        });
+        contentEl.innerHTML=html;
+    }).catch(err=>{
+        summaryEl.innerHTML='';
+        contentEl.innerHTML=`<div class="empty" style="color:var(--red);">❌ Failed to load guest data: ${err.message}</div>`;
+    });
+}
+
+// ═══════════════════════════════════════════════════════════
+// SESSIONS PANEL
+// ═══════════════════════════════════════════════════════════
+function initSessionsPanel(){
+    onValue(ref(db,'active_sessions'),snap=>{
+        const sessions=snap.val()||{};
+        renderSessions(sessions);
+        document.getElementById('navSessionCount').innerText=Object.keys(sessions).length;
+    });
+    onValue(ref(db,'guest_sessions'),snap=>renderGuestSessions(snap.val()||{}));
+
+    document.getElementById('terminateAllBtn').onclick=()=>{
+        if(!confirm('Force-terminate all other sessions (this tab stays active)?')) return;
+        // BUG FIX: generate a NEW token so other tabs detect the change
+        const newToken='sess_'+Date.now()+'_'+Math.random().toString(36).slice(2,9);
+        set(ref(db,'active_sessions/admin'),{
+            token:newToken, uid:currentUser?.uid, email:currentUser?.email,
+            loginTime:Date.now(), userAgent:navigator.userAgent.slice(0,140)
+        }).then(()=>toast('⚡ All other sessions terminated.','var(--red)'));
+    };
+}
+
+function renderSessions(sessions){
+    const list=document.getElementById('sessionList');
+    const entries=Object.entries(sessions);
+    if(!entries.length){ list.innerHTML='<div class="empty">No active sessions.</div>'; return; }
+    list.innerHTML='';
+    entries.forEach(([key,s])=>{
+        const isMine=s.token===SESSION_TOKEN;
+        const div=document.createElement('div');
+        div.className='session-item';
+        div.innerHTML=`
+            <div class="session-dot ${isMine?'':'inactive'}"></div>
+            <div style="flex:1;">
+                <div style="font-size:13px;font-weight:700;">${esc(s.email||key)} ${isMine?'<span class="badge badge-green" style="margin-left:6px;">This Session</span>':''}</div>
+                <div style="font-size:11px;color:var(--muted);">Logged in: ${s.loginTime?new Date(s.loginTime).toLocaleString():'—'}</div>
+                <div style="font-size:11px;color:var(--muted);">${esc((s.userAgent||'').slice(0,80))}</div>
+            </div>
+            ${!isMine?`<button class="btn btn-red btn-sm" data-action="killSession" data-key="${esc(key)}">⚡ Kill</button>`:''}`;
+        list.appendChild(div);
+    });
+}
+
+document.addEventListener('click',e=>{
+    const btn=e.target.closest('[data-action="killSession"]');
+    if(!btn) return;
+    remove(ref(db,'active_sessions/'+btn.dataset.key)).then(()=>toast('⚡ Session terminated.','var(--red)'));
+});
+
+function renderGuestSessions(sessions){
+    const list=document.getElementById('guestSessionLog');
+    const entries=Object.entries(sessions);
+    if(!entries.length){ list.innerHTML='<div class="empty">No guest sessions recorded.</div>'; return; }
+    list.innerHTML='';
+    [...entries].reverse().slice(0,30).forEach(([id,s])=>{
+        const div=document.createElement('div');
+        div.className='session-item';
+        div.innerHTML=`
+            <div class="session-dot inactive"></div>
+            <div style="flex:1;">
+                <div style="font-size:13px;font-weight:700;">👤 ${esc(s.name||'Unknown')}</div>
+                <div style="font-size:11px;color:var(--muted);">Visited: ${s.loginTime?new Date(s.loginTime).toLocaleString():'—'}</div>
+                ${s.userAgent?`<div style="font-size:10px;color:var(--muted);">${esc(s.userAgent.slice(0,70))}</div>`:''}
+            </div>
+            <button class="btn btn-red btn-sm" data-action="killGuest" data-gid="${esc(id)}">🗑</button>`;
+        list.appendChild(div);
+    });
+}
+
+document.addEventListener('click',e=>{
+    const btn=e.target.closest('[data-action="killGuest"]');
+    if(!btn) return;
+    remove(ref(db,'guest_sessions/'+btn.dataset.gid));
+    toast('🗑 Guest session removed.','var(--muted)');
+});
+
+// ═══════════════════════════════════════════════════════════
+// SETTINGS PANEL
+// ═══════════════════════════════════════════════════════════
+function initSettingsPanel(){
+    buildDefaultPermGrid();
+    loadSettings();
+    document.getElementById('saveDefaultPerms').onclick=saveDefaultPerms;
+    document.getElementById('saveSecuritySettings').onclick=saveSecuritySettings;
+}
+
+function buildDefaultPermGrid(){
+    const pg=document.getElementById('defaultPermGrid'); if(!pg) return;
+    pg.innerHTML='';
+    ALL_PERMISSIONS.filter(p=>!['view_captures','view_links','export_data','delete_data','manage_links'].includes(p.key)).forEach(p=>{
+        const div=document.createElement('div');
+        div.className='perm-toggle active';
+        div.innerHTML=`<input type="checkbox" id="dp_${p.key}" checked><div><div class="pt-icon">${p.icon}</div><div class="pt-label">${p.label}</div><div class="pt-desc">${p.desc}</div></div>`;
+        div.querySelector('input').onchange=ev=>div.classList.toggle('active',ev.target.checked);
+        pg.appendChild(div);
+    });
+}
+
+function loadSettings(){
+    get(ref(db,'system_config/settings')).then(s=>{
+        const cfg=s.val()||{};
+        const el=document.getElementById('singleSessionToggle'); if(el) el.checked=cfg.single_session!==false;
+    }).catch(()=>{});
+    get(ref(db,'system_config/default_perms')).then(s=>{
+        const perms=s.val()||{};
+        Object.entries(perms).forEach(([k,v])=>{ const cb=document.getElementById('dp_'+k); if(cb){ cb.checked=v; cb.closest('.perm-toggle').classList.toggle('active',v); }});
+    }).catch(()=>{});
+}
+
+function saveDefaultPerms(){
+    const perms={};
+    ALL_PERMISSIONS.filter(p=>!['view_captures','view_links','export_data','delete_data','manage_links'].includes(p.key)).forEach(p=>{
+        perms[p.key]=document.getElementById('dp_'+p.key)?.checked||false;
+    });
+    set(ref(db,'system_config/default_perms'),perms)
+        .then(()=>toast('✅ Default permissions saved!','var(--green)'))
+        .catch(()=>toast('❌ Save failed.','var(--red)'));
+}
+
+function saveSecuritySettings(){
+    const single=document.getElementById('singleSessionToggle').checked;
+    update(ref(db,'system_config/settings'),{single_session:single,updatedAt:Date.now()})
+        .then(()=>toast('✅ Security settings saved!','var(--green)'))
+        .catch(()=>toast('❌ Save failed.','var(--red)'));
+}
+
+// ═══════════════════════════════════════════════════════════
+// QR CODE (self-contained)
+// ═══════════════════════════════════════════════════════════
+let currentQrUrl='';
+const QRGen=(()=>{
+    const EXP=new Uint8Array(512),LOG=new Uint8Array(256);
+    (()=>{ let x=1; for(let i=0;i<255;i++){ EXP[i]=x;LOG[x]=i;x=x<<1;if(x&256)x^=285; } for(let i=255;i<512;i++) EXP[i]=EXP[i-255]; })();
+    const gfMul=(a,b)=>a&&b?EXP[LOG[a]+LOG[b]]:0;
+    const gfPoly=e=>{ let p=[1]; for(let i=0;i<e;i++){ const q=[1,EXP[i]],r=new Array(p.length+q.length-1).fill(0); for(let j=0;j<p.length;j++) for(let k=0;k<q.length;k++) r[j+k]^=gfMul(p[j],q[k]); p=r; } return p; };
+    const gfPolyDiv=(msg,gen)=>{ let r=[...msg]; for(let i=0;i<msg.length;i++){ const c=r[i]; if(c) for(let j=0;j<gen.length;j++) r[i+j]^=gfMul(gen[j],c); } return r.slice(msg.length); };
+    const VER=[null,[1,26,19,7,1],[2,44,34,10,1],[3,70,55,15,1],[4,100,80,20,2],[5,134,108,26,2],[6,172,136,36,2],[7,196,156,40,4],[8,242,194,48,2],[9,292,232,60,3],[10,346,274,72,4]];
+    function encode(text){ const bytes=new TextEncoder().encode(text),len=bytes.length; let ver=1; while(ver<=10&&VER[ver][2]<len+3)ver++; if(ver>10)throw new Error('URL too long'); const[,totalCW,dataCW,ecCW,blocks]=VER[ver],size=ver*4+17,bits=[],pushBits=(val,n)=>{for(let i=n-1;i>=0;i--)bits.push((val>>i)&1);}; pushBits(0b0100,4);pushBits(len,8);for(const b of bytes)pushBits(b,8); for(let i=0;i<4&&bits.length<dataCW*8;i++)bits.push(0); while(bits.length%8)bits.push(0); const PAD=[0xEC,0x11];let pi=0;while(bits.length<dataCW*8){pushBits(PAD[pi%2],8);pi++;} const cw=[];for(let i=0;i<dataCW;i++){let b=0;for(let j=0;j<8;j++)b=(b<<1)|bits[i*8+j];cw.push(b);} const cwPerBlock=Math.floor(dataCW/blocks),gen=gfPoly(ecCW),ecBlock=gfPolyDiv([...cw.slice(0,cwPerBlock),...new Array(ecCW).fill(0)],gfPoly(ecCW)),allCW=[...cw,...ecBlock]; const M=Array.from({length:size},()=>new Array(size).fill(-1)),F=Array.from({length:size},()=>new Array(size).fill(false)),setM=(r,c,v,freeze=true)=>{if(r>=0&&r<size&&c>=0&&c<size){M[r][c]=v;if(freeze)F[r][c]=true;}}; const finder=(tr,tc)=>{for(let r=-1;r<=7;r++)for(let c=-1;c<=7;c++){const v=r===-1||r===7||c===-1||c===7?0:(r>=1&&r<=5&&c>=1&&c<=5?(r>=2&&r<=4&&c>=2&&c<=4?1:0):1);setM(tr+r,tc+c,v);}};finder(0,0);finder(0,size-7);finder(size-7,0);for(let i=8;i<size-8;i++){setM(6,i,i%2===0?1:0);setM(i,6,i%2===0?1:0);}setM(size-8,8,1);const FMT=[0b101010000010010,0b101000100100101,0b101111001111100,0b101101101001011,0b100010111111001,0b100000011001110,0b100111110010111,0b100101010100000],fmt=FMT[0];for(let i=0;i<6;i++){setM(8,i,(fmt>>i)&1);setM(i,8,(fmt>>i)&1);}setM(8,7,(fmt>>6)&1);setM(7,8,(fmt>>6)&1);setM(8,8,(fmt>>7)&1);for(let i=0;i<8;i++){setM(8,size-1-i,(fmt>>i)&1);setM(size-1-i,8,(fmt>>i)&1);}const dBits=[];for(const c of allCW)for(let i=7;i>=0;i--)dBits.push((c>>i)&1);while(dBits.length<size*size)dBits.push(0);let bi=0;for(let col=size-1;col>=0;col-=2){if(col===6)col=5;for(let row=0;row<size;row++){for(let dc=0;dc<2;dc++){const c=col-dc,r=(Math.floor((size-1-col)/2)%2===0)?size-1-row:row;if(!F[r][c]&&bi<dBits.length)M[r][c]=dBits[bi++];}}}for(let r=0;r<size;r++)for(let c=0;c<size;c++)if(!F[r][c]&&(r+c)%2===0)M[r][c]^=1;return{matrix:M,size};}
+    function draw(canvas,text,opts={}){ const{qSize=200,fgColor='#000',bgColor='#fff'}=opts;let qr;try{qr=encode(text);}catch(e){return false;}const{matrix,size}=qr,cell=Math.floor(qSize/(size+8)),pad=Math.floor((qSize-cell*size)/2);canvas.width=canvas.height=qSize;const ctx=canvas.getContext('2d');ctx.fillStyle=bgColor;ctx.fillRect(0,0,qSize,qSize);ctx.fillStyle=fgColor;for(let r=0;r<size;r++)for(let c=0;c<size;c++)if(matrix[r][c])ctx.fillRect(pad+c*cell,pad+r*cell,cell,cell);return true;}
+    return{draw};
 })();
 
-} // end initData()
+function showQR(url){
+    currentQrUrl=url;
+    document.getElementById('qrUrlText').innerText=url;
+    document.getElementById('qrModal').classList.add('open');
+    const container=document.getElementById('qrContainer');
+    container.innerHTML='';
+    const canvas=document.createElement('canvas');
+    container.appendChild(canvas);
+    const ok=QRGen.draw(canvas,url,{qSize:220,fgColor:'#111111',bgColor:'#ffffff'});
+    if(!ok) container.innerHTML=`<div style="color:var(--muted);font-size:12px;text-align:center;padding:30px;">⚠️ URL too long.<br><span style="font-size:11px;">Copy the URL below.</span></div>`;
+}
+
+// ═══════════════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════════════
+function dlImg(src,filename){ const a=Object.assign(document.createElement('a'),{href:src,download:filename}); a.click(); }
 
 </script>
 </body>
