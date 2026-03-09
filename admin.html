@@ -1795,28 +1795,58 @@ document.getElementById('saveUserBtn').onclick = async () => {
     };
 
     if (editingName) {
-        // Update existing user (name can't change)
+        // Update existing user (permissions + optional password change)
         const updateData = { permissions };
         if (pass) updateData.password = pass;
-        update(ref(db, 'users/' + editingName), updateData).then(() => {
+        const saveBtn2 = document.getElementById('saveUserBtn');
+        saveBtn2.disabled = true; saveBtn2.innerText = 'Saving...';
+        msg.style.color = 'var(--muted)'; msg.innerText = 'Updating user...';
+        try {
+            await update(ref(db, 'users/' + editingName), updateData);
             document.getElementById('userModal').classList.remove('open');
-            toast(`✅ User ${editingName} updated.`, 'var(--green)');
-        });
+            toast('✅ User "' + editingName + '" updated successfully.', 'var(--green)');
+        } catch(e) {
+            msg.style.color = 'var(--red)';
+            msg.innerText = '❌ Update failed: ' + (e.message || 'Unknown error');
+        } finally {
+            saveBtn2.disabled = false; saveBtn2.innerText = '💾 Save';
+        }
     } else {
         // Check username not taken
         try {
             const snap = await get(ref(db, 'users/' + username));
             if (snap.exists()) { msg.style.color = 'var(--red)'; msg.innerText = '❌ Username already taken.'; return; }
-        } catch(e) {}
+        } catch(e) {
+            msg.style.color = 'var(--red)';
+            msg.innerText = '❌ Network error — check your connection and try again.';
+            return;
+        }
 
-        set(ref(db, 'users/' + username), {
-            password, active: true, createdAt: Date.now(), permissions
-        }).then(() => {
+        // Disable button to prevent double-submit
+        const saveBtn = document.getElementById('saveUserBtn');
+        saveBtn.disabled = true;
+        saveBtn.innerText = 'Saving...';
+        msg.style.color = 'var(--muted)';
+        msg.innerText = 'Creating user...';
+
+        try {
+            await set(ref(db, 'users/' + username), {
+                password: pass,
+                active: true,
+                createdAt: Date.now(),
+                permissions,
+                createdBy: 'admin'
+            });
             document.getElementById('userModal').classList.remove('open');
-            toast(`✅ User ${username} created!`, 'var(--green)');
-            // Show user login option
+            toast('✅ User "' + username + '" created successfully!', 'var(--green)');
             document.getElementById('loginModeSwitch').style.display = 'flex';
-        });
+        } catch(e) {
+            msg.style.color = 'var(--red)';
+            msg.innerText = '❌ Save failed: ' + (e.message || 'Unknown error. Check Firebase rules.');
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.innerText = '💾 Save';
+        }
     }
 };
 
