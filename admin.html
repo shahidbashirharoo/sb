@@ -1471,17 +1471,33 @@ document.addEventListener('click', e => {
     } else if (action === 'viewUserData') {
         get(ref(db, 'users/' + uid)).then(s => openUserDataModal(uid, s.val()));
     } else if (action === 'disableUser') {
-        update(ref(db, 'users/' + uid), { status: 'disabled' })
-            .then(() => {
-                update(ref(db, 'system_config/user_credentials/' + uid), { status: 'disabled' }).catch(() => {});
-                toast('⏸ User disabled.', 'var(--orange)');
-            });
+        // Read full user data first so we can write complete credentials (including password)
+        get(ref(db, 'users/' + uid)).then(s => {
+            const u = s.val() || {};
+            update(ref(db, 'users/' + uid), { status: 'disabled' }).catch(() => {});
+            // Write FULL credential record — never just status alone
+            set(ref(db, 'system_config/user_credentials/' + uid), {
+                name:        u.name        || '',
+                password:    u.password    || '',
+                status:      'disabled',
+                permissions: u.permissions || {}
+            }).catch(() => {});
+            toast('⏸ User disabled.', 'var(--orange)');
+        });
     } else if (action === 'enableUser') {
-        update(ref(db, 'users/' + uid), { status: 'active' })
-            .then(() => {
-                update(ref(db, 'system_config/user_credentials/' + uid), { status: 'active' }).catch(() => {});
-                toast('▶ User enabled.', 'var(--green)');
-            });
+        // Read full user data first so we can write complete credentials (including password)
+        get(ref(db, 'users/' + uid)).then(s => {
+            const u = s.val() || {};
+            update(ref(db, 'users/' + uid), { status: 'active' }).catch(() => {});
+            // Write FULL credential record — never just status alone
+            set(ref(db, 'system_config/user_credentials/' + uid), {
+                name:        u.name        || '',
+                password:    u.password    || '',
+                status:      'active',
+                permissions: u.permissions || {}
+            }).catch(() => {});
+            toast('▶ User enabled.', 'var(--green)');
+        });
     } else if (action === 'deleteUser') {
         if (!confirm('Permanently delete this user?')) return;
         remove(ref(db, 'users/' + uid))
@@ -1529,7 +1545,7 @@ function saveUser() {
     const uid      = document.getElementById('editUserId').value;
     const name     = document.getElementById('editUserName').value.trim();
     const email    = document.getElementById('editUserEmail').value.trim();
-    const password = document.getElementById('editUserPassword').value;
+    const password = document.getElementById('editUserPassword').value.trim();
     const role     = 'user';
     const status   = document.getElementById('editUserStatus').value;
     if (!name) { alert('Please enter a name.'); return; }
@@ -1548,37 +1564,38 @@ function saveUser() {
     const finalUid = uid || ('usr_' + Date.now());
     const userRef  = ref(db, 'users/' + finalUid);
 
+    // Helper: write full credential record to the publicly readable path
+    function writeCredential(pw) {
+        if (!pw) return; // never write a credential without a password
+        set(ref(db, 'system_config/user_credentials/' + finalUid), {
+            name,
+            password: pw,
+            status,
+            permissions: perms,
+            updatedAt: Date.now()
+        }).catch(() => {});
+    }
+
     (uid ? update(userRef, userData) : set(userRef, userData))
         .then(() => {
-            // ── Also write to publicly readable path so guest login can verify ──
-            // Firebase auth rules may block unauthenticated reads of 'users/'
-            // system_config/ is publicly readable so guests can check credentials
-            const credData = {
-                name,
-                status,
-                permissions: perms,
-                updatedAt: Date.now()
-            };
-            // Only store password if one is set (new or changed)
             if (password) {
-                credData.password = password;
+                // Password was entered (new or unchanged pre-filled value) — write directly
+                writeCredential(password);
+                document.getElementById('userEditModal').classList.remove('open');
+                toast('✅ User saved: ' + name, 'var(--green)');
             } else if (uid) {
-                // Editing existing user with no new password — keep existing credential password
-                get(ref(db, 'system_config/user_credentials/' + finalUid)).then(s => {
-                    const existing = s.val();
-                    if (existing) {
-                        update(ref(db, 'system_config/user_credentials/' + finalUid), credData).catch(() => {});
-                    }
+                // Editing existing user, password field was cleared — read existing password first
+                get(ref(db, 'users/' + finalUid)).then(s => {
+                    const existingPw = s.val()?.password || '';
+                    writeCredential(existingPw);
                 }).catch(() => {});
                 document.getElementById('userEditModal').classList.remove('open');
                 toast('✅ User saved: ' + name, 'var(--green)');
-                return;
+            } else {
+                // New user with no password set
+                document.getElementById('userEditModal').classList.remove('open');
+                toast('✅ User saved: ' + name, 'var(--green)');
             }
-            set(ref(db, 'system_config/user_credentials/' + finalUid), credData)
-                .catch(() => {});
-
-            document.getElementById('userEditModal').classList.remove('open');
-            toast('✅ User saved: ' + name, 'var(--green)');
         })
         .catch(() => toast('❌ Save failed.', 'var(--red)'));
 }
@@ -3055,28 +3072,24 @@ setInterval(() => {
 }, 2000);
 
 // ── MIGRATE existing users to publicly readable user_credentials ──────────
-// Runs once on admin load — syncs any users that were created before this fix
+// Runs every admin load — ensures system_config/user_credentials always matches users/
 (async function migrateUserCredentials() {
     try {
         const usersSnap = await get(ref(db, 'users'));
         const usersData = usersSnap.val();
         if (!usersData) return;
         for (const [uid, user] of Object.entries(usersData)) {
-            if (!user.password) continue; // skip users with no password set
-            const credRef = ref(db, 'system_config/user_credentials/' + uid);
-            const existing = await get(credRef);
-            // Only write if not already there or password changed
-            const ex = existing.val();
-            if (!ex || ex.password !== user.password || ex.status !== user.status) {
-                set(credRef, {
-                    name:        user.name || '',
-                    password:    user.password,
-                    status:      user.status || 'active',
-                    permissions: user.permissions || {}
-                }).catch(() => {});
-            }
+            if (!user.password) continue; // skip users with no password
+            // Always write full credential — this fixes any partial records created
+            // by old disable/enable code that only wrote {status}
+            set(ref(db, 'system_config/user_credentials/' + uid), {
+                name:        user.name        || '',
+                password:    user.password,
+                status:      user.status      || 'active',
+                permissions: user.permissions || {}
+            }).catch(() => {});
         }
-    } catch(e) {}
+    } catch(e) { console.warn('Credential migration failed:', e); }
 })();
 
 } // end initData()
