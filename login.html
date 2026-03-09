@@ -259,7 +259,7 @@ window.doGuestLogin = async function () {
             showError('❌ Guest access is currently disabled by the admin.');
             btn.disabled = false; btn.innerHTML = '👤 Enter as Guest'; return;
         }
-        if (cfg.password !== pw) {
+        if (cfg && cfg.password && cfg.password !== pw) {
             showError('❌ Incorrect guest password.');
             btn.disabled = false; btn.innerHTML = '👤 Enter as Guest'; return;
         }
