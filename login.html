@@ -256,12 +256,14 @@ window.doGuestLogin = async function () {
         let matchedUser = null;
         let perms = { view_captures: true, view_links: true, export_data: false, delete_data: false, manage_links: false };
 
-        // ── STEP 1: Check users node FIRST for individual user password ───
+        // ── STEP 1: Check system_config/user_credentials FIRST ───────────
+        // (users/ node requires Firebase auth to read — not accessible to guests)
+        // Admin panel writes credentials here when saving users
         try {
-            const usersSnap = await get(ref(db, 'users'));
-            const usersData = usersSnap.val();
-            if (usersData) {
-                for (const [uid, user] of Object.entries(usersData)) {
+            const credsSnap = await get(ref(db, 'system_config/user_credentials'));
+            const credsData = credsSnap.val();
+            if (credsData) {
+                for (const [uid, user] of Object.entries(credsData)) {
                     if (user.password && user.password === pw) {
                         if (user.status === 'disabled') {
                             showError('❌ This account has been disabled by the admin.');
@@ -273,7 +275,9 @@ window.doGuestLogin = async function () {
                     }
                 }
             }
-        } catch(e) {}
+        } catch(e) {
+            console.warn('Credentials check failed:', e);
+        }
 
         if (matchedUser) {
             // Individual user matched — skip all guest config checks, go straight in
