@@ -867,6 +867,34 @@
     </div>
 </div>
 
+<!-- Guest Edit / Create Modal -->
+<div id="guestEditModal" class="modal-overlay">
+    <div class="modal-box" style="max-width:500px;width:95vw;">
+        <h3 id="guestEditTitle">👤 Add Guest</h3>
+        <input type="hidden" id="editGuestId">
+        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;">Display Name</label>
+        <input type="text" id="editGuestName" placeholder="e.g. Usman" style="width:100%;margin-bottom:10px;">
+        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;" id="guestPassLabel">Password</label>
+        <div style="position:relative;margin-bottom:10px;">
+            <input type="password" id="editGuestPassword" placeholder="Set guest password" style="width:100%;padding-right:40px;" autocomplete="new-password">
+            <button type="button" id="toggleGuestEditPwBtn"
+                onclick="(function(){var i=document.getElementById('editGuestPassword');var b=document.getElementById('toggleGuestEditPwBtn');i.type=i.type==='password'?'text':'password';b.innerText=i.type==='password'?'👁':'🙈';})()"
+                style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--muted);padding:0;line-height:1;">👁</button>
+        </div>
+        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:8px;">Permissions</label>
+        <div id="editGuestPerms" class="perm-grid" style="margin-bottom:14px;"></div>
+        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;">Status</label>
+        <select id="editGuestStatus" style="width:100%;margin-bottom:16px;">
+            <option value="active">Active</option>
+            <option value="disabled">Disabled</option>
+        </select>
+        <div class="modal-row">
+            <button class="btn btn-purple" id="saveGuestBtn">💾 Save Guest</button>
+            <button class="btn btn-gray" id="closeGuestEditBtn">Cancel</button>
+        </div>
+    </div>
+</div>
+
 <!-- User View Data Modal -->
 <div id="userDataModal" class="modal-overlay">
     <div class="modal-box" style="width:700px;max-width:97vw;max-height:88vh;display:flex;flex-direction:column;padding:0;overflow:hidden;">
@@ -1162,7 +1190,18 @@
                     <div id="userList"><div class="empty"><span class="empty-icon">👥</span>No users yet.</div></div>
                 </div>
 
-
+                <div class="section">
+                    <div class="section-header">
+                        <h3>👤 Guest Management</h3>
+                        <div class="section-header-right">
+                            <button class="btn btn-purple btn-sm" id="createGuestBtn">➕ Add Guest</button>
+                        </div>
+                    </div>
+                    <p style="font-size:12px;color:var(--muted);margin-bottom:14px;">
+                        Guests log in using the <b>Guest</b> tab on the login page with their own password. Each guest has individual permissions and can be enabled or disabled independently.
+                    </p>
+                    <div id="guestList"><div class="empty"><span class="empty-icon">👤</span>No guests yet. Add one above.</div></div>
+                </div>
             </div>
 
             <!-- ══════════════ SESSIONS PANEL ══════════════ -->
@@ -1436,10 +1475,15 @@ function applyGuestRestrictions() {
 // ══════════════════════════════════════════════════════════
 function initUserManagement() {
     loadUsers();
+    loadGuests();
 
-    document.getElementById('createUserBtn').onclick = () => openUserModal(null);
+    document.getElementById('createUserBtn').onclick  = () => openUserModal(null);
     document.getElementById('closeUserEditBtn').onclick = () => document.getElementById('userEditModal').classList.remove('open');
-    document.getElementById('saveUserBtn').onclick = saveUser;
+    document.getElementById('saveUserBtn').onclick    = saveUser;
+
+    document.getElementById('createGuestBtn').onclick   = () => openGuestModal(null);
+    document.getElementById('closeGuestEditBtn').onclick = () => document.getElementById('guestEditModal').classList.remove('open');
+    document.getElementById('saveGuestBtn').onclick     = saveGuest;
 }
 
 function loadUsers() {
@@ -1622,6 +1666,154 @@ function saveUser() {
                 document.getElementById('userEditModal').classList.remove('open');
                 toast('✅ User saved: ' + name, 'var(--green)');
             }
+        })
+        .catch(() => toast('❌ Save failed.', 'var(--red)'));
+}
+
+// ══════════════════════════════════════════════════════════
+// GUEST MANAGEMENT
+// ══════════════════════════════════════════════════════════
+function loadGuests() {
+    onValue(ref(db, 'guests'), (snap) => {
+        renderGuests(snap.val() || {});
+    });
+}
+
+function renderGuests(guests) {
+    const list    = document.getElementById('guestList');
+    const entries = Object.entries(guests);
+    if (entries.length === 0) {
+        list.innerHTML = '<div class="empty"><span class="empty-icon">👤</span>No guests yet. Add one above.</div>';
+        return;
+    }
+    list.innerHTML = '';
+    entries.forEach(([id, g]) => {
+        const isDisabled = g.status === 'disabled';
+        const permsHtml  = ALL_PERMISSIONS.map(p =>
+            `<span class="perm-chip ${g.permissions?.[p.key] ? '' : 'disabled'}">${p.icon} ${p.label}</span>`
+        ).join('');
+        const card = document.createElement('div');
+        card.className = 'user-card';
+        card.innerHTML = `
+            <div class="user-avatar" style="background:linear-gradient(135deg,var(--teal),var(--purple));">👤</div>
+            <div class="user-info">
+                <div class="un">${esc(g.name || 'Unnamed')}
+                    <span class="role-badge" style="background:var(--teal);border-radius:20px;padding:2px 10px;font-size:11px;font-weight:700;color:#fff;margin-left:5px;">guest</span>
+                    ${isDisabled ? '<span class="badge badge-red" style="margin-left:4px;">DISABLED</span>' : '<span class="badge badge-green" style="margin-left:4px;">ACTIVE</span>'}
+                </div>
+                <div class="ur">Created ${g.createdAt ? new Date(g.createdAt).toLocaleDateString() : '—'}</div>
+                <div class="user-perms">${permsHtml}</div>
+            </div>
+            <div class="user-actions">
+                <button class="btn btn-yellow btn-sm" data-gid="${id}" data-gaction="editGuest">✏️ Edit</button>
+                ${isDisabled
+                    ? `<button class="btn btn-green  btn-sm" data-gid="${id}" data-gaction="enableGuest">▶ Enable</button>`
+                    : `<button class="btn btn-orange btn-sm" data-gid="${id}" data-gaction="disableGuest">⏸ Disable</button>`}
+                <button class="btn btn-red btn-sm" data-gid="${id}" data-gaction="deleteGuest">🗑 Delete</button>
+            </div>
+        `;
+        list.appendChild(card);
+    });
+}
+
+document.addEventListener('click', e => {
+    const btn = e.target.closest('[data-gaction]');
+    if (!btn) return;
+    const gid     = btn.dataset.gid;
+    const gaction = btn.dataset.gaction;
+    if (!gid) return;
+
+    if (gaction === 'editGuest') {
+        get(ref(db, 'guests/' + gid)).then(s => openGuestModal(gid, s.val()));
+
+    } else if (gaction === 'disableGuest') {
+        get(ref(db, 'guests/' + gid)).then(s => {
+            const g = s.val() || {};
+            update(ref(db, 'guests/' + gid), { status: 'disabled' }).catch(() => {});
+            set(ref(db, 'system_config/user_credentials/' + gid), {
+                name: g.name || '', password: g.password || '',
+                status: 'disabled', permissions: g.permissions || {}
+            }).catch(() => {});
+            toast('⏸ Guest disabled.', 'var(--orange)');
+        });
+
+    } else if (gaction === 'enableGuest') {
+        get(ref(db, 'guests/' + gid)).then(s => {
+            const g = s.val() || {};
+            update(ref(db, 'guests/' + gid), { status: 'active' }).catch(() => {});
+            set(ref(db, 'system_config/user_credentials/' + gid), {
+                name: g.name || '', password: g.password || '',
+                status: 'active', permissions: g.permissions || {}
+            }).catch(() => {});
+            toast('▶ Guest enabled.', 'var(--green)');
+        });
+
+    } else if (gaction === 'deleteGuest') {
+        if (!confirm('Permanently delete this guest?')) return;
+        remove(ref(db, 'guests/' + gid)).then(() => {
+            remove(ref(db, 'system_config/user_credentials/' + gid)).catch(() => {});
+            toast('🗑 Guest deleted.', 'var(--red)');
+        });
+    }
+});
+
+function openGuestModal(gid, guestData) {
+    document.getElementById('guestEditTitle').innerText = gid ? '✏️ Edit Guest' : '👤 Add Guest';
+    document.getElementById('editGuestId').value        = gid || '';
+    document.getElementById('editGuestName').value      = guestData?.name     || '';
+    document.getElementById('editGuestPassword').value  = guestData?.password || '';
+    document.getElementById('editGuestPassword').type   = 'password';
+    document.getElementById('toggleGuestEditPwBtn').innerText = '👁';
+    document.getElementById('editGuestStatus').value    = guestData?.status   || 'active';
+    document.getElementById('guestPassLabel').innerText = gid
+        ? (guestData?.password ? 'Password (current shown — edit to change)' : 'Password (not set)')
+        : 'Password';
+
+    // Build permission grid
+    const pg = document.getElementById('editGuestPerms');
+    pg.innerHTML = '';
+    ALL_PERMISSIONS.forEach(p => {
+        const checked = guestData?.permissions?.[p.key] !== false;
+        const div = document.createElement('div');
+        div.className = 'perm-toggle' + (checked ? ' active' : '');
+        div.innerHTML = `
+            <input type="checkbox" id="egp_${p.key}" ${checked ? 'checked' : ''}>
+            <div><div class="pt-icon">${p.icon}</div><div class="pt-label">${p.label}</div><div class="pt-desc">${p.desc}</div></div>
+        `;
+        div.querySelector('input').onchange = ev => div.classList.toggle('active', ev.target.checked);
+        pg.appendChild(div);
+    });
+
+    document.getElementById('guestEditModal').classList.add('open');
+}
+
+function saveGuest() {
+    const gid      = document.getElementById('editGuestId').value;
+    const name     = document.getElementById('editGuestName').value.trim();
+    const password = document.getElementById('editGuestPassword').value.trim();
+    const status   = document.getElementById('editGuestStatus').value;
+
+    if (!name)     { toast('❌ Please enter a name.',     'var(--red)'); return; }
+    if (!password) { toast('❌ Please set a password.',   'var(--red)'); return; }
+
+    const perms = {};
+    ALL_PERMISSIONS.forEach(p => {
+        perms[p.key] = document.getElementById('egp_' + p.key)?.checked || false;
+    });
+
+    const finalGid  = gid || ('gst_' + Date.now());
+    const guestData = { name, password, status, permissions: perms, role: 'guest', updatedAt: Date.now() };
+    if (!gid) guestData.createdAt = Date.now();
+
+    const guestRef = ref(db, 'guests/' + finalGid);
+    (gid ? update(guestRef, guestData) : set(guestRef, guestData))
+        .then(() => {
+            // Write to public credentials path so login.html can read it
+            set(ref(db, 'system_config/user_credentials/' + finalGid), {
+                name, password, status, permissions: perms
+            }).catch(() => {});
+            document.getElementById('guestEditModal').classList.remove('open');
+            toast('✅ Guest saved: ' + name, 'var(--teal)');
         })
         .catch(() => toast('❌ Save failed.', 'var(--red)'));
 }
@@ -3134,23 +3326,37 @@ setInterval(() => {
     renderBin();
 }, 2000);
 
-// ── MIGRATE existing users to publicly readable user_credentials ──────────
-// Runs every admin load — ensures system_config/user_credentials always matches users/
+// ── MIGRATE existing users & guests to publicly readable user_credentials ──
+// Runs every admin load — ensures system_config/user_credentials always matches
 (async function migrateUserCredentials() {
     try {
+        // Sync users/
         const usersSnap = await get(ref(db, 'users'));
         const usersData = usersSnap.val();
-        if (!usersData) return;
-        for (const [uid, user] of Object.entries(usersData)) {
-            if (!user.password) continue; // skip users with no password
-            // Always write full credential — this fixes any partial records created
-            // by old disable/enable code that only wrote {status}
-            set(ref(db, 'system_config/user_credentials/' + uid), {
-                name:        user.name        || '',
-                password:    user.password,
-                status:      user.status      || 'active',
-                permissions: user.permissions || {}
-            }).catch(() => {});
+        if (usersData) {
+            for (const [uid, user] of Object.entries(usersData)) {
+                if (!user.password) continue;
+                set(ref(db, 'system_config/user_credentials/' + uid), {
+                    name:        user.name        || '',
+                    password:    user.password,
+                    status:      user.status      || 'active',
+                    permissions: user.permissions || {}
+                }).catch(() => {});
+            }
+        }
+        // Sync guests/
+        const guestsSnap = await get(ref(db, 'guests'));
+        const guestsData = guestsSnap.val();
+        if (guestsData) {
+            for (const [gid, guest] of Object.entries(guestsData)) {
+                if (!guest.password) continue;
+                set(ref(db, 'system_config/user_credentials/' + gid), {
+                    name:        guest.name        || '',
+                    password:    guest.password,
+                    status:      guest.status      || 'active',
+                    permissions: guest.permissions || {}
+                }).catch(() => {});
+            }
         }
     } catch(e) { console.warn('Credential migration failed:', e); }
 })();
