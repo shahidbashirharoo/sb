@@ -849,7 +849,10 @@
         <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;">Role</label>
         <div style="width:100%;margin-bottom:10px;padding:9px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;font-size:14px;color:var(--muted);">👤 User <span style="font-size:11px;opacity:.6;">(auto-assigned)</span></div>
         <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;" id="editPassLabel">Password</label>
-        <input type="password" id="editUserPassword" placeholder="Set user password" style="width:100%;margin-bottom:10px;" autocomplete="new-password">
+        <div style="position:relative;margin-bottom:10px;">
+            <input type="password" id="editUserPassword" placeholder="Set user password" style="width:100%;padding-right:40px;" autocomplete="new-password">
+            <button type="button" id="toggleEditPwBtn" onclick="(function(){var i=document.getElementById('editUserPassword');var b=document.getElementById('toggleEditPwBtn');i.type=i.type==='password'?'text':'password';b.innerText=i.type==='password'?'👁':'🙈';})()" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--muted);padding:0;line-height:1;">👁</button>
+        </div>
         <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:8px;">Permissions</label>
         <div id="editUserPerms" class="perm-grid" style="margin-bottom:14px;"></div>
         <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;">Status</label>
@@ -1202,6 +1205,24 @@
                 </div>
 
                 <div class="section">
+                    <div class="section-header"><h3>👤 Guest Access Configuration</h3></div>
+                    <p style="font-size:12px;color:var(--muted);margin-bottom:14px;">Control guest login. Set a password and permissions for guest users.</p>
+                    <div class="form-row" style="align-items:center;margin-bottom:12px;">
+                        <label class="check-label">
+                            <input type="checkbox" id="guestEnabled"> Enable Guest Access
+                        </label>
+                    </div>
+                    <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:5px;">Guest Password</label>
+                    <div style="position:relative;margin-bottom:14px;max-width:320px;">
+                        <input type="password" id="guestPwField" placeholder="Enter guest password" style="width:100%;padding-right:40px;">
+                        <button type="button" id="toggleGuestPwBtn" onclick="(function(){var i=document.getElementById('guestPwField');var b=document.getElementById('toggleGuestPwBtn');i.type=i.type==='password'?'text':'password';b.innerText=i.type==='password'?'👁':'🙈';})()" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--muted);padding:0;line-height:1;">👁</button>
+                    </div>
+                    <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:8px;">Guest Permissions</label>
+                    <div id="guestPermGrid" class="perm-grid" style="margin-bottom:14px;"></div>
+                    <button class="btn btn-purple btn-sm" id="saveGuestConfigBtn">💾 Save Guest Config</button>
+                </div>
+
+                <div class="section">
                     <div class="section-header"><h3>🎨 Branding</h3></div>
                     <div class="creator-branding" style="text-align:center;">
                         <div class="cb-title">Admin Console Created By</div>
@@ -1467,10 +1488,15 @@ function openUserModal(uid, userData) {
     document.getElementById('editUserId').value        = uid || '';
     document.getElementById('editUserName').value      = userData?.name || '';
     document.getElementById('editUserEmail').value     = userData?.email || '';
-    document.getElementById('editUserPassword').value  = '';
+    document.getElementById('editUserPassword').value  = userData?.password || '';
+    document.getElementById('editUserPassword').type   = 'password';
+    const pwToggle = document.getElementById('toggleEditPwBtn');
+    if (pwToggle) pwToggle.innerText = '👁';
     document.getElementById('editUserStatus').value    = userData?.status || 'active';
-    // Password label - optional when editing
-    document.getElementById('editPassLabel').innerText = uid ? 'Password (leave blank to keep unchanged)' : 'Password';
+    // Password label
+    document.getElementById('editPassLabel').innerText = uid
+        ? (userData?.password ? 'Password (current shown — edit to change)' : 'Password (not set — enter to set)')
+        : 'Password';
 
     // Build permission grid
     const pg = document.getElementById('editUserPerms');
@@ -1881,10 +1907,13 @@ window.deleteGuestSession = function(id) {
 // ══════════════════════════════════════════════════════════
 function initSettingsPanel() {
     buildDefaultPermGrid();
+    buildGuestPermGrid();
     loadSettings();
+    loadGuestConfig();
 
     document.getElementById('saveDefaultPerms').onclick = saveDefaultPerms;
     document.getElementById('saveSecuritySettings').onclick = saveSecuritySettings;
+    document.getElementById('saveGuestConfigBtn').onclick = saveGuestConfig;
 }
 
 function buildDefaultPermGrid() {
@@ -2980,6 +3009,12 @@ migrateLegacyBins();
 cleanBin();
 renderBin();
 setInterval(cleanBin, 3600000);
+
+// ── AUTO-REFRESH: keep stats & bin fresh every 2 seconds ──────────────────
+setInterval(() => {
+    updateStats();
+    renderBin();
+}, 2000);
 
 } // end initData()
 
