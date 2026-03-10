@@ -1916,18 +1916,21 @@ async function showUserActivity(username) {
         ? Object.entries(allLogsData).filter(([,p]) => p._ownerId === username && p._ownerType === 'user')
         : [];
 
-    // Bin data: admin unified_bin + user's own bin
-    const adminBin   = getBin('unified_bin');
-    const userOwnBin = getBin('user_bin_' + username);
-    const allBinItems = [...adminBin, ...userOwnBin];
+    // Bin data: read from Firebase (recycle_bin/{username}) so admin sees user's deleted items
+    // regardless of which browser the user was on when they deleted them.
+    let allBinItems = [];
+    try {
+        const binSnap = await get(ref(db, 'recycle_bin/' + username));
+        if (binSnap.exists()) allBinItems = Object.values(binSnap.val() || {});
+    } catch(e) { /* read failure — show empty bin sections */ }
 
     // Filter and deduplicate by _binId
     const seen1 = new Set(), seen2 = new Set();
     const dedupedDeletedLinks = allBinItems
-        .filter(x => x._type === 'link' && x._ownerId === username && x._ownerType === 'user')
+        .filter(x => x._type === 'link')
         .filter(x => { if(seen1.has(x._binId)) return false; seen1.add(x._binId); return true; });
     const dedupedDeletedCaps = allBinItems
-        .filter(x => x._type === 'photo' && x._ownerId === username && x._ownerType === 'user')
+        .filter(x => x._type === 'photo')
         .filter(x => { if(seen2.has(x._binId)) return false; seen2.add(x._binId); return true; });
 
     const totalVisits = userLinks.reduce((s,[,l]) => s+(l.visits||0), 0);
@@ -2188,6 +2191,23 @@ function getUserBinKey() {
     return currentSession?.type === 'user' ? 'user_bin_' + currentSession.username : 'user_bin_unknown';
 }
 
+// Mirrors a user bin item to Firebase so the Admin Activity panel can read it.
+// Called immediately after addToBin() for user-owned deletes.
+// Firebase path: recycle_bin/{username}/{_binId}
+function syncUserBinToFirebase(item) {
+    const username = currentSession?.username;
+    if (!username) return;
+    const binItem = { ...item, _binId: item._binId || makeBinId(), deletedAt: item.deletedAt || Date.now() };
+    set(ref(db, 'recycle_bin/' + username + '/' + binItem._binId), binItem).catch(() => {});
+}
+
+// Removes a single item from the Firebase user bin (called on restore or permanent burn).
+function removeUserBinFromFirebase(binId) {
+    const username = currentSession?.username;
+    if (!username || !binId) return;
+    remove(ref(db, 'recycle_bin/' + username + '/' + binId)).catch(() => {});
+}
+
 function updateUserStats() {
     const username = currentSession?.username;
     const myLinks  = uAllLinksData ? Object.values(uAllLinksData).filter(l => l._ownerId === username) : [];
@@ -2297,7 +2317,12 @@ document.getElementById('uLinkTableBody').addEventListener('click', e => {
     } else if (uaction === 'delete') {
         if (!confirm('Move this link to Recycle Bin?')) return;
         const l = uAllLinksData?.[id];
-        if (l) addToBin({ ...l, _type: 'link', firebaseId: id }, getUserBinKey());
+        if (l) {
+            const binItem = { ...l, _type: 'link', firebaseId: id, _binId: makeBinId(), deletedAt: Date.now() };
+            const k = getUserBinKey();
+            const bin = getBin(k); bin.unshift(binItem); saveBin(bin, k);
+            syncUserBinToFirebase(binItem);
+        }
         remove(ref(db, 'managed_links/' + id));
         updateUserStats(); renderUserBin();
         toast('🗑️ Link moved to Recycle Bin', 'var(--yellow)');
@@ -2402,7 +2427,9 @@ document.getElementById('uPhotoGrid').addEventListener('click', e => {
     else if (action === 'copygps' && p) navigator.clipboard.writeText(p.latitude + ', ' + p.longitude).then(() => toast('📍 GPS copied!', 'var(--teal)'));
     else if (action === 'tobin' && p) {
         if (!confirm('Move to Recycle Bin?')) return;
-        addToBin({ ...p, _type: 'photo', _firebaseKey: key }, getUserBinKey());
+        const binItem = { ...p, _type: 'photo', _firebaseKey: key, _binId: makeBinId(), deletedAt: Date.now() };
+        const k = getUserBinKey(); const bin = getBin(k); bin.unshift(binItem); saveBin(bin, k);
+        syncUserBinToFirebase(binItem);
         remove(ref(db, 'photo_history/' + key));
         renderUserBin(); updateUserStats();
         toast('🗑️ Moved to Recycle Bin', 'var(--yellow)');
@@ -2420,7 +2447,9 @@ document.getElementById('uRecentGrid').addEventListener('click', e => {
     else if (action === 'download' && p?.image) dlImg(p.image, `capture_${p.linkName||'x'}_${Date.now()}.jpg`);
     else if (action === 'tobin' && p) {
         if (!confirm('Move to Recycle Bin?')) return;
-        addToBin({ ...p, _type: 'photo', _firebaseKey: key }, getUserBinKey());
+        const binItem = { ...p, _type: 'photo', _firebaseKey: key, _binId: makeBinId(), deletedAt: Date.now() };
+        const k = getUserBinKey(); const bin = getBin(k); bin.unshift(binItem); saveBin(bin, k);
+        syncUserBinToFirebase(binItem);
         remove(ref(db, 'photo_history/' + key));
         renderUserBin(); updateUserStats(); toast('🗑️ Moved to bin', 'var(--yellow)');
     }
@@ -2445,7 +2474,11 @@ document.getElementById('uBulkDeleteBtn').onclick = () => {
     if (!confirm(`Move ${count} capture(s) to Recycle Bin?`)) return;
     uSelectedCaptures.forEach(key => {
         const p = uLogsCache[key];
-        if (p) addToBin({ ...p, _type: 'photo', _firebaseKey: key }, getUserBinKey());
+        if (p) {
+            const binItem = { ...p, _type: 'photo', _firebaseKey: key, _binId: makeBinId(), deletedAt: Date.now() };
+            const k = getUserBinKey(); const bin = getBin(k); bin.unshift(binItem); saveBin(bin, k);
+            syncUserBinToFirebase(binItem);
+        }
         remove(ref(db, 'photo_history/' + key));
     });
     uSelectedCaptures.clear();
@@ -2530,9 +2563,13 @@ document.getElementById('uBinGrid').addEventListener('click', e => {
         const item = bin.find(x => x._type === 'link' && x.firebaseId === fid);
         if (action === 'restore' && item) {
             const toRestore = { ...item }; delete toRestore.deletedAt; delete toRestore.firebaseId; delete toRestore._type; delete toRestore._binId;
-            set(ref(db, 'managed_links/' + fid), toRestore).then(() => { saveBin(bin.filter(x => !(x._type==='link' && x.firebaseId===fid)), binKey); renderUserBin(); updateUserStats(); toast('♻️ Link restored!', 'var(--green)'); });
+            set(ref(db, 'managed_links/' + fid), toRestore).then(() => {
+                removeUserBinFromFirebase(item._binId);
+                saveBin(bin.filter(x => !(x._type==='link' && x.firebaseId===fid)), binKey); renderUserBin(); updateUserStats(); toast('♻️ Link restored!', 'var(--green)');
+            });
         } else if (action === 'burn') {
             if (!confirm('Permanently delete this link?')) return;
+            removeUserBinFromFirebase(item?._binId);
             saveBin(bin.filter(x => !(x._type==='link' && x.firebaseId===fid)), binKey); renderUserBin(); updateUserStats(); toast('🔥 Deleted.', 'var(--red)');
         }
         return;
@@ -2551,9 +2588,11 @@ document.getElementById('uBinGrid').addEventListener('click', e => {
         if (!confirm('Restore this capture?')) return;
         const toRestore = { ...item }; delete toRestore.deletedAt; delete toRestore._type; delete toRestore._firebaseKey; delete toRestore._binId;
         push(ref(db, 'photo_history'), toRestore);
+        removeUserBinFromFirebase(binId);
         saveBin(bin.filter(x => x._binId !== binId), binKey); renderUserBin(); updateUserStats(); toast('♻️ Capture restored!', 'var(--green)');
     } else if (action === 'burn') {
         if (!confirm('Permanently delete?')) return;
+        removeUserBinFromFirebase(binId);
         saveBin(bin.filter(x => x._binId !== binId), binKey); renderUserBin(); updateUserStats(); toast('🔥 Permanently deleted.', 'var(--red)');
     }
 });
@@ -2567,7 +2606,13 @@ document.querySelectorAll('.bin-tab[data-ctx="user"]').forEach(tab => {
     });
 });
 document.getElementById('uBinSearch').addEventListener('input', renderUserBin);
-document.getElementById('uEmptyBinBtn').onclick = () => { if (!confirm('Empty your recycle bin?')) return; saveBin([], getUserBinKey()); renderUserBin(); updateUserStats(); toast('🔥 Bin emptied.', 'var(--red)'); };
+document.getElementById('uEmptyBinBtn').onclick = () => {
+    if (!confirm('Empty your recycle bin?')) return;
+    saveBin([], getUserBinKey());
+    const username = currentSession?.username;
+    if (username) remove(ref(db, 'recycle_bin/' + username)).catch(() => {});
+    renderUserBin(); updateUserStats(); toast('🔥 Bin emptied.', 'var(--red)');
+};
 
 // ══════════════════════════════════════════════════════════
 // FIREBASE LISTENERS
