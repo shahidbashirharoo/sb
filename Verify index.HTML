@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redirecting…</title>
+    <style>
+        body { margin: 0; display: flex; align-items: center; justify-content: center;
+               height: 100vh; font-family: system-ui, sans-serif; background: #0d1117; color: #e2e8f0; }
+        .wrap { text-align: center; }
+        .spinner { width: 36px; height: 36px; border: 3px solid #1e293b;
+                   border-top-color: #3b82f6; border-radius: 50%;
+                   animation: spin .7s linear infinite; margin: 0 auto 16px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        p { font-size: 14px; color: #64748b; }
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <div class="spinner"></div>
+    <p>Redirecting…</p>
+</div>
+<script>
+(function () {
+    // ── Base paths ──────────────────────────────────────────────────────
+    const VERIFY_BASE   = '/camera.access/index.html';   // absolute path on this host
+    const ORIGIN        = window.location.origin;        // e.g. https://shahidbashirharoo.github.io
+
+    // ── 1. Check if we arrived via the root 404.html redirect trick ─────
+    //   The 404.html stores the original path in sessionStorage so we can
+    //   read it here after GitHub Pages redirected to /verify/
+    const stored = sessionStorage.getItem('__verify_redirect');
+    if (stored) {
+        sessionStorage.removeItem('__verify_redirect');
+        doRedirect(stored);
+        return;
+    }
+
+    // ── 2. Direct path — e.g. /verify/LNK-XXXXX served somehow ─────────
+    const parts  = window.location.pathname.replace(/\/$/, '').split('/').filter(Boolean);
+    const vIdx   = parts.lastIndexOf('verify');
+    if (vIdx !== -1 && parts[vIdx + 1]) {
+        doRedirect(parts[vIdx + 1]);
+        return;
+    }
+
+    // ── 3. Query param fallback — /verify/?linkId=LNK-XXXXX ────────────
+    const qp = new URLSearchParams(window.location.search).get('linkId');
+    if (qp) { doRedirect(qp); return; }
+
+    // ── If nothing matched, show an error ───────────────────────────────
+    document.querySelector('p').textContent = '⚠️ No link ID found in URL.';
+
+    function doRedirect(linkId) {
+        window.location.replace(ORIGIN + VERIFY_BASE + '?linkId=' + encodeURIComponent(linkId));
+    }
+})();
+</script>
+</body>
+</html>
