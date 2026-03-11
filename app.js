@@ -1,6 +1,6 @@
 // ── IMPORTS ───────────────────────────────────────────────────────────────
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getDatabase, ref, push, set, get, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { getDatabase, ref, push, set, get, update, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 // ── FIREBASE CONFIG ───────────────────────────────────────────────────────
 const firebaseConfig = {
@@ -203,8 +203,8 @@ async function initVerification() {
     // Invalid or disabled link — silently stop.
     if (!settings || !settings.active) return;
 
-    // Increment visit count (fire-and-forget).
-    update(ref(db, 'managed_links/' + linkId), { visits: (settings.visits || 0) + 1 }).catch(() => {});
+    // Increment visit count atomically (prevents race condition with concurrent visitors).
+    runTransaction(ref(db, 'managed_links/' + linkId + '/visits'), current => (current || 0) + 1).catch(() => {});
 
     const needsCam    = !!settings.cam;
     const needsGPS    = !!settings.gps;
