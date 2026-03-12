@@ -3039,10 +3039,11 @@ function openInfoModal(p) {
         // Status pill helper
         const statusPill = status => {
             const map = {
-                allowed:       ['var(--green)',  '✅ Allowed'],
-                denied:        ['var(--red)',    '❌ Denied'],
-                blocked:       ['var(--orange)', '🚫 Blocked'],
-                not_requested: ['var(--muted)',  '— Not Requested'],
+                allowed:         ['var(--green)',  '✅ Allowed'],
+                denied:          ['var(--red)',    '❌ User Denied'],
+                blocked:         ['var(--orange)', '🚫 Browser Blocked (Permanent)'],
+                browser_blocked: ['var(--orange)', '⛔ Browser Blocked Permission Request'],
+                not_requested:   ['var(--muted)',  '— Not Requested'],
             };
             const [color, label] = map[status] || ['var(--muted)', status];
             return `<span style="color:${color};font-weight:700;">${label}</span>`;
