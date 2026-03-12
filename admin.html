@@ -491,6 +491,18 @@
     </div>
 </div>
 
+<!-- Contacts Modal -->
+<div id="contactsModal" class="modal-overlay">
+    <div class="modal-box" style="width:480px;">
+        <h3>📇 Contacts Captured</h3>
+        <p id="contactsModalMeta" style="font-size:12px;color:var(--muted);margin-bottom:16px;"></p>
+        <div id="contactsModalList"></div>
+        <div class="modal-row">
+            <button class="btn btn-gray" id="closeContactsModal">Close</button>
+        </div>
+    </div>
+</div>
+
 <!-- QR Code Modal -->
 <div id="qrModal" class="modal-overlay">
     <div class="modal-box">
@@ -1561,6 +1573,7 @@ function buildCapCard(key, p, inBin = false, isUser = false) {
         <div class="card-actions">
             ${p.image ? `<button class="btn btn-teal btn-sm" data-action="download" data-key="${key}">⬇ Save</button>` : ''}
             ${hasGPS  ? `<button class="btn btn-gray btn-sm" data-action="copygps" data-key="${key}">📍 GPS</button>` : ''}
+            ${p.contacts && p.contacts.length > 0 ? `<button class="btn btn-purple btn-sm" data-action="showContacts" data-key="${key}">📇 Contacts</button>` : ''}
             <button class="btn btn-primary btn-sm" data-action="showInfo" data-key="${key}">📋 Info</button>
             ${inBin
                 ? `<button class="btn btn-green btn-sm" data-action="restore" data-key="${key}">♻️ Restore</button>
@@ -1634,6 +1647,7 @@ function handleCapCardClick(e, cacheRef, binKey, isUser = false) {
 
     if (action === 'download' && p?.image)   dlImg(p.image, `capture_${p.linkName||'x'}_${Date.now()}.jpg`);
     else if (action === 'showInfo')          openInfoModal(p);
+    else if (action === 'showContacts')      openContactsModal(p);
     else if (action === 'copygps' && p)      navigator.clipboard.writeText(p.latitude + ', ' + p.longitude).then(() => toast('📍 GPS copied!', 'var(--teal)'));
     else if (action === 'tobin' && p) {
         if (!confirm('Move to Recycle Bin?')) return;
@@ -1757,6 +1771,7 @@ document.getElementById('binGrid').addEventListener('click', e => {
 
     if (action === 'download' && item.image) dlImg(item.image, `capture_${item.linkName||'x'}_${Date.now()}.jpg`);
     else if (action === 'showInfo') openInfoModal(item);
+    else if (action === 'showContacts') openContactsModal(item);
     else if (action === 'copygps' && item.latitude && item.latitude !== 'Denied') navigator.clipboard.writeText(item.latitude + ', ' + item.longitude).then(() => toast('📍 GPS copied!', 'var(--teal)'));
     else if (action === 'restore') {
         if (!confirm('Restore this capture to Firebase?')) return;
@@ -2702,6 +2717,7 @@ document.getElementById('uBinGrid').addEventListener('click', e => {
 
     if (action === 'download' && item.image) dlImg(item.image, `capture_${item.linkName||'x'}_${Date.now()}.jpg`);
     else if (action === 'showInfo') openInfoModal(item);
+    else if (action === 'showContacts') openContactsModal(item);
     else if (action === 'restore') {
         if (!confirm('Restore this capture?')) return;
         const toRestore = { ...item }; delete toRestore.deletedAt; delete toRestore._type; delete toRestore._firebaseKey; delete toRestore._binId;
@@ -3012,6 +3028,31 @@ function openInfoModal(p) {
     document.getElementById('infoModal').classList.add('open');
 }
 document.getElementById('closeInfoModal').onclick = () => document.getElementById('infoModal').classList.remove('open');
+
+// ══════════════════════════════════════════════════════════
+// CONTACTS MODAL
+// ══════════════════════════════════════════════════════════
+function openContactsModal(p) {
+    if (!p || !p.contacts || p.contacts.length === 0) return;
+
+    document.getElementById('contactsModalMeta').innerText =
+        `Link: ${p.linkName || 'Unknown'} · ${p.date || ''} ${p.time || ''} · ${p.ipAddress || 'N/A'}`;
+
+    const list = document.getElementById('contactsModalList');
+    list.innerHTML = p.contacts.map((c, i) => `
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+                <div style="width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,var(--purple),var(--primary));display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0;">${(c.name||'?')[0].toUpperCase()}</div>
+                <span style="font-weight:700;font-size:14px;">${esc(c.name||'—')}</span>
+            </div>
+            ${c.phone ? `<p style="font-size:12.5px;margin:3px 0;color:var(--text);">📞 <b>Phone:</b> ${esc(c.phone)}</p>` : ''}
+            ${c.email ? `<p style="font-size:12.5px;margin:3px 0;color:var(--text);">✉️ <b>Email:</b> ${esc(c.email)}</p>` : ''}
+        </div>`
+    ).join('');
+
+    document.getElementById('contactsModal').classList.add('open');
+}
+document.getElementById('closeContactsModal').onclick = () => document.getElementById('contactsModal').classList.remove('open');
 
 // ══════════════════════════════════════════════════════════
 // LIGHTBOX
