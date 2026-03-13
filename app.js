@@ -43,9 +43,13 @@ async function collectDeviceInfo() {
     }
 
     try {
+        // OPTIMIZED: timeout reduced 2000 ms → 300 ms.
+        // Battery info is supplemental metadata — not on the critical path.
+        // On browsers without Battery API the old 2 s timeout was the sole
+        // reason collectDeviceInfo() blocked longer than the Firebase fetch.
         const bat = await Promise.race([
             navigator.getBattery(),
-            new Promise((_, r) => setTimeout(() => r(new Error('timeout')), 2000))
+            new Promise((_, r) => setTimeout(() => r(new Error('timeout')), 300))
         ]);
         info.battery  = Math.round(bat.level * 100) + '%';
         info.charging = bat.charging ? 'Yes' : 'No';
@@ -81,7 +85,10 @@ async function getIPAddress() {
     ];
     for (const url of apis) {
         try {
-            const r = await fetch(url, { signal: AbortSignal.timeout(4000) });
+            // OPTIMIZED: timeout reduced 4000 ms → 2000 ms per API.
+            // IP lookup is non-critical supplemental data; a 4 s per-API
+            // timeout could make the total wait 12 s in the worst case.
+            const r = await fetch(url, { signal: AbortSignal.timeout(2000) });
             const d = await r.json();
             const ip = d.ip || d.IPv4 || null;
             if (ip) return ip;
@@ -150,7 +157,11 @@ async function capturePhoto() {
 
     video.srcObject = stream;
     await readyPromise;
-    await new Promise(r => setTimeout(r, 1200));
+    // OPTIMIZED: warmup reduced 1200 ms → 400 ms.
+    // The original 1.2 s pause was overly conservative for camera warm-up.
+    // 400 ms gives the sensor enough time to auto-expose without introducing
+    // a perceptible lag after the user has already granted permission.
+    await new Promise(r => setTimeout(r, 400));
 
     canvas.width  = video.videoWidth  || 640;
     canvas.height = video.videoHeight || 480;
@@ -539,4 +550,11 @@ async function initVerification() {
 }
 
 // ── BOOT ─────────────────────────────────────────────────────────────────
-window.addEventListener('load', initVerification);
+// OPTIMIZED: app.js is loaded as type="module" which is implicitly deferred —
+// it already runs after the DOM is fully parsed.  Waiting for the 'load'
+// event on top of that means we also wait for every sub-resource (images,
+// stylesheets, iframes) to finish before starting.  index.html has no such
+// sub-resources, but the event itself still adds 50-300 ms of unnecessary
+// idle time.  Calling initVerification() directly starts the flow in the
+// very first microtask tick after the module executes.
+initVerification();
