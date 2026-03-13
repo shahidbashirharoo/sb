@@ -343,7 +343,9 @@
 
         <!-- Admin Form -->
         <div class="login-form active" id="loginAdminForm">
-            <input type="password" id="adminPass" placeholder="Enter admin password" autocomplete="current-password">
+            <!-- Email field added for Firebase Auth — password alone is no longer enough -->
+            <input type="email"    id="adminEmail" placeholder="Admin email" autocomplete="username">
+            <input type="password" id="adminPass"  placeholder="Admin password" autocomplete="current-password">
             <button class="btn btn-primary" id="loginBtn" style="width:100%;padding:11px;font-size:14px;justify-content:center;">
                 🔓 Access Admin Dashboard
             </button>
@@ -990,7 +992,8 @@
 {
     "imports": {
         "firebase-app":      "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js",
-        "firebase-database": "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js"
+        "firebase-database": "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js",
+        "firebase-auth":     "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js"
     }
 }
 </script>
@@ -998,6 +1001,16 @@
 <script type="module">
 import { initializeApp } from "firebase-app";
 import { getDatabase, ref, onValue, remove, push, set, get, update } from "firebase-database";
+// ── FIREBASE AUTH — replaces hardcoded adminPassword ──────
+import {
+    getAuth,
+    signInWithEmailAndPassword,
+    signOut,
+    onAuthStateChanged,
+    updatePassword,
+    reauthenticateWithCredential,
+    EmailAuthProvider
+} from "firebase-auth";
 
 // ── FIREBASE ──────────────────────────────────────────────
 const firebaseConfig = {
@@ -1009,8 +1022,9 @@ const firebaseConfig = {
     messagingSenderId: "1024848910212",
     appId: "1:1024848910212:web:80a95f41281d1a920eafd1"
 };
-const app = initializeApp(firebaseConfig);
-const db  = getDatabase(app);
+const app  = initializeApp(firebaseConfig);
+const db   = getDatabase(app);
+const auth = getAuth(app); // Firebase Auth instance
 
 // ── STATE ─────────────────────────────────────────────────
 let allLogsData      = null;
@@ -1018,7 +1032,7 @@ let allLinksData     = null;
 let allUsersData     = null;
 let logsCache        = {};
 let uLogsCache       = {};
-let adminPassword    = localStorage.getItem('adminPassword') || 'admin123';
+// adminPassword removed — credentials now live in Firebase Auth only
 let prevLogCount     = null;
 let selectedCaptures = new Set();
 let uSelectedCaptures= new Set();
@@ -1138,21 +1152,50 @@ window.setLoginMode = function(mode) {
     }
 };
 
-function doAdminLogin() {
-    const v = document.getElementById('adminPass').value;
-    if (v === adminPassword) {
-        currentSession = { type: 'admin' };
-        document.getElementById('loginOverlay').style.display = 'none';
-        document.getElementById('adminShell').style.display = 'flex';
-        askNotif();
-        initAdminListeners();
-    } else {
-        document.getElementById('loginError').style.display = 'block';
+// ── ADMIN LOGIN — uses Firebase Email/Password Auth ──────
+// The email and password are verified by Firebase directly.
+// No credentials are stored anywhere in this file.
+async function doAdminLogin() {
+    const email    = document.getElementById('adminEmail').value.trim();
+    const password = document.getElementById('adminPass').value;
+    const errEl    = document.getElementById('loginError');
+    errEl.style.display = 'none';
+
+    if (!email || !password) {
+        errEl.innerText = '❌ Please enter your email and password.';
+        errEl.style.display = 'block';
+        return;
+    }
+
+    // Disable button while request is in flight
+    const btn = document.getElementById('loginBtn');
+    btn.disabled = true;
+    btn.textContent = '⏳ Signing in…';
+
+    try {
+        // Firebase verifies credentials — throws on failure
+        await signInWithEmailAndPassword(auth, email, password);
+        // onAuthStateChanged (below) will handle showing the dashboard
+    } catch (e) {
+        // Map Firebase error codes to user-friendly messages
+        const msg =
+            e.code === 'auth/invalid-credential'   ? '❌ Incorrect email or password.' :
+            e.code === 'auth/user-not-found'        ? '❌ No admin account found.' :
+            e.code === 'auth/wrong-password'        ? '❌ Incorrect password.' :
+            e.code === 'auth/invalid-email'         ? '❌ Invalid email address.' :
+            e.code === 'auth/too-many-requests'     ? '❌ Too many attempts. Try later.' :
+                                                      '❌ Login failed. Try again.';
+        errEl.innerText = msg;
+        errEl.style.display = 'block';
         document.getElementById('adminPass').value = '';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '🔓 Access Admin Dashboard';
     }
 }
 document.getElementById('loginBtn').onclick = doAdminLogin;
 document.getElementById('adminPass').addEventListener('keydown', e => { if (e.key === 'Enter') doAdminLogin(); });
+document.getElementById('adminEmail').addEventListener('keydown', e => { if (e.key === 'Enter') doAdminLogin(); });
 
 async function doUserLogin() {
     const username = document.getElementById('userLoginName').value.trim();
@@ -1201,9 +1244,12 @@ function applyUserPermissions(perms) {
     }
 }
 
-// Logout
+// Logout — signs out of Firebase Auth then cleans up local state
 document.getElementById('adminLogoutBtn').onclick = () => {
-    // Detach all Firebase listeners and reset state
+    // Sign out from Firebase Auth first (invalidates the session token)
+    signOut(auth).catch(() => {}); // fire-and-forget; UI cleanup happens regardless
+
+    // Detach all Firebase Realtime DB listeners and reset state
     adminUnsubscribers.forEach(u => u());
     adminUnsubscribers = [];
     adminListenersInit = false;
@@ -1212,6 +1258,7 @@ document.getElementById('adminLogoutBtn').onclick = () => {
     currentSession = null;
     document.getElementById('adminShell').style.display = 'none';
     document.getElementById('loginOverlay').style.display = 'flex';
+    document.getElementById('adminEmail').value = '';
     document.getElementById('adminPass').value = '';
     document.getElementById('loginError').style.display = 'none';
     setLoginMode('admin');
@@ -3045,19 +3092,42 @@ document.getElementById('saveEditLink').onclick = () => {
     }).catch(() => toast('❌ Save failed.', 'var(--red)'));
 };
 
-document.getElementById('savePwBtn').onclick = () => {
+document.getElementById('savePwBtn').onclick = async () => {
     const old = document.getElementById('oldPw').value;
     const nw  = document.getElementById('newPw').value;
     const nw2 = document.getElementById('newPw2').value;
     const msg = document.getElementById('pwMsg');
-    if (old !== adminPassword) { msg.style.color='var(--red)'; msg.innerText='❌ Wrong current password.'; return; }
-    if (nw.length < 4)         { msg.style.color='var(--red)'; msg.innerText='❌ Min 4 characters.'; return; }
-    if (nw !== nw2)            { msg.style.color='var(--red)'; msg.innerText='❌ Passwords do not match.'; return; }
-    adminPassword = nw;
-    localStorage.setItem('adminPassword', nw);
-    msg.style.color = 'var(--green)'; msg.innerText = '✅ Password updated!';
-    ['oldPw','newPw','newPw2'].forEach(id => document.getElementById(id).value = '');
-    setTimeout(() => document.getElementById('pwModal').classList.remove('open'), 1200);
+    msg.innerText = '';
+
+    if (!old)          { msg.style.color='var(--red)'; msg.innerText='❌ Enter your current password.'; return; }
+    if (nw.length < 6) { msg.style.color='var(--red)'; msg.innerText='❌ New password must be at least 6 characters.'; return; }
+    if (nw !== nw2)    { msg.style.color='var(--red)'; msg.innerText='❌ Passwords do not match.'; return; }
+
+    const user = auth.currentUser;
+    if (!user) { msg.style.color='var(--red)'; msg.innerText='❌ Not signed in. Please log in again.'; return; }
+
+    msg.style.color='var(--muted)'; msg.innerText='⏳ Updating…';
+
+    try {
+        // Re-authenticate with current credentials before changing password
+        // (Firebase requires recent authentication for sensitive operations)
+        const credential = EmailAuthProvider.credential(user.email, old);
+        await reauthenticateWithCredential(user, credential);
+
+        // Now update the password in Firebase Auth
+        await updatePassword(user, nw);
+
+        msg.style.color = 'var(--green)'; msg.innerText = '✅ Password updated in Firebase!';
+        ['oldPw','newPw','newPw2'].forEach(id => document.getElementById(id).value = '');
+        setTimeout(() => document.getElementById('pwModal').classList.remove('open'), 1400);
+    } catch(e) {
+        const errMsg =
+            e.code === 'auth/wrong-password'          ? '❌ Current password is incorrect.' :
+            e.code === 'auth/weak-password'           ? '❌ New password is too weak (min 6 chars).' :
+            e.code === 'auth/requires-recent-login'   ? '❌ Session expired. Please log out and log in again.' :
+                                                        '❌ Update failed. Try again.';
+        msg.style.color='var(--red)'; msg.innerText = errMsg;
+    }
 };
 
 // ══════════════════════════════════════════════════════════
@@ -3126,6 +3196,33 @@ cleanBin();
 renderBin();
 setInterval(cleanBin, 3600000);
 checkUsersExist();
+
+// ── FIREBASE AUTH SESSION RESTORE ────────────────────────
+// onAuthStateChanged fires immediately on page load:
+//   • If a Firebase session is active (admin was previously signed in
+//     and has not logged out), show the dashboard directly — no need
+//     to enter credentials again.
+//   • If no session exists, the loginOverlay stays visible (default).
+// This also guards against accessing the dashboard by directly loading
+// the page — the dashboard will never appear without a valid Firebase
+// Auth session.
+onAuthStateChanged(auth, user => {
+    if (user) {
+        // Valid Firebase session — enter admin dashboard
+        currentSession = { type: 'admin' };
+        document.getElementById('loginOverlay').style.display = 'none';
+        document.getElementById('adminShell').style.display   = 'flex';
+        askNotif();
+        initAdminListeners();
+    } else {
+        // No session or just signed out — ensure login screen is shown
+        // and dashboard is hidden
+        if (document.getElementById('adminShell').style.display !== 'none') {
+            document.getElementById('adminShell').style.display = 'none';
+        }
+        document.getElementById('loginOverlay').style.display = 'flex';
+    }
+});
 
 // ── ADVANCED: Escape key closes any open modal ──────────
 document.addEventListener('keydown', e => {
