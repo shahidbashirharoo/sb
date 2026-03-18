@@ -532,6 +532,22 @@
     </div>
 </div>
 
+<!-- ══ RENAME DEVICE MODAL (App Panel) ══ -->
+<div class="modal-overlay" id="appRenameModal">
+    <div class="modal-box" style="width:380px;">
+        <h3>✏️ Rename Device</h3>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:14px;">Set a friendly custom name for this device to identify it easily.</p>
+        <label>Device ID</label>
+        <input type="text" id="appRenameDeviceId" readonly style="background:#0d1117;color:var(--muted);cursor:default;">
+        <label style="margin-top:12px;">Custom Name</label>
+        <input type="text" id="appRenameInput" placeholder="e.g. Office Phone, John's Device…" maxlength="60" style="margin-top:4px;">
+        <div class="modal-row">
+            <button class="btn btn-primary" id="appRenameSaveBtn" style="flex:1;">💾 Save Name</button>
+            <button class="btn btn-gray"    id="appRenameCancelBtn" style="flex:1;">Cancel</button>
+        </div>
+    </div>
+</div>
+
 <!-- ══ MOBILE HAMBURGER ══ -->
 <button class="mob-menu-btn" id="mobMenuBtn" aria-label="Open navigation">☰</button>
 <div class="mob-backdrop" id="mobBackdrop"></div>
@@ -894,22 +910,6 @@
                     </div>
                 </div>
             </div><!-- /panel-app-bin -->
-
-            <!-- ══ RENAME DEVICE MODAL ══ -->
-            <div class="modal-overlay" id="appRenameModal">
-                <div class="modal-box" style="width:380px;">
-                    <h3>✏️ Rename Device</h3>
-                    <p style="font-size:12px;color:var(--muted);margin-bottom:14px;">Set a friendly custom name for this device to identify it easily.</p>
-                    <label>Device ID</label>
-                    <input type="text" id="appRenameDeviceId" readonly style="background:#0d1117;color:var(--muted);cursor:default;">
-                    <label style="margin-top:12px;">Custom Name</label>
-                    <input type="text" id="appRenameInput" placeholder="e.g. Office Phone, John's Device…" maxlength="60" style="margin-top:4px;">
-                    <div class="modal-row">
-                        <button class="btn btn-primary" id="appRenameSaveBtn" style="flex:1;">💾 Save Name</button>
-                        <button class="btn btn-gray"    id="appRenameCancelBtn" style="flex:1;">Cancel</button>
-                    </div>
-                </div>
-            </div>
 
         </div><!-- /content -->
     </div><!-- /main -->
