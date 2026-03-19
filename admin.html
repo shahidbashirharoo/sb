@@ -349,10 +349,6 @@
         }
 
         /* ══════ LOCATION TRACKING ══════ */
-        #locationMap {
-            height: 420px; border-radius: 10px; border: 1px solid var(--border);
-            overflow: hidden; margin-bottom: 16px; position: relative; z-index: 0;
-        }
         .loc-map-placeholder {
             height: 420px; border-radius: 10px; border: 1px solid var(--border);
             background: var(--card2); display: flex; flex-direction: column;
@@ -432,6 +428,86 @@
         }
         .loc-stat-chip .lsc-val { font-size: 18px; font-weight: 800; color: var(--teal); }
         .loc-stat-chip .lsc-lbl { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+        /* ══════ TIMELINE TOOLBAR ══════ */
+        .loc-top-bar {
+            display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+            margin-bottom: 14px; padding: 10px 14px;
+            background: var(--card2); border: 1px solid var(--border); border-radius: 10px;
+        }
+        .loc-date-grp { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+        .loc-date-grp label { font-size: 11px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; }
+        #locDatePicker {
+            padding: 6px 10px; background: var(--bg2); border: 1px solid var(--border);
+            color: var(--text); border-radius: 7px; font-size: 12px; cursor: pointer;
+            color-scheme: dark; font-family: inherit;
+        }
+        .loc-view-grp { margin-left: auto; display: flex; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+        .loc-view-btn {
+            padding: 6px 14px; font-size: 12px; font-weight: 600; cursor: pointer;
+            border: none; background: transparent; color: var(--muted);
+            transition: all .15s; font-family: inherit; white-space: nowrap;
+        }
+        .loc-view-btn.active { background: rgba(59,130,246,.2); color: var(--primary); }
+        .loc-view-btn:hover:not(.active) { background: rgba(255,255,255,.05); color: var(--text); }
+
+        /* ══════ TIMELINE LAYOUT ══════ */
+        #locMapRow { display: flex; gap: 14px; align-items: flex-start; }
+        #locMapCol { flex: 1; min-width: 0; }
+        #locationMap { height: 420px; border-radius: 10px; border: 1px solid var(--border); overflow: hidden; position: relative; z-index: 0; }
+        .loc-tl-panel {
+            width: 290px; flex-shrink: 0; max-height: 500px; overflow-y: auto; overflow-x: hidden;
+            background: var(--card2); border: 1px solid var(--border); border-radius: 10px;
+            scrollbar-width: thin; scrollbar-color: #334155 transparent;
+        }
+        .loc-tl-panel::-webkit-scrollbar { width: 4px; }
+        .loc-tl-panel::-webkit-scrollbar-thumb { background: #334155; border-radius: 2px; }
+
+        /* Timeline header */
+        .tl-header {
+            padding: 10px 14px; font-size: 11px; font-weight: 700; color: var(--muted);
+            text-transform: uppercase; letter-spacing: .06em;
+            border-bottom: 1px solid var(--border); position: sticky; top: 0;
+            background: var(--card2); z-index: 2;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .tl-list { position: relative; }
+        .tl-spine {
+            position: absolute; left: 25px; top: 0; bottom: 0; width: 2px;
+            background: var(--border); z-index: 0;
+        }
+        /* Timeline items */
+        .tl-item {
+            position: relative; padding: 11px 14px 11px 50px;
+            border-bottom: 1px solid var(--border); cursor: pointer;
+            transition: background .15s; z-index: 1;
+        }
+        .tl-item:last-child { border-bottom: none; }
+        .tl-item:hover { background: rgba(255,255,255,.04); }
+        .tl-item.tl-active { background: rgba(59,130,246,.1); border-left: 3px solid var(--primary); padding-left: 47px; }
+        .tl-item.tl-active .tl-dot { box-shadow: 0 0 0 3px rgba(59,130,246,.35); }
+        .tl-dot {
+            position: absolute; left: 15px; top: 50%; transform: translateY(-50%);
+            width: 22px; height: 22px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 9px; font-weight: 800; z-index: 2;
+            border: 2px solid var(--card2); transition: box-shadow .2s;
+        }
+        .tl-dot-stay { background: #10b981; color: #fff; font-size: 10px; }
+        .tl-dot-move { background: #475569; color: #cbd5e1; font-size: 11px; }
+        .tl-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 3px; }
+        .tl-label-stay { color: #10b981; }
+        .tl-label-move { color: #64748b; }
+        .tl-time-range { font-size: 12px; color: var(--text); font-weight: 600; margin-bottom: 2px; }
+        .tl-meta { font-size: 11px; color: var(--muted); }
+        .tl-addr { font-size: 11px; color: var(--muted); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .tl-no-data { text-align: center; padding: 36px 16px; color: var(--muted); }
+        .tl-no-data .tl-no-icon { font-size: 28px; margin-bottom: 8px; }
+
+        @media (max-width: 960px) {
+            #locMapRow { flex-direction: column; }
+            .loc-tl-panel { width: 100%; max-height: 300px; }
+        }
     </style>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 </head>
@@ -1006,14 +1082,33 @@
                             </div>
                         </div>
 
-                        <!-- Map container -->
+                        <!-- ── Date Filter + View Toggle Bar ── -->
+                        <div class="loc-top-bar" id="locTopBar" style="display:none;">
+                            <div class="loc-date-grp">
+                                <label>📅 Date</label>
+                                <input type="date" id="locDatePicker">
+                                <button class="btn btn-gray btn-sm" id="locTodayBtn">Today</button>
+                                <button class="btn btn-gray btn-sm" id="locAllDatesBtn" style="display:none;">✕ All Dates</button>
+                            </div>
+                            <div class="loc-view-grp">
+                                <button class="loc-view-btn active" id="locRawViewBtn">📋 Raw Data</button>
+                                <button class="loc-view-btn" id="locTimelineViewBtn">🗓️ Timeline</button>
+                            </div>
+                        </div>
+
+                        <!-- ── Map + Timeline layout ── -->
                         <div id="locationMapWrap">
                             <div class="loc-map-placeholder" id="locMapPlaceholder">
                                 <span style="font-size:36px;">🗺️</span>
                                 <div style="font-size:14px;font-weight:600;">No location data yet</div>
                                 <div style="font-size:12px;">Location points sent from the device will appear here.</div>
                             </div>
-                            <div id="locationMap" style="display:none;"></div>
+                            <div id="locMapRow" style="display:none;">
+                                <div id="locMapCol">
+                                    <div id="locationMap"></div>
+                                </div>
+                                <div class="loc-tl-panel" id="locTlPanel" style="display:none;"></div>
+                            </div>
                         </div>
 
                         <!-- Playback Controls -->
@@ -4230,6 +4325,13 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
         const LOC_PAGE_SIZE = 50;
         let locActiveSession = 'all'; // session filter
         let locFilteredData  = [];    // after session + search filter
+        // ── Timeline state ────────────────────────────────────────────────────
+        let locViewMode      = 'raw';  // 'raw' | 'timeline'
+        let locDateFilter    = null;   // null | 'YYYY-MM-DD'
+        let locTimeline      = [];     // processed timeline segments
+        let tlMapLayers      = [];     // timeline-specific map layers
+        let locActiveTlIdx   = -1;     // highlighted timeline item index
+        let tlGeoCache       = {};     // reverse geocode cache
 
         // ── Helpers ───────────────────────────────────────────────────────────
         function fmtLocDate(isoStr) {
@@ -4238,7 +4340,7 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
         }
         function fmtLocTime(isoStr) {
             if (!isoStr) return '—';
-            try { return new Date(isoStr).toLocaleTimeString(); } catch(_){ return isoStr; }
+            try { return new Date(isoStr).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }); } catch(_){ return isoStr; }
         }
         function sessionShort(sid) {
             if (!sid) return 'Unknown';
@@ -4250,6 +4352,248 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
             let h = 0;
             for (let i = 0; i < (sid||'').length; i++) h = (h * 31 + sid.charCodeAt(i)) >>> 0;
             return colors[h % colors.length];
+        }
+
+        // ── Timeline Helpers ──────────────────────────────────────────────────
+        function haversineM(lat1, lon1, lat2, lon2) {
+            const R = 6371000;
+            const toRad = x => x * Math.PI / 180;
+            const dLat = toRad(lat2 - lat1), dLon = toRad(lon2 - lon1);
+            const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon/2)**2;
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        }
+        function ptCentroid(pts) {
+            const n = pts.length;
+            return { lat: pts.reduce((s,p) => s + +p.latitude, 0) / n, lon: pts.reduce((s,p) => s + +p.longitude, 0) / n };
+        }
+        function fmtDuration(ms) {
+            if (ms < 0) ms = 0;
+            const h = Math.floor(ms / 3600000);
+            const m = Math.floor((ms % 3600000) / 60000);
+            if (h > 0) return h + 'h ' + m + 'm';
+            if (m > 0) return m + ' min';
+            return Math.max(1, Math.floor(ms / 1000)) + 's';
+        }
+        function calcTotalDist(pts) {
+            let d = 0;
+            for (let i = 1; i < pts.length; i++)
+                d += haversineM(+pts[i-1].latitude, +pts[i-1].longitude, +pts[i].latitude, +pts[i].longitude);
+            return d;
+        }
+        function getDateFilteredData() {
+            if (!locDateFilter) return locData;
+            return locData.filter(pt => {
+                if (!pt.timestamp) return false;
+                const d = new Date(pt.timestamp);
+                const s = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+                return s === locDateFilter;
+            });
+        }
+
+        // ── Timeline Builder ──────────────────────────────────────────────────
+        // Groups location points into STAY (≥100m dwell ≥5min) and MOVE segments
+        function buildTimeline(pts) {
+            if (!pts.length) return [];
+            const DIST_M  = 100;               // metres — same-place threshold
+            const TIME_MS = 5 * 60 * 1000;    // 5 min  — minimum dwell for a STAY
+
+            // Step 1: cluster consecutive nearby points by distance to group centroid
+            const groups = [];
+            let g = [pts[0]];
+            for (let i = 1; i < pts.length; i++) {
+                const c = ptCentroid(g);
+                if (haversineM(c.lat, c.lon, +pts[i].latitude, +pts[i].longitude) <= DIST_M) {
+                    g.push(pts[i]);
+                } else {
+                    groups.push(g);
+                    g = [pts[i]];
+                }
+            }
+            groups.push(g);
+
+            // Step 2: classify each group as STAY or candidate MOVE
+            const classified = groups.map(grp => {
+                const t0  = new Date(grp[0].timestamp);
+                const t1  = new Date(grp[grp.length - 1].timestamp);
+                const dur = t1 - t0;
+                const c   = ptCentroid(grp);
+                return { pts: grp, start: t0, end: t1, dur, lat: c.lat, lon: c.lon,
+                         isStay: dur >= TIME_MS && grp.length >= 2 };
+            });
+
+            // Step 3: merge consecutive non-STAY groups into single MOVE segments
+            const segments = [];
+            let moveBuf = [];
+            for (const cl of classified) {
+                if (cl.isStay) {
+                    if (moveBuf.length) {
+                        const mp = moveBuf.flat();
+                        segments.push({ type: 'MOVE', points: mp,
+                            start: new Date(mp[0].timestamp),
+                            end:   new Date(mp[mp.length-1].timestamp),
+                            distM: calcTotalDist(mp) });
+                        moveBuf = [];
+                    }
+                    segments.push({ type: 'STAY', points: cl.pts,
+                        start: cl.start, end: cl.end, lat: cl.lat, lon: cl.lon });
+                } else {
+                    moveBuf.push(cl.pts);
+                }
+            }
+            if (moveBuf.length) {
+                const mp = moveBuf.flat();
+                segments.push({ type: 'MOVE', points: mp,
+                    start: new Date(mp[0].timestamp),
+                    end:   new Date(mp[mp.length-1].timestamp),
+                    distM: calcTotalDist(mp) });
+            }
+            return segments;
+        }
+
+        // ── Reverse Geocode (Nominatim, cached) ───────────────────────────────
+        async function geocodeReverse(lat, lon) {
+            const key = lat.toFixed(4) + ',' + lon.toFixed(4);
+            if (tlGeoCache[key]) return tlGeoCache[key];
+            try {
+                const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat.toFixed(6)}&lon=${lon.toFixed(6)}&format=json`;
+                const r = await fetch(url, { signal: AbortSignal.timeout(6000), headers: { 'Accept-Language': 'en' } });
+                const d = await r.json();
+                const a = d.address || {};
+                const parts = [
+                    a.road || a.pedestrian || a.footway || a.amenity,
+                    a.suburb || a.neighbourhood || a.city_district || a.quarter,
+                    a.city || a.town || a.village || a.county
+                ].filter(Boolean);
+                const addr = parts.slice(0, 2).join(', ') || d.display_name?.split(',').slice(0, 2).join(',').trim() || 'Unknown location';
+                tlGeoCache[key] = addr;
+                return addr;
+            } catch (_) {
+                return lat.toFixed(4) + ', ' + lon.toFixed(4);
+            }
+        }
+
+        // ── Timeline Panel Renderer ───────────────────────────────────────────
+        function renderTimelinePanel(segments) {
+            const panel = document.getElementById('locTlPanel');
+            if (!segments.length) {
+                panel.innerHTML = '<div class="tl-no-data"><div class="tl-no-icon">🗺️</div><div>No movement data for this date.</div><div style="font-size:11px;margin-top:6px;">Try selecting a different date or All Dates.</div></div>';
+                return;
+            }
+            const staySegs = segments.filter(s => s.type === 'STAY');
+            let stayNum = 0;
+            panel.innerHTML = `
+                <div class="tl-header">
+                    <span>🗓️ Day Timeline</span>
+                    <span style="color:var(--green);font-size:11px;">${staySegs.length} stop${staySegs.length !== 1 ? 's' : ''}</span>
+                </div>
+                <div class="tl-list" id="tlList">
+                    <div class="tl-spine"></div>
+                    ${segments.map((seg, i) => {
+                        if (seg.type === 'STAY') {
+                            stayNum++;
+                            const dur  = fmtDuration(seg.end - seg.start);
+                            const t0   = fmtLocTime(seg.start.toISOString());
+                            const t1   = fmtLocTime(seg.end.toISOString());
+                            const sn   = stayNum;
+                            return `<div class="tl-item" data-tl-idx="${i}" onclick="window.__tlClick(${i})">
+                                <div class="tl-dot tl-dot-stay">${sn}</div>
+                                <div class="tl-label tl-label-stay">📍 Stayed</div>
+                                <div class="tl-time-range">${t0} – ${t1}</div>
+                                <div class="tl-meta">${dur}</div>
+                                <div class="tl-addr" id="tlAddr_${i}">📍 ${seg.lat.toFixed(4)}, ${seg.lon.toFixed(4)}</div>
+                            </div>`;
+                        } else {
+                            const dur  = fmtDuration(seg.end - seg.start);
+                            const dist = seg.distM >= 1000
+                                ? (seg.distM / 1000).toFixed(1) + ' km'
+                                : Math.round(seg.distM) + ' m';
+                            const t0 = fmtLocTime(seg.start.toISOString());
+                            const t1 = fmtLocTime(seg.end.toISOString());
+                            return `<div class="tl-item" data-tl-idx="${i}" onclick="window.__tlClick(${i})">
+                                <div class="tl-dot tl-dot-move">▶</div>
+                                <div class="tl-label tl-label-move">🚶 Moving</div>
+                                <div class="tl-time-range">${t0} – ${t1}</div>
+                                <div class="tl-meta">${dur} · ${dist}</div>
+                            </div>`;
+                        }
+                    }).join('')}
+                </div>`;
+            // Geocode STAY addresses asynchronously (rate-limited: 1 req/sec)
+            staySegs.forEach((seg, order) => {
+                const segIdx = segments.indexOf(seg);
+                setTimeout(() => {
+                    geocodeReverse(seg.lat, seg.lon).then(addr => {
+                        const el = document.getElementById('tlAddr_' + segIdx);
+                        if (el) el.textContent = '📍 ' + addr;
+                    });
+                }, order * 1100); // ~1 req/sec to respect Nominatim usage policy
+            });
+        }
+
+        // ── Timeline Map Renderer ─────────────────────────────────────────────
+        function updateMapTimeline(segments, rawPts) {
+            if (typeof L === 'undefined') return;
+            // Clear previous timeline layers
+            tlMapLayers.forEach(l => { try { locMap && locMap.removeLayer(l); } catch(_){} });
+            tlMapLayers = [];
+            if (locPolyline)   { try { locMap && locMap.removeLayer(locPolyline); } catch(_){} locPolyline = null; }
+            locMarkers.forEach(m => { try { locMap && locMap.removeLayer(m); } catch(_){} });
+            locMarkers = [];
+            if (locPlayMarker) { try { locMap && locMap.removeLayer(locPlayMarker); } catch(_){} locPlayMarker = null; }
+
+            if (!rawPts.length) { destroyMap(); return; }
+
+            const mapEl = document.getElementById('locationMap');
+            if (!locMap) {
+                locMap = L.map(mapEl, { preferCanvas: true });
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© <a href="https://www.openstreetmap.org/">OpenStreetMap</a>',
+                    maxZoom: 19
+                }).addTo(locMap);
+            }
+
+            if (!segments.length) {
+                // Fallback: plain polyline
+                const pl = L.polyline(rawPts.map(p => [+p.latitude, +p.longitude]),
+                    { color: '#3b82f6', weight: 3, opacity: 0.65 }).addTo(locMap);
+                tlMapLayers.push(pl);
+            } else {
+                let sn = 0;
+                segments.forEach((seg, idx) => {
+                    if (seg.type === 'MOVE' && seg.points.length >= 2) {
+                        const pl = L.polyline(
+                            seg.points.map(p => [+p.latitude, +p.longitude]),
+                            { color: '#3b82f6', weight: 4, opacity: 0.7 }
+                        ).addTo(locMap);
+                        pl.on('click', () => window.__tlClick(idx));
+                        tlMapLayers.push(pl);
+                    } else if (seg.type === 'STAY') {
+                        sn++;
+                        const snLocal = sn;
+                        const m = L.marker([seg.lat, seg.lon], {
+                            icon: L.divIcon({
+                                className: '',
+                                html: `<div style="width:30px;height:30px;background:#10b981;border:3px solid #fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;box-shadow:0 2px 10px rgba(0,0,0,.45);cursor:pointer;">${snLocal}</div>`,
+                                iconSize: [30, 30], iconAnchor: [15, 15]
+                            })
+                        }).addTo(locMap);
+                        m.bindPopup(`
+                            <div style="font-size:12px;min-width:160px;line-height:1.6;">
+                                <b>📍 Stop ${snLocal}</b><br>
+                                <span style="color:#555;">${fmtLocTime(seg.start.toISOString())} – ${fmtLocTime(seg.end.toISOString())}</span><br>
+                                <span style="color:#555;">${fmtDuration(seg.end - seg.start)}</span>
+                            </div>`);
+                        m.on('click', () => window.__tlClick(idx));
+                        tlMapLayers.push(m);
+                        locMarkers.push(m);
+                    }
+                });
+            }
+
+            // Fit map to all points
+            const bounds = L.latLngBounds(rawPts.map(p => [+p.latitude, +p.longitude]));
+            locMap.fitBounds(bounds, { padding: [35, 35] });
+            setTimeout(() => locMap && locMap.invalidateSize(), 80);
         }
 
         // ── Firebase listener ─────────────────────────────────────────────────
@@ -4296,23 +4640,30 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
 
         // ── Main render ───────────────────────────────────────────────────────
         function renderLocationSection() {
-            const hasData = locData.length > 0;
+            const hasData    = locData.length > 0;
+            const isTimeline = locViewMode === 'timeline';
 
-            // Empty state
-            document.getElementById('locEmptyState').style.display     = hasData ? 'none' : '';
-            document.getElementById('locStatRow').style.display         = hasData ? '' : 'none';
-            document.getElementById('locPlaybackBar').style.display     = hasData ? '' : 'none';
-            document.getElementById('locSessionTabsWrap').style.display = hasData ? '' : 'none';
-            document.getElementById('locTableWrap').style.display       = hasData ? '' : 'none';
-            document.getElementById('locMapPlaceholder').style.display  = hasData ? 'none' : '';
-            document.getElementById('locationMap').style.display        = hasData ? '' : 'none';
+            // Empty / presence state
+            document.getElementById('locEmptyState').style.display      = hasData ? 'none' : '';
+            document.getElementById('locStatRow').style.display          = hasData ? ''     : 'none';
+            document.getElementById('locTopBar').style.display           = hasData ? ''     : 'none';
+            document.getElementById('locMapPlaceholder').style.display   = hasData ? 'none' : '';
+            document.getElementById('locMapRow').style.display           = hasData ? 'flex' : 'none';
+
+            // Raw-mode-only UI
+            document.getElementById('locPlaybackBar').style.display      = hasData && !isTimeline ? '' : 'none';
+            document.getElementById('locSessionTabsWrap').style.display  = hasData && !isTimeline ? '' : 'none';
+            document.getElementById('locTableWrap').style.display        = hasData && !isTimeline ? '' : 'none';
+
+            // Timeline panel (only in timeline mode)
+            document.getElementById('locTlPanel').style.display          = hasData && isTimeline ? '' : 'none';
 
             if (!hasData) { destroyMap(); return; }
 
             // Stats
-            const sessions = [...new Set(locData.map(p => p.session_id).filter(Boolean))];
+            const sessions   = [...new Set(locData.map(p => p.session_id).filter(Boolean))];
             const accuracies = locData.map(p => parseFloat(p.accuracy)).filter(v => !isNaN(v));
-            const avgAcc = accuracies.length ? (accuracies.reduce((s,v) => s+v, 0) / accuracies.length).toFixed(1) : '—';
+            const avgAcc     = accuracies.length ? (accuracies.reduce((s,v) => s+v, 0) / accuracies.length).toFixed(1) : '—';
             document.getElementById('locStatPoints').textContent   = locData.length;
             document.getElementById('locStatSessions').textContent = sessions.length;
             document.getElementById('locStatFirst').textContent    = fmtLocDate(locData[0]?.timestamp);
@@ -4321,14 +4672,18 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
             document.getElementById('locPointCount').textContent   = locData.length + ' pts';
             document.getElementById('locSessionCount').textContent = sessions.length + ' sessions';
 
-            // Session tabs
-            renderSessionTabs(sessions);
-
-            // Apply filter
-            applyLocFilter();
-
-            // Map
-            initOrUpdateMap();
+            if (isTimeline) {
+                // ── Timeline mode ─────────────────────────────────────────────
+                const filtered = getDateFilteredData();
+                locTimeline    = buildTimeline(filtered);
+                renderTimelinePanel(locTimeline);
+                updateMapTimeline(locTimeline, filtered);
+            } else {
+                // ── Raw data mode ─────────────────────────────────────────────
+                renderSessionTabs(sessions);
+                applyLocFilter();
+                initOrUpdateMap();
+            }
         }
 
         // ── Session Tabs ──────────────────────────────────────────────────────
@@ -4355,7 +4710,8 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
         // ── Filter ────────────────────────────────────────────────────────────
         function applyLocFilter() {
             const search = (document.getElementById('locTableSearch').value || '').toLowerCase();
-            locFilteredData = locData.filter(pt => {
+            const base   = getDateFilteredData(); // honours date picker
+            locFilteredData = base.filter(pt => {
                 if (locActiveSession !== 'all' && pt.session_id !== locActiveSession) return false;
                 if (search) {
                     const combined = ((pt.session_id||'') + ' ' + (pt.timestamp||'')).toLowerCase();
@@ -4436,6 +4792,10 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
                 }).addTo(locMap);
             }
 
+            // Clear timeline layers first (when switching from timeline → raw)
+            tlMapLayers.forEach(l => { try { locMap.removeLayer(l); } catch(_){} });
+            tlMapLayers = [];
+
             // Clear old layers
             if (locPolyline)   { locMap.removeLayer(locPolyline);  locPolyline  = null; }
             if (locPlayMarker) { locMap.removeLayer(locPlayMarker); locPlayMarker = null; }
@@ -4496,6 +4856,7 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
                 })
             });
             // Start hidden
+            setTimeout(() => locMap && locMap.invalidateSize(), 80);
         }
 
         // ── Playback ──────────────────────────────────────────────────────────
@@ -4592,25 +4953,126 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
             applyLocFilter();
         });
 
+        // ── Timeline click: highlight item + pan map ──────────────────────────
+        window.__tlClick = function(idx) {
+            locActiveTlIdx = idx;
+            // Update active highlight in panel
+            document.querySelectorAll('.tl-item').forEach(el => el.classList.remove('tl-active'));
+            const el = document.querySelector(`.tl-item[data-tl-idx="${idx}"]`);
+            if (el) { el.classList.add('tl-active'); el.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+            // Pan map
+            const seg = locTimeline[idx];
+            if (!seg || !locMap) return;
+            if (seg.type === 'STAY') {
+                locMap.setView([seg.lat, seg.lon], Math.max(locMap.getZoom(), 16), { animate: true, duration: 0.5 });
+                // Open popup for the corresponding marker
+                const m = locMarkers.find(mk => {
+                    const ll = mk.getLatLng();
+                    return Math.abs(ll.lat - seg.lat) < 0.0001 && Math.abs(ll.lng - seg.lon) < 0.0001;
+                });
+                if (m) m.openPopup();
+            } else if (seg.type === 'MOVE' && seg.points.length) {
+                const bounds = L.latLngBounds(seg.points.map(p => [+p.latitude, +p.longitude]));
+                locMap.fitBounds(bounds, { padding: [40, 40], animate: true, duration: 0.5 });
+            }
+        };
+
+        // ── Date picker event listeners ───────────────────────────────────────
+        document.getElementById('locDatePicker').addEventListener('change', e => {
+            locDateFilter = e.target.value || null;
+            document.getElementById('locAllDatesBtn').style.display = locDateFilter ? '' : 'none';
+            locActiveTlIdx = -1;
+            renderLocationSection();
+        });
+        document.getElementById('locTodayBtn').addEventListener('click', () => {
+            const today = new Date();
+            const s = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
+            document.getElementById('locDatePicker').value = s;
+            locDateFilter = s;
+            document.getElementById('locAllDatesBtn').style.display = '';
+            locActiveTlIdx = -1;
+            renderLocationSection();
+        });
+        document.getElementById('locAllDatesBtn').addEventListener('click', () => {
+            document.getElementById('locDatePicker').value = '';
+            locDateFilter = null;
+            document.getElementById('locAllDatesBtn').style.display = 'none';
+            locActiveTlIdx = -1;
+            renderLocationSection();
+        });
+
+        // ── View mode toggle ──────────────────────────────────────────────────
+        document.getElementById('locRawViewBtn').addEventListener('click', () => {
+            if (locViewMode === 'raw') return;
+            locViewMode = 'raw';
+            document.getElementById('locRawViewBtn').classList.add('active');
+            document.getElementById('locTimelineViewBtn').classList.remove('active');
+            locActiveTlIdx = -1;
+            renderLocationSection();
+        });
+        document.getElementById('locTimelineViewBtn').addEventListener('click', () => {
+            if (locViewMode === 'timeline') return;
+            locViewMode = 'timeline';
+            document.getElementById('locTimelineViewBtn').classList.add('active');
+            document.getElementById('locRawViewBtn').classList.remove('active');
+            locActiveTlIdx = -1;
+            // Pre-select today if no date is set and today has data
+            if (!locDateFilter) {
+                const today = new Date();
+                const s = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
+                const todayData = locData.filter(pt => {
+                    if (!pt.timestamp) return false;
+                    const d  = new Date(pt.timestamp);
+                    const ds = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+                    return ds === s;
+                });
+                if (todayData.length) {
+                    locDateFilter = s;
+                    document.getElementById('locDatePicker').value = s;
+                    document.getElementById('locAllDatesBtn').style.display = '';
+                } else {
+                    // Use date of most recent point
+                    const last = locData[locData.length - 1];
+                    if (last?.timestamp) {
+                        const d  = new Date(last.timestamp);
+                        const ds = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+                        locDateFilter = ds;
+                        document.getElementById('locDatePicker').value = ds;
+                        document.getElementById('locAllDatesBtn').style.display = '';
+                    }
+                }
+            }
+            renderLocationSection();
+        });
+
         // ── Hook into __appOpenPhone ──────────────────────────────────────────
         const origOpenPhone = window.__appOpenPhone;
         window.__appOpenPhone = function(deviceId) {
             origOpenPhone(deviceId);
-            // reset location state
+            // reset location state (existing)
             stopPlayback();
-            locPlayIndex = 0;
+            locPlayIndex     = 0;
             locActiveSession = 'all';
-            locPage = 0;
-            locFilteredData = [];
+            locPage          = 0;
+            locFilteredData  = [];
             destroyMap();
+            // reset timeline state (new)
+            locViewMode      = 'raw';
+            locTimeline      = [];
+            locActiveTlIdx   = -1;
+            tlMapLayers      = [];
+            document.getElementById('locRawViewBtn').classList.add('active');
+            document.getElementById('locTimelineViewBtn').classList.remove('active');
             // hide all loc UI until data arrives
             document.getElementById('locEmptyState').style.display     = '';
             document.getElementById('locStatRow').style.display         = 'none';
+            document.getElementById('locTopBar').style.display          = 'none';
             document.getElementById('locPlaybackBar').style.display     = 'none';
             document.getElementById('locSessionTabsWrap').style.display = 'none';
             document.getElementById('locTableWrap').style.display       = 'none';
             document.getElementById('locMapPlaceholder').style.display  = '';
-            document.getElementById('locationMap').style.display        = 'none';
+            document.getElementById('locMapRow').style.display          = 'none';
+            document.getElementById('locTlPanel').style.display         = 'none';
             // attach listener
             attachLocListenerReal(deviceId);
         };
@@ -4624,6 +5086,10 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
             stopPlayback();
             destroyMap();
             locData = []; locFilteredData = [];
+            // cleanup timeline
+            tlMapLayers   = [];
+            locTimeline   = [];
+            locActiveTlIdx = -1;
         });
 
     })(); // end location module
