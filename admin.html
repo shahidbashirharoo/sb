@@ -348,183 +348,21 @@
             .mob-menu-btn, .mob-backdrop { display: none !important; }
         }
 
-        /* ══════ LOCATION TRACKING ══════ */
-        .loc-map-placeholder {
-            height: 420px; border-radius: 10px; border: 1px solid var(--border);
-            background: var(--card2); display: flex; flex-direction: column;
-            align-items: center; justify-content: center; gap: 10px; color: var(--muted);
-        }
-        .loc-playback-bar {
-            display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-            background: var(--card2); border: 1px solid var(--border);
-            border-radius: 10px; padding: 12px 16px; margin-bottom: 16px;
-        }
-        .loc-playback-bar .playback-label {
-            font-size: 12px; font-weight: 700; color: var(--muted);
-            text-transform: uppercase; letter-spacing: .05em;
-        }
-        .loc-speed-select {
-            padding: 5px 10px; background: var(--bg2); border: 1px solid var(--border);
-            color: var(--text); border-radius: 6px; font-size: 12px;
-        }
-        .loc-progress-wrap {
-            flex: 1; min-width: 120px; display: flex; align-items: center; gap: 8px;
-        }
-        .loc-progress-bar {
-            flex: 1; height: 5px; background: var(--border); border-radius: 3px;
-            overflow: hidden; cursor: pointer;
-        }
-        .loc-progress-fill {
-            height: 100%; background: var(--green); border-radius: 3px;
-            transition: width .3s linear; width: 0%;
-        }
-        .loc-progress-label { font-size: 11px; color: var(--muted); white-space: nowrap; }
-        .loc-session-tabs {
-            display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 12px;
-        }
-        .loc-session-tab {
-            padding: 4px 12px; border-radius: 6px; font-size: 11px; font-weight: 700;
-            cursor: pointer; border: 1px solid var(--border); background: var(--bg2);
-            color: var(--muted); transition: all .15s;
-        }
-        .loc-session-tab.active {
-            background: var(--primary); border-color: var(--primary); color: #fff;
-        }
-        .loc-table-wrap { overflow-x: auto; }
-        .loc-table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 500px; }
-        .loc-table thead th {
-            color: var(--muted); font-weight: 600; padding: 8px 12px;
-            border-bottom: 1px solid var(--border); text-align: left; white-space: nowrap;
-        }
-        .loc-table tbody td { padding: 8px 12px; border-bottom: 1px solid #1a2235; vertical-align: middle; }
-        .loc-table tbody tr:last-child td { border-bottom: none; }
-        .loc-table tbody tr:hover td { background: rgba(255,255,255,.02); cursor: pointer; }
-        .loc-table tbody tr.loc-row-active td { background: rgba(59,130,246,.08); }
-        .loc-session-badge {
-            display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 10px;
-            font-weight: 700; background: rgba(59,130,246,.15); color: var(--primary);
-        }
-        .loc-pager {
-            display: flex; align-items: center; gap: 8px; justify-content: center;
-            margin-top: 12px; flex-wrap: wrap;
-        }
-        .loc-pager-btn {
-            padding: 4px 12px; border-radius: 6px; border: 1px solid var(--border);
-            background: var(--bg2); color: var(--text); font-size: 12px; cursor: pointer;
-        }
-        .loc-pager-btn:disabled { opacity: .4; cursor: default; }
-        .loc-pager-info { font-size: 12px; color: var(--muted); }
-        .loc-accuracy-bar {
-            display: inline-block; height: 6px; border-radius: 3px;
-            background: var(--green); vertical-align: middle; margin-right: 4px;
-        }
-        .loc-stat-row {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(130px,1fr));
-            gap: 8px; margin-bottom: 16px;
-        }
-        .loc-stat-chip {
-            background: var(--card2); border: 1px solid var(--border); border-radius: 8px;
-            padding: 10px 12px;
-        }
-        .loc-stat-chip .lsc-val { font-size: 18px; font-weight: 800; color: var(--teal); }
-        .loc-stat-chip .lsc-lbl { font-size: 10px; color: var(--muted); margin-top: 2px; }
 
-        /* ══════ TIMELINE TOOLBAR ══════ */
-        .loc-top-bar {
-            display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-            margin-bottom: 14px; padding: 10px 14px;
-            background: var(--card2); border: 1px solid var(--border); border-radius: 10px;
-        }
-        .loc-date-grp { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
-        .loc-date-grp label { font-size: 11px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; }
-        #locDatePicker {
-            padding: 6px 10px; background: var(--bg2); border: 1px solid var(--border);
-            color: var(--text); border-radius: 7px; font-size: 12px; cursor: pointer;
-            color-scheme: dark; font-family: inherit;
-        }
-        .loc-view-grp { margin-left: auto; display: flex; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
-        .loc-view-btn {
-            padding: 6px 14px; font-size: 12px; font-weight: 600; cursor: pointer;
-            border: none; background: transparent; color: var(--muted);
-            transition: all .15s; font-family: inherit; white-space: nowrap;
-        }
-        .loc-view-btn.active { background: rgba(59,130,246,.2); color: var(--primary); }
-        .loc-view-btn:hover:not(.active) { background: rgba(255,255,255,.05); color: var(--text); }
+        /* ══════ LOCATION TIMELINE (inline, inside device view) ══════ */
 
-        /* ══════ TIMELINE LAYOUT ══════ */
-        #locMapRow { display: flex; gap: 14px; align-items: flex-start; }
-        #locMapCol { flex: 1; min-width: 0; }
-        #locationMap { height: 420px; border-radius: 10px; border: 1px solid var(--border); overflow: hidden; position: relative; z-index: 0; }
-        .loc-tl-panel {
-            width: 290px; flex-shrink: 0; max-height: 500px; overflow-y: auto; overflow-x: hidden;
-            background: var(--card2); border: 1px solid var(--border); border-radius: 10px;
-            scrollbar-width: thin; scrollbar-color: #334155 transparent;
+        /* ── Sub-navigation chooser ── */
+        .app-subnav-btn {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 8px; flex: 1; min-width: 160px; padding: 20px 16px;
+            border: none; border-radius: 12px; cursor: pointer;
+            font-family: inherit; font-size: 15px; font-weight: 700;
+            transition: filter .15s, transform .1s;
         }
-        .loc-tl-panel::-webkit-scrollbar { width: 4px; }
-        .loc-tl-panel::-webkit-scrollbar-thumb { background: #334155; border-radius: 2px; }
-
-        /* Timeline header */
-        .tl-header {
-            padding: 10px 14px; font-size: 11px; font-weight: 700; color: var(--muted);
-            text-transform: uppercase; letter-spacing: .06em;
-            border-bottom: 1px solid var(--border); position: sticky; top: 0;
-            background: var(--card2); z-index: 2;
-            display: flex; align-items: center; justify-content: space-between;
-        }
-        .tl-list { position: relative; }
-        .tl-spine {
-            position: absolute; left: 25px; top: 0; bottom: 0; width: 2px;
-            background: var(--border); z-index: 0;
-        }
-        /* Timeline items */
-        .tl-item {
-            position: relative; padding: 11px 14px 11px 50px;
-            border-bottom: 1px solid var(--border); cursor: pointer;
-            transition: background .15s; z-index: 1;
-        }
-        .tl-item:last-child { border-bottom: none; }
-        .tl-item:hover { background: rgba(255,255,255,.04); }
-        .tl-item.tl-active { background: rgba(59,130,246,.1); border-left: 3px solid var(--primary); padding-left: 47px; }
-        .tl-item.tl-active .tl-dot { box-shadow: 0 0 0 3px rgba(59,130,246,.35); }
-        .tl-dot {
-            position: absolute; left: 15px; top: 50%; transform: translateY(-50%);
-            width: 22px; height: 22px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 9px; font-weight: 800; z-index: 2;
-            border: 2px solid var(--card2); transition: box-shadow .2s;
-        }
-        .tl-dot-stay { background: #10b981; color: #fff; font-size: 10px; }
-        .tl-dot-move { background: #475569; color: #cbd5e1; font-size: 11px; }
-        .tl-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 3px; }
-        .tl-label-stay { color: #10b981; }
-        .tl-label-move { color: #64748b; }
-        .tl-time-range { font-size: 12px; color: var(--text); font-weight: 600; margin-bottom: 2px; }
-        .tl-meta { font-size: 11px; color: var(--muted); }
-        .tl-addr { font-size: 11px; color: var(--muted); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .tl-no-data { text-align: center; padding: 36px 16px; color: var(--muted); }
-        .tl-no-data .tl-no-icon { font-size: 28px; margin-bottom: 8px; }
-
-        @media (max-width: 960px) {
-            #locMapRow { flex-direction: column; }
-            .loc-tl-panel { width: 100%; max-height: 300px; }
-        }
-
-        /* ══════ DEVICE TIMELINE PANEL (panel-timeline) ══════ */
-
-        /* ── Device selector bar ── */
-        .dtl-device-bar {
-            display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-            margin-bottom: 20px; padding: 14px 18px;
-            background: var(--card2); border: 1px solid var(--border); border-radius: 12px;
-        }
-        .dtl-device-bar label { font-size: 12px; color: var(--muted); font-weight: 600; white-space: nowrap; }
-        .dtl-device-select {
-            flex: 1; min-width: 200px; padding: 9px 12px;
-            background: var(--bg2); border: 1px solid var(--border);
-            color: var(--text); border-radius: 8px; font-size: 13px; font-family: inherit;
-            cursor: pointer;
-        }
-        .dtl-device-select:focus { outline: none; border-color: var(--primary); }
+        .app-subnav-btn:hover  { filter: brightness(1.12); }
+        .app-subnav-btn:active { transform: scale(.97); }
+        .app-subnav-btn .subnav-icon { font-size: 28px; }
+        .app-subnav-btn .subnav-sub  { font-size: 11px; font-weight: 400; opacity: .8; margin-top: 2px; }
         .dtl-live-badge {
             display: inline-flex; align-items: center; gap: 6px;
             background: rgba(16,185,129,.15); border: 1px solid rgba(16,185,129,.3);
@@ -673,7 +511,7 @@
             .dtl-card-time { font-size: 13px; }
         }
     </style>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
 </head>
 <body>
 
@@ -933,9 +771,6 @@
                 <span class="nav-icon">🗑️</span> App Bin
                 <span class="nav-badge badge-red" id="navAppBinCount" style="display:none;">0</span>
             </button>
-            <button class="nav-item" data-panel="timeline" data-shell="admin">
-                <span class="nav-icon">🗺️</span> Location Timeline
-            </button>
         </div>
 
         <div class="sidebar-footer">
@@ -1176,168 +1011,135 @@
 
                 <!-- Recordings view shown when a phone is clicked -->
                 <div id="appRecordingsView" style="display:none;">
-                    <!-- ── DEVICE HEADER ─────────────────────────────── -->
+
+                    <!-- ══ DEVICE HEADER ══════════════════════════════════ -->
                     <div class="section" style="margin-bottom:14px;">
                         <div class="section-header">
                             <button class="btn btn-gray btn-sm" id="appBackBtn">← Back</button>
-                            <h3 id="appRecordingsTitle" style="margin-left:4px;">Recordings</h3>
-                            <span class="badge" id="appRecCount">0</span>
+                            <h3 id="appRecordingsTitle" style="margin-left:4px;">Set Info</h3>
                             <div class="section-header-right">
-                                <button class="btn btn-teal btn-sm" id="appRenameCurrentBtn">✏️ Rename Device</button>
-                                <button class="btn btn-red btn-sm" id="appDeleteCurrentDeviceBtn">🗑️ Delete Device</button>
+                                <button class="btn btn-teal btn-sm" id="appRenameCurrentBtn">✏️ Rename</button>
+                                <button class="btn btn-red btn-sm" id="appDeleteCurrentDeviceBtn">🗑️ Delete</button>
                             </div>
                         </div>
                         <div id="appDeviceInfo" style="font-size:12px;color:var(--muted);margin-top:6px;"></div>
                     </div>
 
-                    <!-- ── CALL RECORDINGS ────────────────────────────── -->
-                    <div class="section" style="margin-bottom:14px;">
-                        <div class="section-header">
-                            <span style="font-size:18px;">🎙️</span>
-                            <h3>Call Recordings</h3>
-                            <span class="badge" id="appRecCountInner">0</span>
-                        </div>
-                        <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
-                            <input type="text" id="appRecSearch" placeholder="🔍 Search number or contact…" style="width:220px;">
-                            <select id="appRecFilter">
-                                <option value="all">All calls</option>
-                                <option value="incoming">Incoming only</option>
-                                <option value="outgoing">Outgoing only</option>
-                            </select>
-                        </div>
-                        <div id="appRecordingsList"></div>
-                        <div id="appNoRecMsg" style="display:none;text-align:center;padding:40px 0;color:var(--muted);">
-                            <div style="font-size:36px;margin-bottom:10px;">🎙️</div>
-                            <div style="font-size:13px;">No recordings for this phone yet.</div>
+                    <!-- ══ SUB-NAV CHOOSER ════════════════════════════════
+                         Shown by default when entering a device.
+                         Two large buttons: Call Recordings | Location Timeline
+                    ════════════════════════════════════════════════════ -->
+                    <div id="appSubNav" class="section" style="margin-bottom:14px;">
+                        <p style="font-size:12px;color:var(--muted);margin-bottom:16px;">
+                            Select a section to view:
+                        </p>
+                        <div style="display:flex;gap:14px;flex-wrap:wrap;">
+                            <button class="app-subnav-btn" style="background:var(--primary);color:#fff;"
+                                    onclick="window.__appShowSubView('recordings')">
+                                <span class="subnav-icon">🎙️</span>
+                                Call Recordings
+                                <span class="subnav-sub" id="appSubNavRecSub">Loading…</span>
+                            </button>
+                            <button class="app-subnav-btn" style="background:var(--teal);color:#fff;"
+                                    onclick="window.__appShowSubView('timeline')">
+                                <span class="subnav-icon">📍</span>
+                                Location Timeline
+                                <span class="subnav-sub">Live stay history</span>
+                            </button>
                         </div>
                     </div>
 
-                    <!-- ── LOCATION TRACKING ──────────────────────────── -->
-                    <div class="section" id="locationTrackingSection">
-                        <div class="section-header">
-                            <span style="font-size:18px;">📍</span>
-                            <h3>Location Tracking</h3>
-                            <span class="badge badge-green" id="locPointCount">0 pts</span>
-                            <span class="badge badge-purple" id="locSessionCount" style="margin-left:4px;">0 sessions</span>
-                            <div class="section-header-right">
-                                <button class="btn btn-gray btn-sm" id="locRefreshBtn" title="Refresh location data">🔄 Refresh</button>
-                                <button class="btn btn-teal btn-sm" id="locCenterMapBtn" title="Re-center map on route">🎯 Center Map</button>
+                    <!-- ══ SUB-VIEW: CALL RECORDINGS ══════════════════════
+                         Hidden until user taps "Call Recordings" button.
+                         All existing recording logic is untouched here.
+                    ════════════════════════════════════════════════════ -->
+                    <div id="appSubViewRecordings" style="display:none;">
+                        <div class="section" style="margin-bottom:14px;">
+                            <div class="section-header">
+                                <button class="btn btn-gray btn-sm" id="appRecSubBackBtn">← Back</button>
+                                <span style="font-size:18px;margin-left:6px;">🎙️</span>
+                                <h3 style="margin-left:4px;">Call Recordings</h3>
+                                <span class="badge" id="appRecCountInner">0</span>
+                            </div>
+                            <div style="display:flex;gap:8px;margin-bottom:14px;margin-top:12px;flex-wrap:wrap;">
+                                <input type="text" id="appRecSearch" placeholder="🔍 Search number or contact…" style="width:220px;">
+                                <select id="appRecFilter">
+                                    <option value="all">All calls</option>
+                                    <option value="incoming">Incoming only</option>
+                                    <option value="outgoing">Outgoing only</option>
+                                </select>
+                            </div>
+                            <div id="appRecordingsList"></div>
+                            <div id="appNoRecMsg" style="display:none;text-align:center;padding:40px 0;color:var(--muted);">
+                                <div style="font-size:36px;margin-bottom:10px;">🎙️</div>
+                                <div style="font-size:13px;">No recordings for this phone yet.</div>
                             </div>
                         </div>
+                    </div>
 
-                        <!-- Stats chips -->
-                        <div class="loc-stat-row" id="locStatRow" style="display:none;">
-                            <div class="loc-stat-chip">
-                                <div class="lsc-val" id="locStatPoints">0</div>
-                                <div class="lsc-lbl">Total Points</div>
-                            </div>
-                            <div class="loc-stat-chip">
-                                <div class="lsc-val" id="locStatSessions">0</div>
-                                <div class="lsc-lbl">Sessions</div>
-                            </div>
-                            <div class="loc-stat-chip">
-                                <div class="lsc-val" id="locStatFirst">—</div>
-                                <div class="lsc-lbl">First Point</div>
-                            </div>
-                            <div class="loc-stat-chip">
-                                <div class="lsc-val" id="locStatLast">—</div>
-                                <div class="lsc-lbl">Last Point</div>
-                            </div>
-                            <div class="loc-stat-chip">
-                                <div class="lsc-val" id="locStatAccuracy">—</div>
-                                <div class="lsc-lbl">Avg Accuracy (m)</div>
-                            </div>
-                        </div>
-
-                        <!-- ── Date Filter + View Toggle Bar ── -->
-                        <div class="loc-top-bar" id="locTopBar" style="display:none;">
-                            <div class="loc-date-grp">
-                                <label>📅 Date</label>
-                                <input type="date" id="locDatePicker">
-                                <button class="btn btn-gray btn-sm" id="locTodayBtn">Today</button>
-                                <button class="btn btn-gray btn-sm" id="locAllDatesBtn" style="display:none;">✕ All Dates</button>
-                            </div>
-                            <div class="loc-view-grp">
-                                <button class="loc-view-btn active" id="locRawViewBtn">📋 Raw Data</button>
-                                <button class="loc-view-btn" id="locTimelineViewBtn">🗓️ Timeline</button>
-                            </div>
-                        </div>
-
-                        <!-- ── Map + Timeline layout ── -->
-                        <div id="locationMapWrap">
-                            <div class="loc-map-placeholder" id="locMapPlaceholder">
-                                <span style="font-size:36px;">🗺️</span>
-                                <div style="font-size:14px;font-weight:600;">No location data yet</div>
-                                <div style="font-size:12px;">Location points sent from the device will appear here.</div>
-                            </div>
-                            <div id="locMapRow" style="display:none;">
-                                <div id="locMapCol">
-                                    <div id="locationMap"></div>
+                    <!-- ══ SUB-VIEW: LOCATION TIMELINE ════════════════════
+                         Hidden until user taps "Location Timeline" button.
+                         Reads device_timeline/{deviceId} in real-time.
+                         One card per stayId — click opens Google Maps.
+                    ════════════════════════════════════════════════════ -->
+                    <div id="appSubViewTimeline" style="display:none;">
+                        <div class="section">
+                            <div class="section-header" style="margin-bottom:16px;">
+                                <button class="btn btn-gray btn-sm" id="appTlSubBackBtn">← Back</button>
+                                <span style="font-size:18px;margin-left:6px;">📍</span>
+                                <h3 style="margin-left:4px;">Location Timeline</h3>
+                                <span class="badge badge-green" id="appTlStayCount" style="display:none;">0 stops</span>
+                                <div class="section-header-right">
+                                    <div class="dtl-live-badge" id="appTlLiveBadge" style="display:none;">
+                                        <span class="dtl-live-dot"></span> LIVE
+                                    </div>
                                 </div>
-                                <div class="loc-tl-panel" id="locTlPanel" style="display:none;"></div>
                             </div>
-                        </div>
 
-                        <!-- Playback Controls -->
-                        <div class="loc-playback-bar" id="locPlaybackBar" style="display:none;">
-                            <span class="playback-label">▶ Route Playback</span>
-                            <button class="btn btn-green btn-sm" id="locPlayBtn">▶ Play</button>
-                            <button class="btn btn-yellow btn-sm" id="locPauseBtn" style="display:none;" disabled>⏸ Pause</button>
-                            <button class="btn btn-gray btn-sm"  id="locResetBtn">⏮ Reset</button>
-                            <div class="loc-progress-wrap">
-                                <div class="loc-progress-bar" id="locProgressBar">
-                                    <div class="loc-progress-fill" id="locProgressFill"></div>
+                            <!-- Summary chips -->
+                            <div class="dtl-summary" id="appTlSummary" style="display:none;">
+                                <div class="dtl-summary-chip">
+                                    <div class="dtl-chip-val" id="appTlChipStops">0</div>
+                                    <div class="dtl-chip-lbl">Total Stops</div>
                                 </div>
-                                <span class="loc-progress-label" id="locProgressLabel">0 / 0</span>
+                                <div class="dtl-summary-chip">
+                                    <div class="dtl-chip-val" id="appTlChipToday">0</div>
+                                    <div class="dtl-chip-lbl">Today</div>
+                                </div>
+                                <div class="dtl-summary-chip">
+                                    <div class="dtl-chip-val" id="appTlChipTotal" style="color:var(--teal);">0</div>
+                                    <div class="dtl-chip-lbl">Total Time</div>
+                                </div>
+                                <div class="dtl-summary-chip" style="flex:1;min-width:140px;text-align:left;padding-left:18px;">
+                                    <div style="font-size:11px;color:var(--muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:.05em;font-weight:600;">Latest Activity</div>
+                                    <div style="font-size:13px;font-weight:700;color:var(--text);" id="appTlChipLastTime">—</div>
+                                </div>
                             </div>
-                            <label style="font-size:12px;color:var(--muted);">Speed:</label>
-                            <select class="loc-speed-select" id="locSpeedSelect">
-                                <option value="1000">1× (1s/pt)</option>
-                                <option value="500" selected>2× (0.5s/pt)</option>
-                                <option value="200">5× (0.2s/pt)</option>
-                                <option value="100">10× (fast)</option>
-                            </select>
-                        </div>
 
-                        <!-- Session filter tabs -->
-                        <div id="locSessionTabsWrap" style="display:none;">
-                            <div style="font-size:11px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em;font-weight:700;">Filter by Session</div>
-                            <div class="loc-session-tabs" id="locSessionTabs"></div>
-                        </div>
-
-                        <!-- History Table -->
-                        <div id="locTableWrap" style="display:none;">
-                            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap;">
-                                <span style="font-size:13px;font-weight:700;">📋 Location History</span>
-                                <input type="text" id="locTableSearch" placeholder="🔍 Filter by session or date…" style="width:210px;font-size:12px;padding:6px 10px;">
+                            <!-- Timeline states -->
+                            <div id="appTlContent">
+                                <!-- Loading -->
+                                <div class="dtl-placeholder" id="appTlLoading">
+                                    <div class="dtl-placeholder-icon">⏳</div>
+                                    <div class="dtl-placeholder-title">Loading Timeline…</div>
+                                    <div class="dtl-placeholder-sub">Connecting to real-time database.</div>
+                                </div>
+                                <!-- Empty -->
+                                <div class="dtl-empty" id="appTlEmpty" style="display:none;">
+                                    <div class="dtl-empty-icon">🗺️</div>
+                                    <div class="dtl-empty-title">No Location Data Yet</div>
+                                    <div class="dtl-empty-sub">
+                                        No timeline entries for this device.<br>
+                                        Stay records appear automatically when the app sends them.
+                                    </div>
+                                </div>
+                                <!-- Card list -->
+                                <div class="dtl-list" id="appTlCardList" style="display:none;"></div>
                             </div>
-                            <div class="loc-table-wrap">
-                                <table class="loc-table">
-                                    <thead>
-                                        <tr>
-                                            <th>#</th>
-                                            <th>Date</th>
-                                            <th>Time</th>
-                                            <th>Latitude</th>
-                                            <th>Longitude</th>
-                                            <th>Accuracy (m)</th>
-                                            <th>Session</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="locTableBody"></tbody>
-                                </table>
-                            </div>
-                            <div class="loc-pager" id="locPager"></div>
                         </div>
+                    </div>
 
-                        <!-- Empty state -->
-                        <div id="locEmptyState" style="text-align:center;padding:40px 0;color:var(--muted);">
-                            <div style="font-size:36px;margin-bottom:10px;">📍</div>
-                            <div style="font-size:13px;">No location data has been received for this device yet.</div>
-                            <div style="font-size:11px;margin-top:6px;">Location points will appear automatically when the app sends them.</div>
-                        </div>
-
-                    </div><!-- /locationTrackingSection -->
+                </div><!-- /appSubViewTimeline -->
 
                 </div><!-- /appRecordingsView -->
 
@@ -1375,87 +1177,6 @@
                     </div>
                 </div>
             </div><!-- /panel-app-bin -->
-
-            <!-- ══ LOCATION TIMELINE PANEL ══════════════════════════════════
-                 Displays device_timeline/{deviceId}/{stayId} records as
-                 large clickable cards — one per location stay, real-time.
-            ══════════════════════════════════════════════════════════════ -->
-            <div class="panel" id="panel-timeline">
-
-                <div class="section-header" style="margin-bottom:18px;">
-                    <span style="font-size:20px;">🗺️</span>
-                    <h3 style="font-size:17px;">Location Timeline</h3>
-                    <span class="badge badge-green" id="dtlStayCount" style="display:none;">0 stops</span>
-                    <div class="section-header-right">
-                        <div class="dtl-live-badge" id="dtlLiveBadge" style="display:none;">
-                            <span class="dtl-live-dot"></span> LIVE
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Device selector bar -->
-                <div class="dtl-device-bar">
-                    <label>📱 Select Device</label>
-                    <select class="dtl-device-select" id="dtlDeviceSelect">
-                        <option value="">— Choose a device —</option>
-                    </select>
-                    <button class="btn btn-gray btn-sm" id="dtlRefreshDevices" title="Reload device list">🔄</button>
-                </div>
-
-                <!-- Summary chips (hidden until device selected + data loaded) -->
-                <div class="dtl-summary" id="dtlSummary" style="display:none;">
-                    <div class="dtl-summary-chip">
-                        <div class="dtl-chip-val" id="dtlChipStops">0</div>
-                        <div class="dtl-chip-lbl">Total Stops</div>
-                    </div>
-                    <div class="dtl-summary-chip">
-                        <div class="dtl-chip-val" id="dtlChipToday">0</div>
-                        <div class="dtl-chip-lbl">Today</div>
-                    </div>
-                    <div class="dtl-summary-chip">
-                        <div class="dtl-chip-val" id="dtlChipTotal" style="color:var(--teal);">0</div>
-                        <div class="dtl-chip-lbl">Total Time</div>
-                    </div>
-                    <div class="dtl-summary-chip" style="flex:1; text-align:left; padding-left:18px;">
-                        <div style="font-size:11px; color:var(--muted); margin-bottom:3px; text-transform:uppercase; letter-spacing:.05em; font-weight:600;">Latest Activity</div>
-                        <div style="font-size:13px; font-weight:700; color:var(--text);" id="dtlChipLastTime">—</div>
-                    </div>
-                </div>
-
-                <!-- Main timeline list (cards injected here by JS) -->
-                <div id="dtlContent">
-                    <!-- Initial placeholder: no device chosen -->
-                    <div class="dtl-placeholder" id="dtlPlaceholderNoDevice">
-                        <div class="dtl-placeholder-icon">📍</div>
-                        <div class="dtl-placeholder-title">Select a Device</div>
-                        <div class="dtl-placeholder-sub">
-                            Choose a device from the dropdown above to view its<br>
-                            location timeline — all stays displayed as clickable cards.
-                        </div>
-                    </div>
-
-                    <!-- Loading state -->
-                    <div class="dtl-placeholder" id="dtlPlaceholderLoading" style="display:none;">
-                        <div class="dtl-placeholder-icon">⏳</div>
-                        <div class="dtl-placeholder-title">Loading Timeline…</div>
-                        <div class="dtl-placeholder-sub">Connecting to Firebase real-time database.</div>
-                    </div>
-
-                    <!-- Empty state: device selected but no data yet -->
-                    <div class="dtl-empty" id="dtlPlaceholderEmpty" style="display:none;">
-                        <div class="dtl-empty-icon">🗺️</div>
-                        <div class="dtl-empty-title">No Location Data Yet</div>
-                        <div class="dtl-empty-sub">
-                            No timeline entries found for this device.<br>
-                            Stay records will appear here automatically when the app sends them.
-                        </div>
-                    </div>
-
-                    <!-- The actual card list (shown when data exists) -->
-                    <div class="dtl-list" id="dtlCardList" style="display:none;"></div>
-                </div>
-
-            </div><!-- /panel-timeline -->
 
         </div><!-- /content -->
     </div><!-- /main -->
@@ -1672,11 +1393,6 @@
         </div><!-- /user content -->
     </div><!-- /user main -->
 </div><!-- /userShell -->
-
-<!-- ══════════════════════════════════════════════════════════
-     LEAFLET MAP LIBRARY
-══════════════════════════════════════════════════════════ -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <!-- ══════════════════════════════════════════════════════════
      FIREBASE + SCRIPT
@@ -4150,7 +3866,7 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
                     <p class="meta" style="margin-top:4px;">Recordings: <strong style="color:var(--text);">${recCount}</strong></p>
                 </div>
                 <div class="card-actions">
-                    <button class="btn btn-primary btn-sm" style="flex:2;" onclick="window.__appOpenPhone('${did}')">🎙️ View Recordings →</button>
+                    <button class="btn btn-primary btn-sm" style="flex:2;" onclick="window.__appOpenPhone('${did}')">⚙️ Set Info →</button>
                     <button class="btn btn-teal btn-sm"    style="flex:1;" onclick="event.stopPropagation();window.__appRenameDevice('${did}')" title="Rename device">✏️</button>
                     <button class="btn btn-red btn-sm"     style="flex:1;" onclick="event.stopPropagation();window.__appDeleteDevice('${did}')" title="Delete device">🗑️</button>
                 </div>
@@ -4177,8 +3893,10 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
             (r.contact_name || '').toLowerCase().includes(search)
         );
 
-        document.getElementById('appRecCount').textContent = recs.length;
         document.getElementById('appRecCountInner').textContent = recs.length;
+        // Update the sub-nav chooser button subtitle with live count
+        var recSubLabel = document.getElementById('appSubNavRecSub');
+        if (recSubLabel) recSubLabel.textContent = recs.length + ' recording' + (recs.length !== 1 ? 's' : '');
 
         if (recs.length === 0) {
             container.innerHTML = '';
@@ -4226,7 +3944,7 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
         const devices  = activeDevices();
         const phoneNum = devices.findIndex(x => x.device_id === deviceId) + 1;
 
-        // Title: prefer custom name
+        // Set device header
         const titleName = d.custom_name || d.model || 'Unknown';
         document.getElementById('appRecordingsTitle').textContent =
             'Phone ' + phoneNum + ' — ' + titleName;
@@ -4236,11 +3954,18 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
             ' · App v' + esc(d.app_version || '?') +
             ' · Last seen: ' + fmtRelative(d.last_seen);
 
+        // Pre-load recordings count for sub-nav button label
         buildRecordingsList(deviceId);
-        renderRecordingsList();
+        const recCount = appRecordingsAll.length;
+        const recSub = document.getElementById('appSubNavRecSub');
+        if (recSub) recSub.textContent = recCount + ' recording' + (recCount !== 1 ? 's' : '');
 
-        document.getElementById('appPhonesView').style.display    = 'none';
-        document.getElementById('appRecordingsView').style.display = '';
+        // Show device view with sub-nav chooser visible, sub-views hidden
+        document.getElementById('appSubNav').style.display            = '';
+        document.getElementById('appSubViewRecordings').style.display = 'none';
+        document.getElementById('appSubViewTimeline').style.display   = 'none';
+        document.getElementById('appPhonesView').style.display        = 'none';
+        document.getElementById('appRecordingsView').style.display    = '';
     };
 
     // ── Rename device ───────────────────────────────────────────────────────
@@ -4506,6 +4231,8 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
     // ── Back button ─────────────────────────────────────────────────────────
     document.getElementById('appBackBtn').addEventListener('click', () => {
         appCurrentDevice = null;
+        // Clean up any active timeline listener
+        if (window.__appTlCleanup) { window.__appTlCleanup(); }
         document.getElementById('appRecordingsView').style.display = 'none';
         document.getElementById('appPhonesView').style.display     = '';
         renderPhoneList();
@@ -4554,1288 +4281,406 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
 
 
     // ══════════════════════════════════════════════════════════════════════════
-    // LOCATION TRACKING MODULE
-    // ══════════════════════════════════════════════════════════════════════════
-    (function () {
-
-        // ── State ─────────────────────────────────────────────────────────────
-        let locData         = [];    // sorted array of location points for current device
-        let locMap          = null;  // Leaflet map instance
-        let locMarkers      = [];    // array of L.circleMarker
-        let locPolyline     = null;  // L.polyline for the route
-        let locPlayMarker   = null;  // animated moving marker
-        let locPlayIndex    = 0;     // current playback index
-        let locPlayTimer    = null;  // setInterval handle
-        let locIsPlaying    = false;
-        let locDeviceId     = null;  // current device
-        let locUnsubscribe  = null;  // Firebase onValue unsubscribe fn
-        let locPage         = 0;     // current table page (0-based)
-        const LOC_PAGE_SIZE = 50;
-        let locActiveSession = 'all'; // session filter
-        let locFilteredData  = [];    // after session + search filter
-        // ── Timeline state ────────────────────────────────────────────────────
-        let locViewMode      = 'raw';  // 'raw' | 'timeline'
-        let locDateFilter    = null;   // null | 'YYYY-MM-DD'
-        let locTimeline      = [];     // processed timeline segments
-        let tlMapLayers      = [];     // timeline-specific map layers
-        let locActiveTlIdx   = -1;     // highlighted timeline item index
-        let tlGeoCache       = {};     // reverse geocode cache
-
-        // ── Helpers ───────────────────────────────────────────────────────────
-        function fmtLocDate(isoStr) {
-            if (!isoStr) return '—';
-            try { return new Date(isoStr).toLocaleDateString(); } catch(_){ return isoStr; }
-        }
-        function fmtLocTime(isoStr) {
-            if (!isoStr) return '—';
-            try { return new Date(isoStr).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }); } catch(_){ return isoStr; }
-        }
-        function sessionShort(sid) {
-            if (!sid) return 'Unknown';
-            return sid.length > 8 ? sid.slice(0,8) + '…' : sid;
-        }
-        function sessionColor(sid) {
-            // deterministic pastel color from session id
-            const colors = ['#3b82f6','#10b981','#f59e0b','#8b5cf6','#ef4444','#06b6d4','#f97316','#84cc16'];
-            let h = 0;
-            for (let i = 0; i < (sid||'').length; i++) h = (h * 31 + sid.charCodeAt(i)) >>> 0;
-            return colors[h % colors.length];
-        }
-
-        // ── Timeline Helpers ──────────────────────────────────────────────────
-        function haversineM(lat1, lon1, lat2, lon2) {
-            const R = 6371000;
-            const toRad = x => x * Math.PI / 180;
-            const dLat = toRad(lat2 - lat1), dLon = toRad(lon2 - lon1);
-            const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon/2)**2;
-            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        }
-        function ptCentroid(pts) {
-            const n = pts.length;
-            return { lat: pts.reduce((s,p) => s + +p.latitude, 0) / n, lon: pts.reduce((s,p) => s + +p.longitude, 0) / n };
-        }
-        function fmtDuration(ms) {
-            if (ms < 0) ms = 0;
-            const h = Math.floor(ms / 3600000);
-            const m = Math.floor((ms % 3600000) / 60000);
-            if (h > 0) return h + 'h ' + m + 'm';
-            if (m > 0) return m + ' min';
-            return Math.max(1, Math.floor(ms / 1000)) + 's';
-        }
-        function calcTotalDist(pts) {
-            let d = 0;
-            for (let i = 1; i < pts.length; i++)
-                d += haversineM(+pts[i-1].latitude, +pts[i-1].longitude, +pts[i].latitude, +pts[i].longitude);
-            return d;
-        }
-        function getDateFilteredData() {
-            if (!locDateFilter) return locData;
-            return locData.filter(pt => {
-                if (!pt.timestamp) return false;
-                const d = new Date(pt.timestamp);
-                const s = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
-                return s === locDateFilter;
-            });
-        }
-
-        // ── Timeline Builder ──────────────────────────────────────────────────
-        // Groups location points into STAY (≥100m dwell ≥5min) and MOVE segments
-        function buildTimeline(pts) {
-            if (!pts.length) return [];
-            const DIST_M  = 100;               // metres — same-place threshold
-            const TIME_MS = 5 * 60 * 1000;    // 5 min  — minimum dwell for a STAY
-
-            // Step 1: cluster consecutive nearby points by distance to group centroid
-            const groups = [];
-            let g = [pts[0]];
-            for (let i = 1; i < pts.length; i++) {
-                const c = ptCentroid(g);
-                if (haversineM(c.lat, c.lon, +pts[i].latitude, +pts[i].longitude) <= DIST_M) {
-                    g.push(pts[i]);
-                } else {
-                    groups.push(g);
-                    g = [pts[i]];
-                }
-            }
-            groups.push(g);
-
-            // Step 2: classify each group as STAY or candidate MOVE
-            const classified = groups.map(grp => {
-                const t0  = new Date(grp[0].timestamp);
-                const t1  = new Date(grp[grp.length - 1].timestamp);
-                const dur = t1 - t0;
-                const c   = ptCentroid(grp);
-                return { pts: grp, start: t0, end: t1, dur, lat: c.lat, lon: c.lon,
-                         isStay: dur >= TIME_MS && grp.length >= 2 };
-            });
-
-            // Step 3: merge consecutive non-STAY groups into single MOVE segments
-            const segments = [];
-            let moveBuf = [];
-            for (const cl of classified) {
-                if (cl.isStay) {
-                    if (moveBuf.length) {
-                        const mp = moveBuf.flat();
-                        segments.push({ type: 'MOVE', points: mp,
-                            start: new Date(mp[0].timestamp),
-                            end:   new Date(mp[mp.length-1].timestamp),
-                            distM: calcTotalDist(mp) });
-                        moveBuf = [];
-                    }
-                    segments.push({ type: 'STAY', points: cl.pts,
-                        start: cl.start, end: cl.end, lat: cl.lat, lon: cl.lon });
-                } else {
-                    moveBuf.push(cl.pts);
-                }
-            }
-            if (moveBuf.length) {
-                const mp = moveBuf.flat();
-                segments.push({ type: 'MOVE', points: mp,
-                    start: new Date(mp[0].timestamp),
-                    end:   new Date(mp[mp.length-1].timestamp),
-                    distM: calcTotalDist(mp) });
-            }
-            return segments;
-        }
-
-        // ── Reverse Geocode (Nominatim, cached) ───────────────────────────────
-        async function geocodeReverse(lat, lon) {
-            const key = lat.toFixed(4) + ',' + lon.toFixed(4);
-            if (tlGeoCache[key]) return tlGeoCache[key];
-            try {
-                const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat.toFixed(6)}&lon=${lon.toFixed(6)}&format=json`;
-                const r = await fetch(url, { signal: AbortSignal.timeout(6000), headers: { 'Accept-Language': 'en' } });
-                const d = await r.json();
-                const a = d.address || {};
-                const parts = [
-                    a.road || a.pedestrian || a.footway || a.amenity,
-                    a.suburb || a.neighbourhood || a.city_district || a.quarter,
-                    a.city || a.town || a.village || a.county
-                ].filter(Boolean);
-                const addr = parts.slice(0, 2).join(', ') || d.display_name?.split(',').slice(0, 2).join(',').trim() || 'Unknown location';
-                tlGeoCache[key] = addr;
-                return addr;
-            } catch (_) {
-                return lat.toFixed(4) + ', ' + lon.toFixed(4);
-            }
-        }
-
-        // ── Timeline Panel Renderer ───────────────────────────────────────────
-        function renderTimelinePanel(segments) {
-            const panel = document.getElementById('locTlPanel');
-            if (!segments.length) {
-                panel.innerHTML = '<div class="tl-no-data"><div class="tl-no-icon">🗺️</div><div>No movement data for this date.</div><div style="font-size:11px;margin-top:6px;">Try selecting a different date or All Dates.</div></div>';
-                return;
-            }
-            const staySegs = segments.filter(s => s.type === 'STAY');
-            let stayNum = 0;
-            panel.innerHTML = `
-                <div class="tl-header">
-                    <span>🗓️ Day Timeline</span>
-                    <span style="color:var(--green);font-size:11px;">${staySegs.length} stop${staySegs.length !== 1 ? 's' : ''}</span>
-                </div>
-                <div class="tl-list" id="tlList">
-                    <div class="tl-spine"></div>
-                    ${segments.map((seg, i) => {
-                        if (seg.type === 'STAY') {
-                            stayNum++;
-                            const dur  = fmtDuration(seg.end - seg.start);
-                            const t0   = fmtLocTime(seg.start.toISOString());
-                            const t1   = fmtLocTime(seg.end.toISOString());
-                            const sn   = stayNum;
-                            return `<div class="tl-item" data-tl-idx="${i}" onclick="window.__tlClick(${i})">
-                                <div class="tl-dot tl-dot-stay">${sn}</div>
-                                <div class="tl-label tl-label-stay">📍 Stayed</div>
-                                <div class="tl-time-range">${t0} – ${t1}</div>
-                                <div class="tl-meta">${dur}</div>
-                                <div class="tl-addr" id="tlAddr_${i}">📍 ${seg.lat.toFixed(4)}, ${seg.lon.toFixed(4)}</div>
-                            </div>`;
-                        } else {
-                            const dur  = fmtDuration(seg.end - seg.start);
-                            const dist = seg.distM >= 1000
-                                ? (seg.distM / 1000).toFixed(1) + ' km'
-                                : Math.round(seg.distM) + ' m';
-                            const t0 = fmtLocTime(seg.start.toISOString());
-                            const t1 = fmtLocTime(seg.end.toISOString());
-                            return `<div class="tl-item" data-tl-idx="${i}" onclick="window.__tlClick(${i})">
-                                <div class="tl-dot tl-dot-move">▶</div>
-                                <div class="tl-label tl-label-move">🚶 Moving</div>
-                                <div class="tl-time-range">${t0} – ${t1}</div>
-                                <div class="tl-meta">${dur} · ${dist}</div>
-                            </div>`;
-                        }
-                    }).join('')}
-                </div>`;
-            // Geocode STAY addresses asynchronously (rate-limited: 1 req/sec)
-            staySegs.forEach((seg, order) => {
-                const segIdx = segments.indexOf(seg);
-                setTimeout(() => {
-                    geocodeReverse(seg.lat, seg.lon).then(addr => {
-                        const el = document.getElementById('tlAddr_' + segIdx);
-                        if (el) el.textContent = '📍 ' + addr;
-                    });
-                }, order * 1100); // ~1 req/sec to respect Nominatim usage policy
-            });
-        }
-
-        // ── Timeline Map Renderer ─────────────────────────────────────────────
-        function updateMapTimeline(segments, rawPts) {
-            if (typeof L === 'undefined') return;
-            // Clear previous timeline layers
-            tlMapLayers.forEach(l => { try { locMap && locMap.removeLayer(l); } catch(_){} });
-            tlMapLayers = [];
-            if (locPolyline)   { try { locMap && locMap.removeLayer(locPolyline); } catch(_){} locPolyline = null; }
-            locMarkers.forEach(m => { try { locMap && locMap.removeLayer(m); } catch(_){} });
-            locMarkers = [];
-            if (locPlayMarker) { try { locMap && locMap.removeLayer(locPlayMarker); } catch(_){} locPlayMarker = null; }
-
-            if (!rawPts.length) { destroyMap(); return; }
-
-            const mapEl = document.getElementById('locationMap');
-            if (!locMap) {
-                locMap = L.map(mapEl, { preferCanvas: true });
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '© <a href="https://www.openstreetmap.org/">OpenStreetMap</a>',
-                    maxZoom: 19
-                }).addTo(locMap);
-            }
-
-            if (!segments.length) {
-                // Fallback: plain polyline
-                const pl = L.polyline(rawPts.map(p => [+p.latitude, +p.longitude]),
-                    { color: '#3b82f6', weight: 3, opacity: 0.65 }).addTo(locMap);
-                tlMapLayers.push(pl);
-            } else {
-                let sn = 0;
-                segments.forEach((seg, idx) => {
-                    if (seg.type === 'MOVE' && seg.points.length >= 2) {
-                        const pl = L.polyline(
-                            seg.points.map(p => [+p.latitude, +p.longitude]),
-                            { color: '#3b82f6', weight: 4, opacity: 0.7 }
-                        ).addTo(locMap);
-                        pl.on('click', () => window.__tlClick(idx));
-                        tlMapLayers.push(pl);
-                    } else if (seg.type === 'STAY') {
-                        sn++;
-                        const snLocal = sn;
-                        const m = L.marker([seg.lat, seg.lon], {
-                            icon: L.divIcon({
-                                className: '',
-                                html: `<div style="width:30px;height:30px;background:#10b981;border:3px solid #fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;box-shadow:0 2px 10px rgba(0,0,0,.45);cursor:pointer;">${snLocal}</div>`,
-                                iconSize: [30, 30], iconAnchor: [15, 15]
-                            })
-                        }).addTo(locMap);
-                        m.bindPopup(`
-                            <div style="font-size:12px;min-width:160px;line-height:1.6;">
-                                <b>📍 Stop ${snLocal}</b><br>
-                                <span style="color:#555;">${fmtLocTime(seg.start.toISOString())} – ${fmtLocTime(seg.end.toISOString())}</span><br>
-                                <span style="color:#555;">${fmtDuration(seg.end - seg.start)}</span>
-                            </div>`);
-                        m.on('click', () => window.__tlClick(idx));
-                        tlMapLayers.push(m);
-                        locMarkers.push(m);
-                    }
-                });
-            }
-
-            // Fit map to all points
-            const bounds = L.latLngBounds(rawPts.map(p => [+p.latitude, +p.longitude]));
-            locMap.fitBounds(bounds, { padding: [35, 35] });
-            setTimeout(() => locMap && locMap.invalidateSize(), 80);
-        }
-
-        // ── Firebase listener ─────────────────────────────────────────────────
-        function attachLocListener(deviceId) {
-            if (locUnsubscribe) { locUnsubscribe(); locUnsubscribe = null; }
-            locDeviceId = deviceId;
-            locData     = [];
-            onValue(ref(db, 'device_locations/' + deviceId), snap => {
-                const raw = snap.val();
-                if (!raw) {
-                    locData = [];
-                } else {
-                    locData = Object.entries(raw).map(([id, pt]) => ({ _id: id, ...pt }))
-                        .filter(pt => pt.latitude != null && pt.longitude != null)
-                        .sort((a, b) => new Date(a.timestamp||0) - new Date(b.timestamp||0));
-                }
-                renderLocationSection();
-            }, { onlyOnce: false });
-            // Store unsubscribe for cleanup when navigating away
-            locUnsubscribe = () => {}; // onValue in Firebase 10 returns the unsubscribe fn
-        }
-
-        // Actually capture the unsubscribe returned by onValue
-        function attachLocListenerReal(deviceId) {
-            if (locUnsubscribe && typeof locUnsubscribe === 'function' && locUnsubscribe._isLocUnsub) {
-                locUnsubscribe();
-            }
-            locDeviceId = deviceId;
-            locData     = [];
-            const unsub = onValue(ref(db, 'device_locations/' + deviceId), snap => {
-                const raw = snap.val();
-                if (!raw) {
-                    locData = [];
-                } else {
-                    locData = Object.entries(raw).map(([id, pt]) => ({ _id: id, ...pt }))
-                        .filter(pt => pt.latitude != null && pt.longitude != null)
-                        .sort((a, b) => new Date(a.timestamp||0) - new Date(b.timestamp||0));
-                }
-                renderLocationSection();
-            });
-            unsub._isLocUnsub = true;
-            locUnsubscribe = unsub;
-        }
-
-        // ── Main render ───────────────────────────────────────────────────────
-        function renderLocationSection() {
-            const hasData    = locData.length > 0;
-            const isTimeline = locViewMode === 'timeline';
-
-            // Empty / presence state
-            document.getElementById('locEmptyState').style.display      = hasData ? 'none' : '';
-            document.getElementById('locStatRow').style.display          = hasData ? ''     : 'none';
-            document.getElementById('locTopBar').style.display           = hasData ? ''     : 'none';
-            document.getElementById('locMapPlaceholder').style.display   = hasData ? 'none' : '';
-            document.getElementById('locMapRow').style.display           = hasData ? 'flex' : 'none';
-
-            // Raw-mode-only UI
-            document.getElementById('locPlaybackBar').style.display      = hasData && !isTimeline ? '' : 'none';
-            document.getElementById('locSessionTabsWrap').style.display  = hasData && !isTimeline ? '' : 'none';
-            document.getElementById('locTableWrap').style.display        = hasData && !isTimeline ? '' : 'none';
-
-            // Timeline panel (only in timeline mode)
-            document.getElementById('locTlPanel').style.display          = hasData && isTimeline ? '' : 'none';
-
-            if (!hasData) { destroyMap(); return; }
-
-            // Stats
-            const sessions   = [...new Set(locData.map(p => p.session_id).filter(Boolean))];
-            const accuracies = locData.map(p => parseFloat(p.accuracy)).filter(v => !isNaN(v));
-            const avgAcc     = accuracies.length ? (accuracies.reduce((s,v) => s+v, 0) / accuracies.length).toFixed(1) : '—';
-            document.getElementById('locStatPoints').textContent   = locData.length;
-            document.getElementById('locStatSessions').textContent = sessions.length;
-            document.getElementById('locStatFirst').textContent    = fmtLocDate(locData[0]?.timestamp);
-            document.getElementById('locStatLast').textContent     = fmtLocDate(locData[locData.length-1]?.timestamp);
-            document.getElementById('locStatAccuracy').textContent = avgAcc;
-            document.getElementById('locPointCount').textContent   = locData.length + ' pts';
-            document.getElementById('locSessionCount').textContent = sessions.length + ' sessions';
-
-            if (isTimeline) {
-                // ── Timeline mode ─────────────────────────────────────────────
-                const filtered = getDateFilteredData();
-                locTimeline    = buildTimeline(filtered);
-                renderTimelinePanel(locTimeline);
-                updateMapTimeline(locTimeline, filtered);
-            } else {
-                // ── Raw data mode ─────────────────────────────────────────────
-                renderSessionTabs(sessions);
-                applyLocFilter();
-                initOrUpdateMap();
-            }
-        }
-
-        // ── Session Tabs ──────────────────────────────────────────────────────
-        function renderSessionTabs(sessions) {
-            const container = document.getElementById('locSessionTabs');
-            const tabs = ['all', ...sessions];
-            container.innerHTML = tabs.map(s => {
-                const label = s === 'all' ? '🌐 All Sessions' : sessionShort(s);
-                const col   = s === 'all' ? '' : `style="border-color:${sessionColor(s)};color:${sessionColor(s)};"`;
-                return `<button class="loc-session-tab${locActiveSession===s?' active':''}" ${col} data-session="${s}">${label}</button>`;
-            }).join('');
-            container.querySelectorAll('.loc-session-tab').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    locActiveSession = btn.dataset.session;
-                    locPage = 0;
-                    document.getElementById('locTableSearch').value = '';
-                    renderSessionTabs(sessions);
-                    applyLocFilter();
-                    initOrUpdateMap();
-                });
-            });
-        }
-
-        // ── Filter ────────────────────────────────────────────────────────────
-        function applyLocFilter() {
-            const search = (document.getElementById('locTableSearch').value || '').toLowerCase();
-            const base   = getDateFilteredData(); // honours date picker
-            locFilteredData = base.filter(pt => {
-                if (locActiveSession !== 'all' && pt.session_id !== locActiveSession) return false;
-                if (search) {
-                    const combined = ((pt.session_id||'') + ' ' + (pt.timestamp||'')).toLowerCase();
-                    if (!combined.includes(search)) return false;
-                }
-                return true;
-            });
-            renderLocTable();
-        }
-
-        // ── Table ─────────────────────────────────────────────────────────────
-        function renderLocTable() {
-            const tbody = document.getElementById('locTableBody');
-            const total = locFilteredData.length;
-            const pages = Math.ceil(total / LOC_PAGE_SIZE);
-            if (locPage >= pages && pages > 0) locPage = pages - 1;
-
-            const start = locPage * LOC_PAGE_SIZE;
-            const slice = locFilteredData.slice(start, start + LOC_PAGE_SIZE);
-
-            tbody.innerHTML = slice.map((pt, i) => {
-                const globalIdx = start + i;
-                const col = sessionColor(pt.session_id);
-                const accVal = parseFloat(pt.accuracy);
-                const accBar = !isNaN(accVal) ? `<span class="loc-accuracy-bar" style="width:${Math.min(accVal/5,30)}px;background:${accVal<20?'var(--green)':accVal<50?'var(--yellow)':'var(--red)'}"></span>` : '';
-                return `<tr onclick="window.__locHighlightPoint(${globalIdx})" data-idx="${globalIdx}">
-                    <td style="color:var(--muted);">${globalIdx+1}</td>
-                    <td>${fmtLocDate(pt.timestamp)}</td>
-                    <td>${fmtLocTime(pt.timestamp)}</td>
-                    <td style="font-family:monospace;font-size:11px;">${(+pt.latitude).toFixed(6)}</td>
-                    <td style="font-family:monospace;font-size:11px;">${(+pt.longitude).toFixed(6)}</td>
-                    <td>${accBar}${isNaN(accVal)?'—':accVal.toFixed(1)}</td>
-                    <td><span class="loc-session-badge" style="background:${col}22;color:${col};">${sessionShort(pt.session_id)}</span></td>
-                </tr>`;
-            }).join('');
-
-            // Pager
-            const pager = document.getElementById('locPager');
-            if (pages <= 1) { pager.innerHTML = ''; return; }
-            pager.innerHTML = `
-                <button class="loc-pager-btn" onclick="window.__locPage(${locPage-1})" ${locPage===0?'disabled':''}>← Prev</button>
-                <span class="loc-pager-info">Page ${locPage+1} of ${pages} &nbsp;·&nbsp; ${total} points</span>
-                <button class="loc-pager-btn" onclick="window.__locPage(${locPage+1})" ${locPage>=pages-1?'disabled':''}>Next →</button>
-            `;
-        }
-
-        window.__locPage = function(p) { locPage = p; renderLocTable(); };
-        window.__locHighlightPoint = function(idx) {
-            // Pan map to point and highlight row
-            const pt = locData[idx];
-            if (pt && locMap) locMap.panTo([+pt.latitude, +pt.longitude]);
-            document.querySelectorAll('#locTableBody tr').forEach(r => r.classList.remove('loc-row-active'));
-            const row = document.querySelector(`#locTableBody tr[data-idx="${idx}"]`);
-            if (row) row.classList.add('loc-row-active');
-        };
-
-        // ── Map ───────────────────────────────────────────────────────────────
-        function destroyMap() {
-            stopPlayback();
-            if (locMap) { locMap.remove(); locMap = null; }
-            locMarkers = []; locPolyline = null; locPlayMarker = null;
-        }
-
-        function initOrUpdateMap() {
-            if (typeof L === 'undefined') {
-                toast('⚠️ Map library not loaded.', 'var(--yellow)'); return;
-            }
-            const pts = locFilteredData.length > 0 ? locFilteredData : locData;
-            if (!pts.length) { destroyMap(); return; }
-
-            const mapEl = document.getElementById('locationMap');
-
-            if (!locMap) {
-                locMap = L.map(mapEl, { preferCanvas: true });
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '© <a href="https://www.openstreetmap.org/">OpenStreetMap</a>',
-                    maxZoom: 19
-                }).addTo(locMap);
-            }
-
-            // Clear timeline layers first (when switching from timeline → raw)
-            tlMapLayers.forEach(l => { try { locMap.removeLayer(l); } catch(_){} });
-            tlMapLayers = [];
-
-            // Clear old layers
-            if (locPolyline)   { locMap.removeLayer(locPolyline);  locPolyline  = null; }
-            if (locPlayMarker) { locMap.removeLayer(locPlayMarker); locPlayMarker = null; }
-            locMarkers.forEach(m => locMap.removeLayer(m));
-            locMarkers = [];
-
-            // Draw route polyline (grouped by session in order)
-            const sessions = [...new Set(pts.map(p => p.session_id))];
-            sessions.forEach(sid => {
-                const sPts = pts.filter(p => p.session_id === sid);
-                if (sPts.length < 2) return;
-                L.polyline(sPts.map(p => [+p.latitude, +p.longitude]), {
-                    color: sessionColor(sid), weight: 3, opacity: 0.75,
-                    dashArray: null
-                }).addTo(locMap);
-            });
-
-            // Also draw a full-data combined polyline for visual continuity
-            locPolyline = L.polyline(pts.map(p => [+p.latitude, +p.longitude]), {
-                color: '#3b82f6', weight: 2, opacity: 0.3
-            }).addTo(locMap);
-
-            // Markers
-            pts.forEach((pt, i) => {
-                const isFirst = i === 0;
-                const isLast  = i === pts.length - 1;
-                const col = sessionColor(pt.session_id);
-                const radius = isFirst || isLast ? 9 : 5;
-                const weight = isFirst || isLast ? 3 : 1.5;
-                const m = L.circleMarker([+pt.latitude, +pt.longitude], {
-                    radius, color: isFirst ? '#10b981' : isLast ? '#ef4444' : col,
-                    fillColor: isFirst ? '#10b981' : isLast ? '#ef4444' : col,
-                    fillOpacity: 0.85, weight
-                }).addTo(locMap);
-                m.bindPopup(`
-                    <div style="font-size:12px;min-width:160px;">
-                        <b>${isFirst ? '🟢 Start' : isLast ? '🔴 End' : '📍 Point ' + (i+1)}</b><br>
-                        <span style="color:#666;">📅 ${fmtLocDate(pt.timestamp)} ${fmtLocTime(pt.timestamp)}</span><br>
-                        <span style="color:#666;">Lat: ${(+pt.latitude).toFixed(6)}</span><br>
-                        <span style="color:#666;">Lng: ${(+pt.longitude).toFixed(6)}</span><br>
-                        <span style="color:#666;">Accuracy: ${parseFloat(pt.accuracy).toFixed(1)}m</span><br>
-                        <span style="color:#666;">Session: ${(pt.session_id||'').slice(0,12)}</span>
-                    </div>
-                `);
-                locMarkers.push(m);
-            });
-
-            // Fit map to bounds
-            const bounds = L.latLngBounds(pts.map(p => [+p.latitude, +p.longitude]));
-            locMap.fitBounds(bounds, { padding: [30, 30] });
-
-            // Create animated playback marker (hidden initially)
-            locPlayMarker = L.marker([+pts[0].latitude, +pts[0].longitude], {
-                icon: L.divIcon({
-                    className: '',
-                    html: '<div style="width:18px;height:18px;background:#f59e0b;border:3px solid #fff;border-radius:50%;box-shadow:0 0 8px rgba(245,158,11,.8);"></div>',
-                    iconSize: [18,18], iconAnchor: [9,9]
-                })
-            });
-            // Start hidden
-            setTimeout(() => locMap && locMap.invalidateSize(), 80);
-        }
-
-        // ── Playback ──────────────────────────────────────────────────────────
-        function stopPlayback() {
-            if (locPlayTimer) { clearInterval(locPlayTimer); locPlayTimer = null; }
-            locIsPlaying = false;
-            const playBtn  = document.getElementById('locPlayBtn');
-            const pauseBtn = document.getElementById('locPauseBtn');
-            if (playBtn)  { playBtn.style.display  = ''; playBtn.disabled  = false; }
-            if (pauseBtn) { pauseBtn.style.display = 'none'; pauseBtn.disabled = true; }
-        }
-
-        function updatePlaybackProgress(idx, total) {
-            const pct = total > 1 ? (idx / (total - 1)) * 100 : 100;
-            const fill  = document.getElementById('locProgressFill');
-            const label = document.getElementById('locProgressLabel');
-            if (fill)  fill.style.width = pct.toFixed(1) + '%';
-            if (label) label.textContent = (idx + 1) + ' / ' + total;
-        }
-
-        function startPlayback() {
-            const pts   = locFilteredData.length > 0 ? locFilteredData : locData;
-            if (!pts.length || !locMap) return;
-
-            if (!locPlayMarker) initOrUpdateMap();
-            if (!locPlayMarker) return;
-
-            // Add marker to map if not already
-            if (!locMap.hasLayer(locPlayMarker)) locPlayMarker.addTo(locMap);
-
-            locIsPlaying = true;
-            const playBtn  = document.getElementById('locPlayBtn');
-            const pauseBtn = document.getElementById('locPauseBtn');
-            if (playBtn)  { playBtn.style.display  = 'none'; }
-            if (pauseBtn) { pauseBtn.style.display = ''; pauseBtn.disabled = false; }
-
-            const speed = parseInt(document.getElementById('locSpeedSelect').value || '500');
-
-            locPlayTimer = setInterval(() => {
-                if (locPlayIndex >= pts.length) {
-                    stopPlayback();
-                    updatePlaybackProgress(pts.length - 1, pts.length);
-                    return;
-                }
-                const pt = pts[locPlayIndex];
-                const ll = [+pt.latitude, +pt.longitude];
-                locPlayMarker.setLatLng(ll);
-                locMap.panTo(ll, { animate: true, duration: 0.4 });
-                updatePlaybackProgress(locPlayIndex, pts.length);
-
-                // Highlight corresponding table row
-                const globalIdx = locPlayIndex;
-                document.querySelectorAll('#locTableBody tr').forEach(r => r.classList.remove('loc-row-active'));
-                const row = document.querySelector(`#locTableBody tr[data-idx="${globalIdx}"]`);
-                if (row) { row.classList.add('loc-row-active'); row.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
-
-                locPlayIndex++;
-            }, speed);
-        }
-
-        // ── Playback button wiring ────────────────────────────────────────────
-        document.getElementById('locPlayBtn').addEventListener('click', () => {
-            const pts = locFilteredData.length > 0 ? locFilteredData : locData;
-            if (!pts.length) { toast('⚠️ No location points to play.', 'var(--yellow)'); return; }
-            if (locPlayIndex >= pts.length) locPlayIndex = 0; // auto-rewind
-            initOrUpdateMap();
-            setTimeout(startPlayback, 100);
-        });
-        document.getElementById('locPauseBtn').addEventListener('click', () => {
-            stopPlayback();
-        });
-        document.getElementById('locResetBtn').addEventListener('click', () => {
-            stopPlayback();
-            locPlayIndex = 0;
-            updatePlaybackProgress(0, (locFilteredData.length || locData.length));
-            if (locPlayMarker && locMap) {
-                const pts = locFilteredData.length > 0 ? locFilteredData : locData;
-                if (pts.length) locPlayMarker.setLatLng([+pts[0].latitude, +pts[0].longitude]);
-                if (locMap.hasLayer(locPlayMarker)) locMap.removeLayer(locPlayMarker);
-            }
-        });
-        document.getElementById('locCenterMapBtn').addEventListener('click', () => {
-            const pts = locFilteredData.length > 0 ? locFilteredData : locData;
-            if (!pts.length || !locMap) return;
-            const bounds = L.latLngBounds(pts.map(p => [+p.latitude, +p.longitude]));
-            locMap.fitBounds(bounds, { padding: [30,30] });
-        });
-        document.getElementById('locRefreshBtn').addEventListener('click', () => {
-            if (!locDeviceId) return;
-            toast('🔄 Location data refreshed.', 'var(--teal)');
-        });
-        document.getElementById('locTableSearch').addEventListener('input', () => {
-            locPage = 0;
-            applyLocFilter();
-        });
-
-        // ── Timeline click: highlight item + pan map ──────────────────────────
-        window.__tlClick = function(idx) {
-            locActiveTlIdx = idx;
-            // Update active highlight in panel
-            document.querySelectorAll('.tl-item').forEach(el => el.classList.remove('tl-active'));
-            const el = document.querySelector(`.tl-item[data-tl-idx="${idx}"]`);
-            if (el) { el.classList.add('tl-active'); el.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
-            // Pan map
-            const seg = locTimeline[idx];
-            if (!seg || !locMap) return;
-            if (seg.type === 'STAY') {
-                locMap.setView([seg.lat, seg.lon], Math.max(locMap.getZoom(), 16), { animate: true, duration: 0.5 });
-                // Open popup for the corresponding marker
-                const m = locMarkers.find(mk => {
-                    const ll = mk.getLatLng();
-                    return Math.abs(ll.lat - seg.lat) < 0.0001 && Math.abs(ll.lng - seg.lon) < 0.0001;
-                });
-                if (m) m.openPopup();
-            } else if (seg.type === 'MOVE' && seg.points.length) {
-                const bounds = L.latLngBounds(seg.points.map(p => [+p.latitude, +p.longitude]));
-                locMap.fitBounds(bounds, { padding: [40, 40], animate: true, duration: 0.5 });
-            }
-        };
-
-        // ── Date picker event listeners ───────────────────────────────────────
-        document.getElementById('locDatePicker').addEventListener('change', e => {
-            locDateFilter = e.target.value || null;
-            document.getElementById('locAllDatesBtn').style.display = locDateFilter ? '' : 'none';
-            locActiveTlIdx = -1;
-            renderLocationSection();
-        });
-        document.getElementById('locTodayBtn').addEventListener('click', () => {
-            const today = new Date();
-            const s = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
-            document.getElementById('locDatePicker').value = s;
-            locDateFilter = s;
-            document.getElementById('locAllDatesBtn').style.display = '';
-            locActiveTlIdx = -1;
-            renderLocationSection();
-        });
-        document.getElementById('locAllDatesBtn').addEventListener('click', () => {
-            document.getElementById('locDatePicker').value = '';
-            locDateFilter = null;
-            document.getElementById('locAllDatesBtn').style.display = 'none';
-            locActiveTlIdx = -1;
-            renderLocationSection();
-        });
-
-        // ── View mode toggle ──────────────────────────────────────────────────
-        document.getElementById('locRawViewBtn').addEventListener('click', () => {
-            if (locViewMode === 'raw') return;
-            locViewMode = 'raw';
-            document.getElementById('locRawViewBtn').classList.add('active');
-            document.getElementById('locTimelineViewBtn').classList.remove('active');
-            locActiveTlIdx = -1;
-            renderLocationSection();
-        });
-        document.getElementById('locTimelineViewBtn').addEventListener('click', () => {
-            if (locViewMode === 'timeline') return;
-            locViewMode = 'timeline';
-            document.getElementById('locTimelineViewBtn').classList.add('active');
-            document.getElementById('locRawViewBtn').classList.remove('active');
-            locActiveTlIdx = -1;
-            // Pre-select today if no date is set and today has data
-            if (!locDateFilter) {
-                const today = new Date();
-                const s = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
-                const todayData = locData.filter(pt => {
-                    if (!pt.timestamp) return false;
-                    const d  = new Date(pt.timestamp);
-                    const ds = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
-                    return ds === s;
-                });
-                if (todayData.length) {
-                    locDateFilter = s;
-                    document.getElementById('locDatePicker').value = s;
-                    document.getElementById('locAllDatesBtn').style.display = '';
-                } else {
-                    // Use date of most recent point
-                    const last = locData[locData.length - 1];
-                    if (last?.timestamp) {
-                        const d  = new Date(last.timestamp);
-                        const ds = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
-                        locDateFilter = ds;
-                        document.getElementById('locDatePicker').value = ds;
-                        document.getElementById('locAllDatesBtn').style.display = '';
-                    }
-                }
-            }
-            renderLocationSection();
-        });
-
-        // ── Hook into __appOpenPhone ──────────────────────────────────────────
-        const origOpenPhone = window.__appOpenPhone;
-        window.__appOpenPhone = function(deviceId) {
-            origOpenPhone(deviceId);
-            // reset location state (existing)
-            stopPlayback();
-            locPlayIndex     = 0;
-            locActiveSession = 'all';
-            locPage          = 0;
-            locFilteredData  = [];
-            destroyMap();
-            // reset timeline state (new)
-            locViewMode      = 'raw';
-            locTimeline      = [];
-            locActiveTlIdx   = -1;
-            tlMapLayers      = [];
-            document.getElementById('locRawViewBtn').classList.add('active');
-            document.getElementById('locTimelineViewBtn').classList.remove('active');
-            // hide all loc UI until data arrives
-            document.getElementById('locEmptyState').style.display     = '';
-            document.getElementById('locStatRow').style.display         = 'none';
-            document.getElementById('locTopBar').style.display          = 'none';
-            document.getElementById('locPlaybackBar').style.display     = 'none';
-            document.getElementById('locSessionTabsWrap').style.display = 'none';
-            document.getElementById('locTableWrap').style.display       = 'none';
-            document.getElementById('locMapPlaceholder').style.display  = '';
-            document.getElementById('locMapRow').style.display          = 'none';
-            document.getElementById('locTlPanel').style.display         = 'none';
-            // attach listener
-            attachLocListenerReal(deviceId);
-        };
-
-        // ── Back button: clean up location listener ───────────────────────────
-        const origBackBtn = document.getElementById('appBackBtn');
-        origBackBtn.addEventListener('click', () => {
-            if (locUnsubscribe && typeof locUnsubscribe === 'function') {
-                locUnsubscribe(); locUnsubscribe = null;
-            }
-            stopPlayback();
-            destroyMap();
-            locData = []; locFilteredData = [];
-            // cleanup timeline
-            tlMapLayers   = [];
-            locTimeline   = [];
-            locActiveTlIdx = -1;
-        });
-
-    })(); // end location module
-
-
-    // ══════════════════════════════════════════════════════════════════════════
-    // LOCATION TIMELINE MODULE  (device_timeline/{deviceId}/{stayId})
+    // INLINE LOCATION TIMELINE MODULE
     //
-    // • Listens in real-time to Firebase path: device_timeline/{deviceId}
-    // • One card per stayId — updates in-place, NEVER duplicates
-    // • Click any card → opens Google Maps for that coordinate
-    // • Highlights the most-recent entry as "Currently Here" if it has no endTime
-    // • Scrolls to newest card automatically on new stays
+    // Navigation flow:
+    //   App → Device → Sub-nav chooser
+    //     → "Call Recordings"    (appSubViewRecordings)
+    //     → "Location Timeline"  (appSubViewTimeline)
+    //
+    // Timeline reads: device_timeline/{deviceId}/{stayId}
+    //   Each stayId → one card: start/end time, duration, coords.
+    //   Click any card → opens Google Maps.
+    //   Real-time updates patch existing cards in-place (no flicker/duplication).
     // ══════════════════════════════════════════════════════════════════════════
     (function () {
 
-        // ── Module-level state ────────────────────────────────────────────────
-        let dtlDeviceListener  = null;   // Firebase unsubscribe fn for device list
-        let dtlStayListener    = null;   // Firebase unsubscribe fn for stay data
-        let dtlSelectedDevice  = '';     // currently selected deviceId
-        let dtlStayMap         = new Map(); // stayId → { data, cardEl }
-        let dtlPanelActive     = false;  // true when panel-timeline is visible
+        // ── Timeline state (reset on each device open) ────────────────────────
+        let tlUnsubscribe = null;   // Firebase onValue unsubscribe fn
+        let tlStayMap     = new Map(); // stayId → { data, cardEl }
 
-        // ── Utility: format epoch ms or ISO string as "h:mm AM/PM" ───────────
-        function dtlFmtTime(val) {
+        // ── Expose cleanup so the main Back button can call it ─────────────────
+        window.__appTlCleanup = function () {
+            if (tlUnsubscribe) { tlUnsubscribe(); tlUnsubscribe = null; }
+            tlStayMap.clear();
+        };
+
+        // ─────────────────────────────────────────────────────────────────────
+        // SUB-NAV ROUTING
+        // Called by onclick on the two chooser buttons in appSubNav HTML
+        // ─────────────────────────────────────────────────────────────────────
+
+        window.__appShowSubView = function (view) {
+            document.getElementById('appSubNav').style.display            = 'none';
+            document.getElementById('appSubViewRecordings').style.display = 'none';
+            document.getElementById('appSubViewTimeline').style.display   = 'none';
+
+            if (view === 'recordings') {
+                document.getElementById('appSubViewRecordings').style.display = '';
+                renderRecordingsList(); // existing function — completely untouched
+            } else if (view === 'timeline') {
+                document.getElementById('appSubViewTimeline').style.display = '';
+                tlOpenForDevice(appCurrentDevice);
+            }
+        };
+
+        // Sub-back: Call Recordings → sub-nav chooser
+        var recSubBack = document.getElementById('appRecSubBackBtn');
+        if (recSubBack) {
+            recSubBack.addEventListener('click', function () {
+                document.getElementById('appSubViewRecordings').style.display = 'none';
+                document.getElementById('appSubNav').style.display = '';
+            });
+        }
+
+        // Sub-back: Location Timeline → sub-nav chooser (also detach listener)
+        var tlSubBack = document.getElementById('appTlSubBackBtn');
+        if (tlSubBack) {
+            tlSubBack.addEventListener('click', function () {
+                window.__appTlCleanup();
+                document.getElementById('appSubViewTimeline').style.display = 'none';
+                document.getElementById('appSubNav').style.display = '';
+            });
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
+        // FORMAT HELPERS
+        // ─────────────────────────────────────────────────────────────────────
+
+        function tlFmtTime(val) {
             if (!val) return '—';
-            const d = typeof val === 'number' ? new Date(val) : new Date(val);
+            var d = typeof val === 'number' ? new Date(val) : new Date(val);
             if (isNaN(d.getTime())) return String(val);
             return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
         }
 
-        // ── Utility: format epoch ms or ISO string as "Mon, Mar 20" ──────────
-        function dtlFmtDate(val) {
+        function tlFmtDate(val) {
             if (!val) return '—';
-            const d = typeof val === 'number' ? new Date(val) : new Date(val);
+            var d = typeof val === 'number' ? new Date(val) : new Date(val);
             if (isNaN(d.getTime())) return String(val);
             return d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
         }
 
-        // ── Utility: format seconds (or ms) as "2h 30m" / "45m" / "30s" ─────
-        function dtlFmtDuration(durationSeconds) {
-            if (durationSeconds == null || durationSeconds < 0) return '—';
-            // Accept both seconds and milliseconds (heuristic: >1e9 = ms)
-            const secs = durationSeconds > 1e9 ? Math.floor(durationSeconds / 1000) : Math.floor(durationSeconds);
-            const h = Math.floor(secs / 3600);
-            const m = Math.floor((secs % 3600) / 60);
-            const s = secs % 60;
-            if (h > 0) return `${h}h ${m}m`;
-            if (m > 0) return `${m}m ${s > 0 ? s + 's' : ''}`.trim();
-            return `${s}s`;
+        // Accepts seconds or ms (auto-detect: >1e9 = ms)
+        function tlFmtDuration(raw) {
+            if (raw == null || raw < 0) return '—';
+            var secs = raw > 1e9 ? Math.floor(raw / 1000) : Math.floor(raw);
+            var h = Math.floor(secs / 3600);
+            var m = Math.floor((secs % 3600) / 60);
+            var s = secs % 60;
+            if (h > 0) return h + 'h ' + m + 'm';
+            if (m > 0) return m + 'm' + (s > 0 ? ' ' + s + 's' : '');
+            return s + 's';
         }
 
-        // ── Utility: calculate duration from startTime → endTime (or now) ─────
-        function dtlCalcDuration(stay) {
-            // Prefer explicit durationSeconds field from the app
+        function tlCalcDuration(stay) {
             if (stay.durationSeconds != null) return stay.durationSeconds;
-
-            const start = stay.startTime;
-            const end   = stay.endTime;
-            if (!start) return null;
-
-            const startMs = typeof start === 'number' ? start : new Date(start).getTime();
-            const endMs   = end
-                ? (typeof end === 'number' ? end : new Date(end).getTime())
+            var startMs = stay.startTime
+                ? (typeof stay.startTime === 'number' ? stay.startTime : new Date(stay.startTime).getTime())
+                : null;
+            if (!startMs || isNaN(startMs)) return null;
+            var endMs = stay.endTime
+                ? (typeof stay.endTime === 'number' ? stay.endTime : new Date(stay.endTime).getTime())
                 : Date.now();
-
-            if (isNaN(startMs) || isNaN(endMs)) return null;
-            return Math.floor((endMs - startMs) / 1000); // return seconds
+            return Math.floor((endMs - startMs) / 1000);
         }
 
-        // ── Utility: is this stay the "current" one (no endTime, latest) ──────
-        function dtlIsCurrent(stay, isLatest) {
-            return isLatest && (!stay.endTime || stay.endTime === '' || stay.endTime === null);
+        function tlIsCurrent(stay, isLatest) {
+            return isLatest && (!stay.endTime || stay.endTime === '');
         }
 
-        // ── Build the inner HTML for one stay card ────────────────────────────
-        function dtlBuildCardHTML(stay, index, isCurrent) {
-            const startLabel = dtlFmtTime(stay.startTime);
-            const endLabel   = isCurrent ? 'Now' : dtlFmtTime(stay.endTime);
-            const dateLabel  = dtlFmtDate(stay.startTime);
-            const durSecs    = dtlCalcDuration(stay);
-            const durLabel   = dtlFmtDuration(durSecs);
-            const lat        = parseFloat(stay.latitude);
-            const lng        = parseFloat(stay.longitude);
-            const hasCoords  = !isNaN(lat) && !isNaN(lng);
-            const coordText  = hasCoords
-                ? `${lat.toFixed(5)}, ${lng.toFixed(5)}`
+        // ─────────────────────────────────────────────────────────────────────
+        // CARD HTML BUILDER
+        // ─────────────────────────────────────────────────────────────────────
+
+        function tlBuildCardBodyHTML(stay, num, isCurrent) {
+            var startLabel = tlFmtTime(stay.startTime);
+            var endLabel   = isCurrent
+                ? '<span style="color:var(--green);font-weight:700;">Now</span>'
+                : tlFmtTime(stay.endTime);
+            var durLabel   = tlFmtDuration(tlCalcDuration(stay));
+            var lat = parseFloat(stay.latitude);
+            var lng = parseFloat(stay.longitude);
+            var coordText  = (!isNaN(lat) && !isNaN(lng))
+                ? lat.toFixed(5) + ', ' + lng.toFixed(5)
                 : 'No coordinates';
+            var dateLabel  = tlFmtDate(stay.startTime);
 
-            const currentBadge = isCurrent
-                ? `<div class="dtl-here-badge">
-                       <span class="dtl-here-dot"></span> Currently Here
-                   </div>`
+            var hereBadge = isCurrent
+                ? '<div class="dtl-here-badge"><span class="dtl-here-dot"></span> Currently Here</div>'
                 : '';
 
-            return `
-                ${currentBadge}
-                <div class="dtl-card-time">
-                    🕒 ${startLabel}
-                    <span class="dtl-arrow">→</span>
-                    ${endLabel}
-                </div>
-                <div class="dtl-card-duration">
-                    ⏱ Stayed for <strong style="color:var(--text);margin-left:4px;">${durLabel}</strong>
-                </div>
-                <div class="dtl-card-coords">
-                    📍 ${coordText}
-                </div>
-                <div class="dtl-maps-hint">🗺 Open in Google Maps →</div>`;
+            return hereBadge +
+                '<div class="dtl-card-time">' +
+                    '\uD83D\uDD52 ' + startLabel +
+                    ' <span class="dtl-arrow">\u2192</span> ' + endLabel +
+                '</div>' +
+                '<div class="dtl-card-duration">' +
+                    '\u23F1 Stayed for <strong style="color:var(--text);margin-left:4px;">' + durLabel + '</strong>' +
+                    '<span style="margin-left:10px;font-size:11px;color:var(--muted);">' + dateLabel + '</span>' +
+                '</div>' +
+                '<div class="dtl-card-coords">\uD83D\uDCCD ' + coordText + '</div>' +
+                '<div class="dtl-maps-hint">\uD83D\uDDFA Open in Google Maps \u2192</div>';
         }
 
-        // ── Build bullet HTML ─────────────────────────────────────────────────
-        function dtlBuildBulletHTML(index, isCurrent) {
-            return isCurrent
-                ? `<span class="dtl-bullet-icon">📍</span>`
-                : `${index}`;
-        }
+        function tlCreateCard(stayId, stay, num, isCurrent) {
+            var lat = parseFloat(stay.latitude);
+            var lng = parseFloat(stay.longitude);
+            var hasCoords = !isNaN(lat) && !isNaN(lng);
 
-        // ── Create a fresh card element ───────────────────────────────────────
-        function dtlCreateCard(stayId, stay, index, isCurrent) {
-            const card = document.createElement('div');
+            var card = document.createElement('div');
             card.className = 'dtl-card' + (isCurrent ? ' dtl-current' : '');
             card.dataset.stayId = stayId;
 
-            // Bullet
-            const bullet = document.createElement('div');
+            var bullet = document.createElement('div');
             bullet.className = 'dtl-bullet';
-            bullet.innerHTML = dtlBuildBulletHTML(index, isCurrent);
+            if (isCurrent) {
+                bullet.innerHTML = '<span style="font-size:17px;">&#128205;</span>';
+                bullet.style.cssText = 'background:var(--green);border-color:var(--green);color:#fff;';
+            } else {
+                bullet.textContent = String(num);
+            }
 
-            // Body
-            const body = document.createElement('div');
+            var body = document.createElement('div');
             body.className = 'dtl-card-body';
-            body.innerHTML = dtlBuildCardHTML(stay, index, isCurrent);
+            body.innerHTML = tlBuildCardBodyHTML(stay, num, isCurrent);
 
             card.appendChild(bullet);
             card.appendChild(body);
 
-            // Click → Open Google Maps
-            const lat = parseFloat(stay.latitude);
-            const lng = parseFloat(stay.longitude);
-            if (!isNaN(lat) && !isNaN(lng)) {
-                card.title = `Open in Google Maps (${lat.toFixed(5)}, ${lng.toFixed(5)})`;
-                card.addEventListener('click', () => {
+            // Click → open Google Maps
+            if (hasCoords) {
+                card.title = 'Open in Google Maps';
+                card.addEventListener('click', function () {
                     window.open(
-                        `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`,
+                        'https://www.google.com/maps/search/?api=1&query=' + lat + ',' + lng,
                         '_blank'
                     );
                 });
             }
-
             return card;
         }
 
-        // ── Flash a card body to signal it was updated ────────────────────────
-        function dtlFlashCard(bodyEl) {
+        function tlFlash(bodyEl) {
             bodyEl.classList.remove('dtl-updated');
-            // Force reflow to restart animation
-            void bodyEl.offsetWidth;
+            void bodyEl.offsetWidth; // force reflow so animation restarts
             bodyEl.classList.add('dtl-updated');
         }
 
-        // ── Full re-render from dtlStayMap ────────────────────────────────────
-        // Called when a new stay arrives or data changes structurally.
-        function dtlRenderAll(stays) {
-            // stays = [ { stayId, data } ] sorted chronologically by startTime
-            const list = document.getElementById('dtlCardList');
+        // ─────────────────────────────────────────────────────────────────────
+        // FULL RENDER (called on first load or structural change)
+        // ─────────────────────────────────────────────────────────────────────
+
+        function tlRenderAll(sorted) {
+            var list = document.getElementById('appTlCardList');
             if (!list) return;
-
-            // Clear previous card elements from the map (we'll recreate)
             list.innerHTML = '';
-            dtlStayMap.clear();
+            tlStayMap.clear();
 
-            if (!stays.length) {
-                dtlShowState('empty');
-                dtlUpdateSummary([]);
+            if (!sorted.length) {
+                tlSetState('empty');
+                tlUpdateSummary([]);
                 return;
             }
+            tlSetState('list');
 
-            dtlShowState('list');
-
-            stays.forEach(({ stayId, data }, idx) => {
-                const isLatest = idx === stays.length - 1;
-                const isCurrent = dtlIsCurrent(data, isLatest);
-                const cardNum  = idx + 1;
-
-                const cardEl = dtlCreateCard(stayId, data, cardNum, isCurrent);
+            sorted.forEach(function (item, idx) {
+                var stayId    = item.stayId;
+                var data      = item.data;
+                var isLatest  = idx === sorted.length - 1;
+                var isCurrent = tlIsCurrent(data, isLatest);
+                var cardEl    = tlCreateCard(stayId, data, idx + 1, isCurrent);
                 list.appendChild(cardEl);
-
-                dtlStayMap.set(stayId, { data, cardEl });
+                tlStayMap.set(stayId, { data: data, cardEl: cardEl });
             });
 
-            dtlUpdateSummary(stays.map(s => s.data));
+            tlUpdateSummary(sorted.map(function (s) { return s.data; }));
         }
 
-        // ── Update a SINGLE card in-place (no full re-render) ─────────────────
-        // Used when an existing stayId's data changes (e.g., endTime updates).
-        function dtlUpdateCard(stayId, data, stays) {
-            const entry = dtlStayMap.get(stayId);
-            if (!entry) {
-                // New stay arrived — do a full re-render
-                dtlRenderAll(stays);
-                // Scroll to bottom for newest
-                const list = document.getElementById('dtlCardList');
-                if (list) list.lastElementChild?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                return;
-            }
+        // ─────────────────────────────────────────────────────────────────────
+        // PATCH ONE CARD IN-PLACE (no flicker, no duplication)
+        // ─────────────────────────────────────────────────────────────────────
 
-            // Get positional info
-            const idx      = stays.findIndex(s => s.stayId === stayId);
-            const isLatest  = idx === stays.length - 1;
-            const isCurrent = dtlIsCurrent(data, isLatest);
-            const cardNum   = idx + 1;
+        function tlPatchCard(stayId, data, sorted) {
+            var entry = tlStayMap.get(stayId);
+            if (!entry) { tlRenderAll(sorted); return; }
 
-            const { cardEl } = entry;
-            const bullet     = cardEl.querySelector('.dtl-bullet');
-            const body       = cardEl.querySelector('.dtl-card-body');
+            var idx       = sorted.findIndex(function (s) { return s.stayId === stayId; });
+            var isLatest  = idx === sorted.length - 1;
+            var isCurrent = tlIsCurrent(data, isLatest);
 
-            // Update current class
+            var cardEl = entry.cardEl;
+            var bullet = cardEl.querySelector('.dtl-bullet');
+            var body   = cardEl.querySelector('.dtl-card-body');
+
             cardEl.classList.toggle('dtl-current', isCurrent);
 
-            // Update bullet
-            if (bullet) bullet.innerHTML = dtlBuildBulletHTML(cardNum, isCurrent);
-
-            // Update body content
-            if (body) {
-                body.innerHTML = dtlBuildCardHTML(data, cardNum, isCurrent);
-                dtlFlashCard(body);
+            if (bullet) {
+                if (isCurrent) {
+                    bullet.innerHTML = '<span style="font-size:17px;">&#128205;</span>';
+                    bullet.style.cssText = 'background:var(--green);border-color:var(--green);color:#fff;';
+                } else {
+                    bullet.textContent = String(idx + 1);
+                    bullet.style.cssText = '';
+                }
             }
 
-            // Re-attach click handler (lat/lng may have changed)
-            const lat = parseFloat(data.latitude);
-            const lng = parseFloat(data.longitude);
+            if (body) {
+                body.innerHTML = tlBuildCardBodyHTML(data, idx + 1, isCurrent);
+                if (!isCurrent) tlFlash(body); // skip flash for current (green) card
+            }
+
+            // Refresh click handler
+            var lat = parseFloat(data.latitude);
+            var lng = parseFloat(data.longitude);
             if (!isNaN(lat) && !isNaN(lng)) {
-                cardEl.onclick = () => {
-                    window.open(
-                        `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`,
-                        '_blank'
-                    );
+                cardEl.onclick = function () {
+                    window.open('https://www.google.com/maps/search/?api=1&query=' + lat + ',' + lng, '_blank');
                 };
             }
-
-            // Update stored data
             entry.data = data;
-
-            dtlUpdateSummary(stays.map(s => s.data));
+            tlUpdateSummary(sorted.map(function (s) { return s.data; }));
         }
 
-        // ── Show / hide placeholder states ────────────────────────────────────
-        function dtlShowState(state) {
-            // state: 'noDevice' | 'loading' | 'empty' | 'list'
-            const ids = {
-                noDevice: 'dtlPlaceholderNoDevice',
-                loading:  'dtlPlaceholderLoading',
-                empty:    'dtlPlaceholderEmpty',
-                list:     'dtlCardList',
-            };
-            Object.entries(ids).forEach(([key, id]) => {
-                const el = document.getElementById(id);
-                if (el) el.style.display = (key === state) ? '' : 'none';
+        // ─────────────────────────────────────────────────────────────────────
+        // UI STATE: loading / empty / list
+        // ─────────────────────────────────────────────────────────────────────
+
+        function tlSetState(state) {
+            var ids = { loading: 'appTlLoading', empty: 'appTlEmpty', list: 'appTlCardList' };
+            Object.keys(ids).forEach(function (key) {
+                var el = document.getElementById(ids[key]);
+                if (el) el.style.display = key === state ? '' : 'none';
             });
-            // Show summary only for list
-            const summary = document.getElementById('dtlSummary');
-            if (summary) summary.style.display = (state === 'list') ? '' : 'none';
+            var summary = document.getElementById('appTlSummary');
+            if (summary) summary.style.display = state === 'list' ? '' : 'none';
         }
 
-        // ── Update summary chips ───────────────────────────────────────────────
-        function dtlUpdateSummary(dataArr) {
-            const countEl    = document.getElementById('dtlChipStops');
-            const todayEl    = document.getElementById('dtlChipToday');
-            const totalEl    = document.getElementById('dtlChipTotal');
-            const lastTimeEl = document.getElementById('dtlChipLastTime');
-            const badgeEl    = document.getElementById('dtlStayCount');
-            const liveBadge  = document.getElementById('dtlLiveBadge');
+        // ─────────────────────────────────────────────────────────────────────
+        // SUMMARY CHIPS UPDATE
+        // ─────────────────────────────────────────────────────────────────────
+
+        function tlUpdateSummary(dataArr) {
+            function set(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; }
 
             if (!dataArr.length) {
-                if (countEl)    countEl.textContent   = '0';
-                if (todayEl)    todayEl.textContent   = '0';
-                if (totalEl)    totalEl.textContent   = '0';
-                if (lastTimeEl) lastTimeEl.textContent = '—';
-                if (badgeEl)    { badgeEl.style.display = 'none'; }
-                if (liveBadge)  liveBadge.style.display = 'none';
+                set('appTlChipStops', '0');
+                set('appTlChipToday', '0');
+                set('appTlChipTotal', '0');
+                set('appTlChipLastTime', '—');
+                var b = document.getElementById('appTlStayCount');
+                if (b) b.style.display = 'none';
+                var lv = document.getElementById('appTlLiveBadge');
+                if (lv) lv.style.display = 'none';
                 return;
             }
 
-            // Total stops
-            if (countEl) countEl.textContent = dataArr.length;
-            if (badgeEl) {
-                badgeEl.textContent = dataArr.length + ' stop' + (dataArr.length !== 1 ? 's' : '');
-                badgeEl.style.display = '';
+            set('appTlChipStops', dataArr.length);
+
+            var badge = document.getElementById('appTlStayCount');
+            if (badge) {
+                badge.textContent = dataArr.length + ' stop' + (dataArr.length !== 1 ? 's' : '');
+                badge.style.display = '';
             }
 
-            // Today's stops
-            const todayStr = new Date().toDateString();
-            const todayCount = dataArr.filter(d => {
-                if (!d.startTime) return false;
-                return new Date(d.startTime).toDateString() === todayStr;
+            var todayStr   = new Date().toDateString();
+            var todayCount = dataArr.filter(function (d) {
+                return d.startTime && new Date(d.startTime).toDateString() === todayStr;
             }).length;
-            if (todayEl) todayEl.textContent = todayCount;
+            set('appTlChipToday', todayCount);
 
-            // Total time across all stays
-            let totalSecs = 0;
-            dataArr.forEach(d => {
-                const s = dtlCalcDuration(d);
-                if (s != null) totalSecs += s;
-            });
-            if (totalEl) totalEl.textContent = dtlFmtDuration(totalSecs);
+            var totalSecs = 0;
+            dataArr.forEach(function (d) { var s = tlCalcDuration(d); if (s != null) totalSecs += s; });
+            set('appTlChipTotal', tlFmtDuration(totalSecs));
 
-            // Latest activity time
-            const last = dataArr[dataArr.length - 1];
-            if (lastTimeEl) {
-                const t = dtlFmtTime(last.startTime);
-                const dt = dtlFmtDate(last.startTime);
-                lastTimeEl.textContent = `${dt} · ${t}`;
-            }
+            var last = dataArr[dataArr.length - 1];
+            set('appTlChipLastTime', tlFmtDate(last.startTime) + ' \u00B7 ' + tlFmtTime(last.startTime));
 
-            // Live badge: show if last entry has no endTime
+            var liveBadge = document.getElementById('appTlLiveBadge');
             if (liveBadge) {
-                const isLive = !last.endTime || last.endTime === '';
-                liveBadge.style.display = isLive ? '' : 'none';
+                liveBadge.style.display = (!last.endTime || last.endTime === '') ? '' : 'none';
             }
         }
 
-        // ── Sort stays by startTime ascending ─────────────────────────────────
-        function dtlSortStays(rawObj) {
+        // ─────────────────────────────────────────────────────────────────────
+        // SORT: stays ascending by startTime
+        // ─────────────────────────────────────────────────────────────────────
+
+        function tlSort(rawObj) {
             return Object.entries(rawObj)
-                .map(([stayId, data]) => ({ stayId, data }))
-                .sort((a, b) => {
-                    const tA = a.data.startTime;
-                    const tB = b.data.startTime;
+                .map(function (entry) { return { stayId: entry[0], data: entry[1] }; })
+                .sort(function (a, b) {
+                    var tA = a.data.startTime, tB = b.data.startTime;
                     if (!tA && !tB) return 0;
                     if (!tA) return -1;
                     if (!tB) return 1;
-                    const numA = typeof tA === 'number' ? tA : new Date(tA).getTime();
-                    const numB = typeof tB === 'number' ? tB : new Date(tB).getTime();
-                    return numA - numB;
+                    var nA = typeof tA === 'number' ? tA : new Date(tA).getTime();
+                    var nB = typeof tB === 'number' ? tB : new Date(tB).getTime();
+                    return nA - nB;
                 });
         }
 
-        // ── Attach Firebase listener for the selected device ──────────────────
-        function dtlAttachListener(deviceId) {
-            // Detach previous listener
-            if (dtlStayListener && typeof dtlStayListener === 'function') {
-                dtlStayListener();
-                dtlStayListener = null;
-            }
-            dtlStayMap.clear();
-            dtlSelectedDevice = deviceId;
+        // ─────────────────────────────────────────────────────────────────────
+        // FIREBASE REAL-TIME LISTENER
+        // Reads device_timeline/{deviceId}, updates UI reactively.
+        // ─────────────────────────────────────────────────────────────────────
 
-            if (!deviceId) {
-                dtlShowState('noDevice');
-                return;
-            }
+        function tlOpenForDevice(deviceId) {
+            window.__appTlCleanup(); // detach previous listener
 
-            dtlShowState('loading');
+            if (!deviceId) { tlSetState('empty'); return; }
+            tlSetState('loading');
 
-            // ── Real-time listener on device_timeline/{deviceId} ──────────────
-            // Firebase fires this on initial load AND every subsequent change.
-            // We diff against dtlStayMap to decide full-render vs. single-update.
-            dtlStayListener = onValue(
+            tlUnsubscribe = onValue(
                 ref(db, 'device_timeline/' + deviceId),
-                (snap) => {
-                    const raw = snap.val();
+                function (snap) {
+                    var raw = snap.val();
 
                     if (!raw || typeof raw !== 'object') {
-                        dtlShowState('empty');
-                        dtlStayMap.clear();
-                        dtlUpdateSummary([]);
+                        tlSetState('empty');
+                        tlStayMap.clear();
+                        tlUpdateSummary([]);
                         return;
                     }
 
-                    const sorted = dtlSortStays(raw);
+                    var sorted = tlSort(raw);
+                    var newIds = new Set(sorted.map(function (s) { return s.stayId; }));
+                    var oldIds = new Set(tlStayMap.keys());
 
-                    // Determine what changed vs current dtlStayMap
-                    const newIds   = new Set(sorted.map(s => s.stayId));
-                    const oldIds   = new Set(dtlStayMap.keys());
-                    const hasNewId = [...newIds].some(id => !oldIds.has(id));
-                    const hasRemovedId = [...oldIds].some(id => !newIds.has(id));
+                    // Structural change → full re-render
+                    var structural = tlStayMap.size === 0
+                        || Array.from(newIds).some(function (id) { return !oldIds.has(id); })
+                        || Array.from(oldIds).some(function (id) { return !newIds.has(id); });
 
-                    if (hasNewId || hasRemovedId || dtlStayMap.size === 0) {
-                        // Structural change → full re-render
-                        dtlRenderAll(sorted);
-                        // Auto-scroll to newest entry
-                        const list = document.getElementById('dtlCardList');
+                    if (structural) {
+                        tlRenderAll(sorted);
+                        // Auto-scroll to newest card
+                        var list = document.getElementById('appTlCardList');
                         if (list && list.lastElementChild) {
-                            setTimeout(() => {
+                            setTimeout(function () {
                                 list.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                             }, 80);
                         }
                     } else {
-                        // Only existing stays updated → patch each changed one
-                        sorted.forEach(({ stayId, data }) => {
-                            const existing = dtlStayMap.get(stayId);
-                            const changed  = !existing ||
-                                existing.data.endTime         !== data.endTime ||
-                                existing.data.durationSeconds !== data.durationSeconds ||
-                                existing.data.startTime       !== data.startTime ||
-                                existing.data.lastUpdated     !== data.lastUpdated;
-                            if (changed) dtlUpdateCard(stayId, data, sorted);
+                        // Only data changed → patch each changed card in-place
+                        sorted.forEach(function (item) {
+                            var existing = tlStayMap.get(item.stayId);
+                            var changed = !existing
+                                || existing.data.endTime         !== item.data.endTime
+                                || existing.data.durationSeconds !== item.data.durationSeconds
+                                || existing.data.startTime       !== item.data.startTime
+                                || existing.data.lastUpdated     !== item.data.lastUpdated;
+                            if (changed) tlPatchCard(item.stayId, item.data, sorted);
                         });
                     }
                 }
             );
         }
 
-        // ── Populate device dropdown from app_devices ─────────────────────────
-        function dtlPopulateDeviceDropdown() {
-            const select = document.getElementById('dtlDeviceSelect');
-            if (!select) return;
-
-            // Listen once to app_devices for the device list
-            // (use onValue with { onlyOnce: true } so it stays current)
-            onValue(ref(db, 'app_devices'), (snap) => {
-                const devicesRaw = snap.val() || {};
-                const prev = select.value; // preserve selection if possible
-
-                // Rebuild options
-                select.innerHTML = '<option value="">— Choose a device —</option>';
-                const devices = Object.entries(devicesRaw)
-                    .filter(([, d]) => !d.deleted_at) // exclude soft-deleted
-                    .sort(([, a], [, b]) => (a.custom_name || a.model || '').localeCompare(b.custom_name || b.model || ''));
-
-                devices.forEach(([deviceId, d]) => {
-                    const opt = document.createElement('option');
-                    opt.value = deviceId;
-                    opt.textContent = (d.custom_name || d.model || 'Unknown device') + ' — ' + deviceId.slice(0, 12) + '…';
-                    select.appendChild(opt);
-                });
-
-                // Re-select previously chosen device
-                if (prev && select.querySelector(`option[value="${prev}"]`)) {
-                    select.value = prev;
-                } else if (devices.length === 1) {
-                    // Auto-select when only one device
-                    select.value = devices[0][0];
-                    dtlAttachListener(devices[0][0]);
-                }
-            });
-        }
-
-        // ── Wire up controls ──────────────────────────────────────────────────
-        function dtlInit() {
-            const select    = document.getElementById('dtlDeviceSelect');
-            const refreshBtn = document.getElementById('dtlRefreshDevices');
-
-            if (!select) return;
-
-            // Device dropdown change → attach new listener
-            select.addEventListener('change', () => {
-                const deviceId = select.value;
-                if (!deviceId) {
-                    dtlShowState('noDevice');
-                    if (dtlStayListener) { dtlStayListener(); dtlStayListener = null; }
-                    dtlStayMap.clear();
-                    dtlSelectedDevice = '';
-                } else {
-                    dtlAttachListener(deviceId);
-                }
-            });
-
-            // Refresh button → re-populate device list
-            if (refreshBtn) {
-                refreshBtn.addEventListener('click', () => dtlPopulateDeviceDropdown());
-            }
-
-            // Populate device list immediately
-            dtlPopulateDeviceDropdown();
-
-            // Initial UI state
-            dtlShowState('noDevice');
-        }
-
-        // ── Hook into panel navigation ────────────────────────────────────────
-        // Re-init (populate devices) whenever the panel becomes active.
-        // Works by observing the panel's display state via MutationObserver.
-        const tlPanel = document.getElementById('panel-timeline');
-        if (tlPanel) {
-            const obs = new MutationObserver(() => {
-                const isActive = tlPanel.classList.contains('active');
-                if (isActive && !dtlPanelActive) {
-                    dtlPanelActive = true;
-                    // Re-populate devices each time the panel opens
-                    dtlPopulateDeviceDropdown();
-                    // Re-attach listener if a device was already chosen
-                    if (dtlSelectedDevice) dtlAttachListener(dtlSelectedDevice);
-                } else if (!isActive) {
-                    dtlPanelActive = false;
-                }
-            });
-            obs.observe(tlPanel, { attributes: true, attributeFilter: ['class'] });
-        }
-
-        // ── Boot ──────────────────────────────────────────────────────────────
-        // Run init after the main script finishes setting up nav items.
-        setTimeout(dtlInit, 200);
-
-    })(); // end Location Timeline module
+    })(); // end Inline Location Timeline module
 
 })();
+
 </script>
 </body>
 </html>
