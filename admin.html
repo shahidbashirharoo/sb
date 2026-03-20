@@ -66,7 +66,7 @@
         .login-form.active { display: block; }
 
         /* ══════ SIDEBAR + LAYOUT ══════ */
-        #adminShell, #userShell { display: flex; min-height: 100vh; }
+        #adminShell { display: flex; min-height: 100vh; }
         .sidebar {
             width: 220px; min-height: 100vh; background: var(--card);
             border-right: 1px solid var(--border); display: flex; flex-direction: column;
@@ -256,50 +256,12 @@
         /* ══════ QR MODAL ══════ */
         #qrContainer { text-align: center; padding: 16px 0; }
         #qrUrlText { font-size: 11px; color: var(--muted); word-break: break-all; margin-top: 8px; }
-
-        /* ══════ USERS PANEL ══════ */
-        .user-list-item {
-            background: var(--card2); border: 1px solid var(--border); border-radius: 10px;
-            padding: 14px 16px; display: flex; align-items: center; gap: 14px; margin-bottom: 10px;
-        }
-        .user-avatar {
-            width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0;
-            background: linear-gradient(135deg, var(--purple), var(--primary));
-            display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700;
-        }
-        .user-info { flex: 1; min-width: 0; }
-        .user-name { font-size: 14px; font-weight: 700; }
-        .user-meta { font-size: 11px; color: var(--muted); margin-top: 3px; }
-        .user-actions { display: flex; gap: 6px; flex-wrap: wrap; }
-
-        /* ══════ USER PANEL (user shell) ══════ */
-        #userShell .sidebar-logo .logo-sub { color: var(--purple); }
-        .user-panel-badge {
-            display: inline-block; background: rgba(139,92,246,.2); color: var(--purple);
+ background: rgba(139,92,246,.2); color: var(--purple);
             border: 1px solid rgba(139,92,246,.4); border-radius: 6px; padding: 2px 8px;
             font-size: 10px; font-weight: 700; margin-left: 8px;
         }
 
-        /* ══════ MASKED DATA (admin viewing user data) ══════ */
-        .masked-card {
-            background: var(--card2); border: 1px solid rgba(139,92,246,.25); border-radius: 12px;
-            padding: 14px 16px; position: relative; overflow: hidden;
-        }
-        .masked-card::before {
-            content: ''; position: absolute; inset: 0;
-            background: repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(139,92,246,.03) 8px, rgba(139,92,246,.03) 16px);
-        }
-        .masked-badge {
-            display: inline-block; background: rgba(139,92,246,.2); color: var(--purple);
-            border-radius: 4px; padding: 1px 6px; font-size: 10px; font-weight: 700; margin-right: 4px;
-        }
-
-        /* ══════ ACTIVITY LOG ══════ */
-        .activity-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
-        .activity-row:last-child { border-bottom: none; }
-        .activity-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-
-        /* ══════ APP BIN / APP PANEL EXTRAS ══════ */
+ BIN / APP PANEL EXTRAS ══════ */
         .app-bin-tabs { display: flex; gap: 4px; margin-bottom: 16px; }
         .app-bin-tab {
             padding: 7px 16px; border-radius: 8px; font-size: 12px; font-weight: 600;
@@ -522,15 +484,8 @@
     <div class="login-box">
         <div class="login-logo">🛡️</div>
         <h2>Shahid Bashir</h2>
-        <p id="loginSubtitle">Control Panel — Secure Access</p>
+        <p id="loginSubtitle">Admin — Secure Access</p>
 
-        <!-- Mode Switch (only shown if users exist) -->
-        <div class="login-mode-switch" id="loginModeSwitch" style="display:none;">
-            <button class="login-mode-btn active" id="modeAdminBtn" onclick="setLoginMode('admin')">🛡️ Admin</button>
-            <button class="login-mode-btn"        id="modeUserBtn"  onclick="setLoginMode('user')">👤 User</button>
-        </div>
-
-        <!-- Admin Form -->
         <div class="login-form active" id="loginAdminForm">
             <!-- Email field added for Firebase Auth — password alone is no longer enough -->
             <input type="email"    id="adminEmail" placeholder="Admin email" autocomplete="username">
@@ -542,22 +497,7 @@
                 ❌ Incorrect password. Try again.
             </p>
         </div>
-
-        <!-- User Form -->
-        <div class="login-form" id="loginUserForm">
-            <input type="text"     id="userLoginName" placeholder="Enter username">
-            <input type="password" id="userLoginPass" placeholder="Enter password">
-            <button class="btn btn-purple" id="userLoginBtn" style="width:100%;padding:11px;font-size:14px;justify-content:center;">
-                👤 Access User Panel
-            </button>
-            <p id="userLoginError" style="color:var(--red);font-size:12px;margin-top:10px;display:none;">
-                ❌ Invalid credentials or account disabled.
-            </p>
-        </div>
-    </div>
-</div>
-
-<!-- ══════════════════════════════════════════════════════════
+══════════════════════════════════════════════════════
      LIGHTBOX
 ══════════════════════════════════════════════════════════ -->
 <div id="lightbox">
@@ -586,78 +526,6 @@
             <button class="btn btn-primary" id="saveEditLink">💾 Save</button>
             <button class="btn btn-gray"    id="closeEditLink">Cancel</button>
         </div>
-    </div>
-</div>
-
-<!-- Password Modal -->
-<div id="pwModal" class="modal-overlay">
-    <div class="modal-box">
-        <h3>🔐 Change Admin Password</h3>
-        <label>Current Password</label>
-        <input type="password" id="oldPw" placeholder="Current password">
-        <label>New Password</label>
-        <input type="password" id="newPw" placeholder="New password (min 4 chars)">
-        <label>Confirm New Password</label>
-        <input type="password" id="newPw2" placeholder="Confirm password">
-        <div class="modal-row">
-            <button class="btn btn-primary" id="savePwBtn">Save</button>
-            <button class="btn btn-gray"    id="closePwModal">Cancel</button>
-        </div>
-        <p id="pwMsg" style="font-size:12px;margin-top:10px;"></p>
-    </div>
-</div>
-
-<!-- Add/Edit User Modal -->
-<div id="userModal" class="modal-overlay">
-    <div class="modal-box">
-        <h3 id="userModalTitle">➕ Add User</h3>
-        <input type="hidden" id="editingUsername">
-        <label>Username</label>
-        <input type="text" id="userModalName" placeholder="e.g. operator1">
-        <label>Password</label>
-        <input type="password" id="userModalPass" placeholder="Min 4 characters">
-        <label>Confirm Password</label>
-        <input type="password" id="userModalPass2" placeholder="Confirm password">
-        <label>Permissions</label>
-        <div class="perm-row" id="userPermGrid">
-            <label class="check-label"><input type="checkbox" id="permLinks"    checked> 🔗 Link Generator</label>
-            <label class="check-label"><input type="checkbox" id="permCaptures" checked> 📸 Live Captures</label>
-            <label class="check-label"><input type="checkbox" id="permBin"      checked> 🗑️ Recycle Bin</label>
-            <label class="check-label"><input type="checkbox" id="permExport"   checked> 📥 Export Data</label>
-        </div>
-        <div class="modal-row">
-            <button class="btn btn-primary" id="saveUserBtn">💾 Save</button>
-            <button class="btn btn-gray"    id="closeUserModal">Cancel</button>
-        </div>
-        <p id="userModalMsg" style="font-size:12px;margin-top:10px;"></p>
-    </div>
-</div>
-
-<!-- User Activity Modal -->
-<div id="userActivityModal" class="modal-overlay">
-    <div class="modal-box" style="width:min(860px,96vw);max-height:88vh;overflow-y:auto;">
-        <h3>📊 User Activity — <span id="activityUsername"></span></h3>
-        <div id="activityContent" style="margin-top:10px;"></div>
-        <div class="modal-row">
-            <button class="btn btn-gray" id="closeActivityModal">Close</button>
-        </div>
-    </div>
-</div>
-
-<!-- Change User Password Modal -->
-<div id="changeUserPwModal" class="modal-overlay">
-    <div class="modal-box">
-        <h3>🔑 Change User Password</h3>
-        <input type="hidden" id="changePwUsername">
-        <label>New Password</label>
-        <input type="password" id="changeUserNewPw" placeholder="Min 4 characters">
-        <label>Confirm Password</label>
-        <input type="password" id="changeUserNewPw2" placeholder="Confirm password">
-        <div class="modal-row">
-            <button class="btn btn-primary" id="saveUserPwBtn">Save</button>
-            <button class="btn btn-gray" id="closeUserPwModal">Cancel</button>
-        </div>
-        <p id="userPwMsg" style="font-size:12px;margin-top:10px;"></p>
     </div>
 </div>
 
@@ -751,14 +619,6 @@
                 <span class="nav-icon">📸</span> Live Captures
                 <span class="nav-badge" id="navCaptureCount">0</span>
             </button>
-            <button class="nav-item" data-panel="users" data-shell="admin">
-                <span class="nav-icon">👥</span> Users
-                <span class="nav-badge nav-badge-purple" id="navUserCount" style="display:none;">0</span>
-            </button>
-        </div>
-
-        <div class="nav-section">
-            <div class="nav-label">Data</div>
             <button class="nav-item" data-panel="bin" data-shell="admin">
                 <span class="nav-icon">🗑️</span> Recycle Bin
                 <span class="nav-badge" id="navBinCount" style="display:none;">0</span>
@@ -774,10 +634,6 @@
         </div>
 
         <div class="sidebar-footer">
-            <button class="nav-item" id="changePwBtn">
-                <span class="nav-icon">🔐</span> Change Password
-            </button>
-            <button class="nav-item" id="refreshBtn">
                 <span class="nav-icon">🔄</span> Refresh
             </button>
             <button class="nav-item" id="adminLogoutBtn" style="color:var(--red);">
@@ -832,15 +688,6 @@
                         <div class="stat-num" id="statBin">0</div>
                         <div class="stat-lbl">In Recycle Bin</div>
                     </div>
-                    <div class="stat-card" style="border-color:rgba(139,92,246,.3);">
-                        <span class="stat-icon">👥</span>
-                        <div class="stat-num" id="statUsers" style="color:var(--purple);">0</div>
-                        <div class="stat-lbl">Total Users</div>
-                    </div>
-                </div>
-                <div class="section">
-                    <div class="section-header">
-                        <h3>🕐 Recent Captures</h3>
                         <button class="btn btn-gray btn-sm" style="margin-left:auto;" data-panel="captures" data-shell="admin">View All →</button>
                     </div>
                     <div class="cap-grid" id="recentGrid"></div>
@@ -922,8 +769,6 @@
                             <option value="newest">Newest First</option>
                             <option value="oldest">Oldest First</option>
                         </select>
-                        <!-- ownerFilter hidden: admin panel now shows only admin captures;
-                             user captures are exclusively in Users → Activity -->
                         <select id="ownerFilter" style="display:none;">
                             <option value="all">All Owners</option>
                         </select>
@@ -935,23 +780,6 @@
                 </div>
             </div>
 
-            <!-- ══ USERS ══ -->
-            <div class="panel" id="panel-users">
-                <div class="section" id="usersSection">
-                    <div class="section-header">
-                        <h3>👥 User Management</h3>
-                        <span class="badge badge-purple" id="userCount">0</span>
-                        <div class="section-header-right">
-                            <button class="btn btn-purple" id="addUserBtn">➕ Add User</button>
-                        </div>
-                    </div>
-                    <div id="userListContainer">
-                        <div class="empty"><span class="empty-icon">👥</span>No users created yet. Click Add User to get started.</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ══ RECYCLE BIN ══ -->
             <div class="panel" id="panel-bin">
                 <div class="section">
                     <div class="section-header">
@@ -1181,220 +1009,7 @@
         </div><!-- /content -->
     </div><!-- /main -->
 </div><!-- /adminShell -->
-
-<!-- ══════════════════════════════════════════════════════════
-     USER SHELL
-══════════════════════════════════════════════════════════ -->
-<div id="userShell" style="display:none;">
-    <nav class="sidebar" id="userSidebar">
-        <div class="sidebar-logo">
-            <div class="logo-row">
-                <div class="logo-icon">👤</div>
-                <div>
-                    <div class="logo-text" id="userDisplayName">User Panel</div>
-                    <div class="logo-sub">User Dashboard</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="nav-section">
-            <div class="nav-label">Overview</div>
-            <button class="nav-item active" data-panel="u-dashboard" data-shell="user">
-                <span class="nav-icon">📊</span> Dashboard
-            </button>
-        </div>
-
-        <div class="nav-section">
-            <div class="nav-label">My Tools</div>
-            <button class="nav-item" id="uNavLinks" data-panel="u-links" data-shell="user">
-                <span class="nav-icon">🔗</span> My Links
-                <span class="nav-badge nav-badge-blue" id="uNavLinkCount">0</span>
-            </button>
-            <button class="nav-item" id="uNavCaptures" data-panel="u-captures" data-shell="user">
-                <span class="nav-icon">📸</span> My Captures
-                <span class="nav-badge" id="uNavCaptureCount">0</span>
-            </button>
-            <button class="nav-item" id="uNavBin" data-panel="u-bin" data-shell="user">
-                <span class="nav-icon">🗑️</span> Recycle Bin
-                <span class="nav-badge" id="uNavBinCount" style="display:none;">0</span>
-            </button>
-        </div>
-
-        <div class="sidebar-footer">
-            <button class="nav-item" id="userLogoutBtn" style="color:var(--red);">
-                <span class="nav-icon">🚪</span> Logout
-            </button>
-        </div>
-    </nav>
-
-    <div class="main">
-        <div class="topbar">
-            <div class="topbar-left">
-                <div class="live-dot"></div>
-                <h2 id="userPanelTitle">Dashboard</h2>
-                <span class="user-panel-badge">USER</span>
-            </div>
-            <div class="topbar-right">
-                <button class="btn btn-teal" id="uExportBtn">📥 Export CSV</button>
-            </div>
-        </div>
-
-        <div class="content" id="userContent">
-
-            <!-- ══ USER DASHBOARD ══ -->
-            <div class="panel active" id="panel-u-dashboard">
-                <div class="stats-grid">
-                    <div class="stat-card stat-blue">
-                        <span class="stat-icon">📸</span>
-                        <div class="stat-num" id="uStatTotal">0</div>
-                        <div class="stat-lbl">My Captures</div>
-                    </div>
-                    <div class="stat-card stat-green">
-                        <span class="stat-icon">📅</span>
-                        <div class="stat-num" id="uStatToday">0</div>
-                        <div class="stat-lbl">Today</div>
-                    </div>
-                    <div class="stat-card stat-purple">
-                        <span class="stat-icon">🔗</span>
-                        <div class="stat-num" id="uStatLinks">0</div>
-                        <div class="stat-lbl">My Links</div>
-                    </div>
-                    <div class="stat-card stat-yellow">
-                        <span class="stat-icon">👁</span>
-                        <div class="stat-num" id="uStatVisits">0</div>
-                        <div class="stat-lbl">Total Visits</div>
-                    </div>
-                    <div class="stat-card stat-teal">
-                        <span class="stat-icon">📷</span>
-                        <div class="stat-num" id="uStatWithPhoto">0</div>
-                        <div class="stat-lbl">With Photo</div>
-                    </div>
-                    <div class="stat-card stat-red">
-                        <span class="stat-icon">🗑️</span>
-                        <div class="stat-num" id="uStatBin">0</div>
-                        <div class="stat-lbl">In Bin</div>
-                    </div>
-                </div>
-                <div class="section">
-                    <div class="section-header">
-                        <h3>🕐 Recent Captures</h3>
-                        <button class="btn btn-gray btn-sm" style="margin-left:auto;" data-panel="u-captures" data-shell="user">View All →</button>
-                    </div>
-                    <div class="cap-grid" id="uRecentGrid"></div>
-                </div>
-            </div>
-
-            <!-- ══ USER LINKS ══ -->
-            <div class="panel" id="panel-u-links">
-                <div class="section" id="uLinksGenSection">
-                    <div class="section-header"><h3>⚡ Generate New Link</h3></div>
-                    <div class="form-row">
-                        <input type="text" id="uLinkName"     placeholder="Target Name" style="width:200px;">
-                        <input type="url"  id="uLinkRedirect" placeholder="Redirect URL (optional)" style="flex:1;min-width:180px;">
-                    </div>
-                    <div class="form-row">
-                        <label class="check-label"><input type="checkbox" id="uCheckCam" checked> 📷 Camera</label>
-                        <label class="check-label"><input type="checkbox" id="uCheckGPS" checked> 📍 GPS</label>
-                        <button class="btn btn-primary" id="uCreateBtn">⚡ Generate Link</button>
-                    </div>
-                    <div class="form-row" style="margin-bottom:0;">
-                        <label class="check-label"><input type="checkbox" id="uUseShortLink" checked> 🔗 Use Short Professional Link <span style="font-size:11px;color:var(--muted);margin-left:4px;">(Copy &amp; QR will share <b>.../camera.access/verify.html?linkId={id}</b>)</span></label>
-                    </div>
-                </div>
-                <div class="section">
-                    <div class="section-header">
-                        <h3>🔗 My Links</h3>
-                        <span class="badge badge-green" id="uLinkCount">0</span>
-                        <div class="section-header-right">
-                            <input type="text" id="uSearchLinks" placeholder="🔍 Search..." style="width:160px;">
-                        </div>
-                    </div>
-                    <div class="table-wrap">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Target Name</th>
-                                    <th>Permissions</th>
-                                    <th>Redirect</th>
-                                    <th>Status</th>
-                                    <th>👁 Visits</th>
-                                    <th>Created</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="uLinkTableBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ══ USER CAPTURES ══ -->
-            <div class="panel" id="panel-u-captures">
-                <div class="section">
-                    <div class="section-header">
-                        <h3>📸 My Captures</h3>
-                        <span class="badge" id="uLogCount">0</span>
-                        <div class="section-header-right">
-                            <button class="btn btn-red btn-sm" id="uBulkDeleteBtn">🗑 Delete Selected</button>
-                        </div>
-                    </div>
-                    <div class="filter-bar">
-                        <input type="text" id="uSearchLogs" placeholder="🔍 Search name, IP, OS...">
-                        <select id="uTimeFilter">
-                            <option value="all">All Time</option>
-                            <option value="today">Today</option>
-                            <option value="week">This Week</option>
-                            <option value="month">This Month</option>
-                        </select>
-                        <select id="uPhotoFilter">
-                            <option value="all">All</option>
-                            <option value="photo">With Photo</option>
-                            <option value="nophoto">No Photo</option>
-                        </select>
-                        <select id="uSortFilter">
-                            <option value="newest">Newest First</option>
-                            <option value="oldest">Oldest First</option>
-                        </select>
-                        <select id="uGpsFilter">
-                            <option value="all">All GPS</option>
-                            <option value="gps">With GPS</option>
-                            <option value="nogps">No GPS</option>
-                        </select>
-                        <label class="check-label" style="margin-left:auto;">
-                            <input type="checkbox" id="uSelectAll"> Select All
-                        </label>
-                    </div>
-                    <div id="uPhotoGrid" class="cap-grid"></div>
-                </div>
-            </div>
-
-            <!-- ══ USER BIN ══ -->
-            <div class="panel" id="panel-u-bin">
-                <div class="section">
-                    <div class="section-header">
-                        <h3>🗑️ My Recycle Bin</h3>
-                        <span class="badge badge-red" id="uBinCount">0</span>
-                        <div class="section-header-right">
-                            <button class="btn btn-red btn-sm" id="uEmptyBinBtn">🔥 Empty All</button>
-                        </div>
-                    </div>
-                    <div class="bin-filter-bar">
-                        <div class="bin-type-tabs">
-                            <button class="bin-tab active" data-bin-type="all" data-ctx="user">All</button>
-                            <button class="bin-tab" data-bin-type="photos" data-ctx="user">📷 Photos</button>
-                            <button class="bin-tab" data-bin-type="links" data-ctx="user">🔗 Links</button>
-                        </div>
-                        <input type="text" id="uBinSearch" placeholder="🔍 Search..." style="width:190px;">
-                    </div>
-                    <div id="uBinGrid" class="cap-grid"></div>
-                </div>
-            </div>
-
-        </div><!-- /user content -->
-    </div><!-- /user main -->
-</div><!-- /userShell -->
-
-<!-- ══════════════════════════════════════════════════════════
+══════════════════════════════════════════════════════
      FIREBASE + SCRIPT
 ══════════════════════════════════════════════════════════ -->
 <script type="importmap">
@@ -1438,23 +1053,17 @@ const auth = getAuth(app); // Firebase Auth instance
 // ── STATE ─────────────────────────────────────────────────
 let allLogsData      = null;
 let allLinksData     = null;
-let allUsersData     = null;
 let logsCache        = {};
-let uLogsCache       = {};
 // adminPassword removed — credentials now live in Firebase Auth only
 let prevLogCount     = null;
 let selectedCaptures = new Set();
-let uSelectedCaptures= new Set();
 let activeBinType    = 'all';
-let uActiveBinType   = 'all';
 let currentEditId    = null;
 let currentSession   = null; // {type:'admin'} or {type:'user', username:'...', permissions:{...}}
 
 // Listener lifecycle management — store unsubscribe fns so logout cleanly detaches them
 let adminUnsubscribers = [];
-let userUnsubscribers  = [];
 let adminListenersInit = false;
-let userListenersInit  = false;
 
 // ── HTML ESCAPE ───────────────────────────────────────────
 function esc(s) {
@@ -1490,7 +1099,7 @@ function askNotif() { if ('Notification' in window && Notification.permission ==
 function sendNotif(title, body) { if ('Notification' in window && Notification.permission === 'granted') new Notification(title, { body }); }
 
 // ── BIN HELPERS ───────────────────────────────────────────
-function getBinKey()          { return currentSession?.type === 'user' ? 'user_bin_' + currentSession.username : 'unified_bin'; }
+function getBinKey()          { return 'unified_bin'; }
 function getBin(key)          { return JSON.parse(localStorage.getItem(key || getBinKey()) || '[]'); }
 function saveBin(arr, key)    { localStorage.setItem(key || getBinKey(), JSON.stringify(arr)); }
 function makeBinId()          { return '_b' + Date.now() + Math.random().toString(36).slice(2, 7); }
@@ -1532,21 +1141,7 @@ function dlImg(src, filename) {
     a.click();
     setTimeout(() => { document.body.removeChild(a); }, 100);
 }
-
-// ══════════════════════════════════════════════════════════
-// LOGIN SYSTEM
-// ══════════════════════════════════════════════════════════
-async function checkUsersExist() {
-    try {
-        const snap = await get(ref(db, 'users'));
-        const data = snap.val();
-        if (data && Object.keys(data).length > 0) {
-            document.getElementById('loginModeSwitch').style.display = 'flex';
-        }
-    } catch(e) {}
-}
-
-window.setLoginMode = function(mode) {
+ = function(mode) {
     document.querySelectorAll('.login-mode-btn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.login-form').forEach(f => f.classList.remove('active'));
     // Clear stale error messages when switching modes
@@ -1557,7 +1152,6 @@ window.setLoginMode = function(mode) {
         document.getElementById('loginAdminForm').classList.add('active');
     } else {
         document.getElementById('modeUserBtn').classList.add('active');
-        document.getElementById('loginUserForm').classList.add('active');
     }
 };
 
@@ -1605,55 +1199,7 @@ async function doAdminLogin() {
 document.getElementById('loginBtn').onclick = doAdminLogin;
 document.getElementById('adminPass').addEventListener('keydown', e => { if (e.key === 'Enter') doAdminLogin(); });
 document.getElementById('adminEmail').addEventListener('keydown', e => { if (e.key === 'Enter') doAdminLogin(); });
-
-async function doUserLogin() {
-    const username = document.getElementById('userLoginName').value.trim();
-    const password = document.getElementById('userLoginPass').value;
-    const errEl    = document.getElementById('userLoginError');
-    errEl.style.display = 'none';
-
-    if (!username || !password) { errEl.style.display = 'block'; errEl.innerText = '❌ Fill in all fields.'; return; }
-
-    try {
-        const snap = await get(ref(db, 'users/' + username));
-        const user = snap.val();
-        if (!user)              { errEl.style.display = 'block'; errEl.innerText = '❌ User not found.'; return; }
-        if (!user.active)       { errEl.style.display = 'block'; errEl.innerText = '❌ Account is disabled.'; return; }
-        if (user.password !== password) { errEl.style.display = 'block'; errEl.innerText = '❌ Incorrect password.'; return; }
-
-        // Update last active
-        update(ref(db, 'users/' + username), { lastActive: Date.now() }).catch(() => {});
-
-        currentSession = { type: 'user', username, permissions: user.permissions || {} };
-        document.getElementById('loginOverlay').style.display = 'none';
-        document.getElementById('userShell').style.display = 'flex';
-        document.getElementById('userDisplayName').innerText = username;
-
-        // Apply permission restrictions
-        applyUserPermissions(user.permissions || {});
-        initUserListeners();
-    } catch(e) {
-        errEl.style.display = 'block';
-        errEl.innerText = '❌ Login error. Try again.';
-    }
-}
-document.getElementById('userLoginBtn').onclick = doUserLogin;
-document.getElementById('userLoginPass').addEventListener('keydown', e => { if (e.key === 'Enter') doUserLogin(); });
-
-function applyUserPermissions(perms) {
-    if (!perms.linkGenerator) {
-        document.getElementById('uNavLinks').style.display    = 'none';
-        document.getElementById('uLinksGenSection').style.display = 'none';
-    }
-    if (!perms.liveCaptures) {
-        document.getElementById('uNavCaptures').style.display = 'none';
-    }
-    if (!perms.recycleBin) {
-        document.getElementById('uNavBin').style.display      = 'none';
-    }
-}
-
-// Logout — signs out of Firebase Auth then cleans up local state
+ Auth then cleans up local state
 document.getElementById('adminLogoutBtn').onclick = () => {
     // Sign out from Firebase Auth first (invalidates the session token)
     signOut(auth).catch(() => {}); // fire-and-forget; UI cleanup happens regardless
@@ -1662,7 +1208,7 @@ document.getElementById('adminLogoutBtn').onclick = () => {
     adminUnsubscribers.forEach(u => u());
     adminUnsubscribers = [];
     adminListenersInit = false;
-    allLogsData = null; allLinksData = null; allUsersData = null;
+    allLogsData = null; allLinksData = null;
     logsCache = {}; prevLogCount = null; selectedCaptures.clear();
     currentSession = null;
     document.getElementById('adminShell').style.display = 'none';
@@ -1670,44 +1216,22 @@ document.getElementById('adminLogoutBtn').onclick = () => {
     document.getElementById('adminEmail').value = '';
     document.getElementById('adminPass').value = '';
     document.getElementById('loginError').style.display = 'none';
-    setLoginMode('admin');
-};
-document.getElementById('userLogoutBtn').onclick = () => {
-    // Detach all Firebase listeners and reset user state
-    userUnsubscribers.forEach(u => u());
-    userUnsubscribers = [];
-    userListenersInit = false;
-    uAllLogsData = null; uAllLinksData = null;
-    uLogsCache = {}; uSelectedCaptures.clear();
-    currentSession = null;
-    document.getElementById('userShell').style.display = 'none';
-    document.getElementById('loginOverlay').style.display = 'flex';
-    document.getElementById('userLoginName').value = '';
-    document.getElementById('userLoginPass').value = '';
-    document.getElementById('userLoginError').style.display = 'none';
-    setLoginMode('user');
-};
-
-// ══════════════════════════════════════════════════════════
+};════════════════════════════════════════════════════
 // NAVIGATION
 // ══════════════════════════════════════════════════════════
-const adminPanelTitles = { dashboard: 'Dashboard', links: 'Manage Links', captures: 'Live Captures', bin: 'Recycle Bin', users: 'User Management', app: 'App — Connected Phones', 'app-bin': 'App Bin — Deleted Items' };
-const userPanelTitles  = { 'u-dashboard': 'Dashboard', 'u-links': 'My Links', 'u-captures': 'My Captures', 'u-bin': 'Recycle Bin' };
-
+const adminPanelTitles = { dashboard: 'Dashboard', links: 'Manage Links', captures: 'Live Captures', bin: 'Recycle Bin', app: 'App — Connected Phones', 'app-bin': 'App Bin — Deleted Items' };
 function switchPanel(name, shell) {
-    const prefix = shell === 'user' ? '#userContent' : '#adminContent';
-    document.querySelectorAll(prefix + ' .panel').forEach(p => p.classList.remove('active'));
-    const navCtx = shell === 'user' ? '#userSidebar' : '#adminSidebar';
-    document.querySelectorAll(navCtx + ' .nav-item[data-panel]').forEach(n => n.classList.remove('active'));
+    document.querySelectorAll('#adminContent .panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('#adminSidebar .nav-item[data-panel]').forEach(n => n.classList.remove('active'));
     const panel = document.getElementById('panel-' + name);
     if (panel) panel.classList.add('active');
     const nav = document.querySelector(`${navCtx} .nav-item[data-panel="${name}"]`);
     if (nav) nav.classList.add('active');
-    const title = shell === 'user' ? document.getElementById('userPanelTitle') : document.getElementById('panelTitle');
-    title.innerText = (shell === 'user' ? userPanelTitles : adminPanelTitles)[name] || name;
+    const title = document.getElementById('panelTitle');
+    if (title) title.innerText = adminPanelTitles[name] || name;
 }
 
-document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
+document.querySelectorAll('[data-panel][data-shell="admin"]').forEach(el => {
     el.addEventListener('click', () => switchPanel(el.dataset.panel, el.dataset.shell));
 });
 
@@ -1715,9 +1239,8 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
 // ADMIN: STATS
 // ══════════════════════════════════════════════════════════
 function updateStats() {
-    // Counts are admin-only (user data lives exclusively in Activity)
-    const adminLogs  = allLogsData  ? Object.values(allLogsData).filter(p => p._ownerType !== 'user') : [];
-    const adminLinks = allLinksData ? Object.values(allLinksData).filter(l => l._ownerType !== 'user') : [];
+    const adminLogs  = allLogsData  ? Object.values(allLogsData) : [];
+    const adminLinks = allLinksData ? Object.values(allLinksData) : [];
 
     const total = adminLogs.length;
     document.getElementById('statTotal').innerText = total;
@@ -1739,16 +1262,13 @@ function updateStats() {
     document.getElementById('statLinks').innerText  = activeLinks;
     document.getElementById('statVisits').innerText = totalVisits;
 
-    // Bin count: admin items only
-    const adminBinCount = getBin('unified_bin').filter(x => x._ownerType !== 'user').length;
+    const adminBinCount = getBin('unified_bin').length;
     document.getElementById('statBin').innerText = adminBinCount;
     document.getElementById('binCount').innerText = adminBinCount;
     const navBin = document.getElementById('navBinCount');
     navBin.innerText = adminBinCount;
     navBin.style.display = adminBinCount > 0 ? '' : 'none';
 
-    const userCount = allUsersData ? Object.keys(allUsersData).length : 0;
-    document.getElementById('statUsers').innerText = userCount;
 
     document.getElementById('navCaptureCount').innerText = total;
     document.getElementById('navLinkCount').innerText    = adminLinks.length;
@@ -1771,8 +1291,6 @@ function renderLinksTable() {
 
     Object.keys(allLinksData).forEach(id => {
         const l = allLinksData[id];
-        // Admin global view: only show admin-owned links
-        if (l._ownerType === 'user') return;
         if (search && !(l.name || '').toLowerCase().includes(search)) return;
         count++; 
         const row = document.createElement('tr');
@@ -1895,1319 +1413,13 @@ function passFilter(p) {
     return true;
 }
 
-function buildCapCard(key, p, inBin = false, isUser = false) {
+function buildCapCard(key, p, inBin = false) {
     const d      = p.device || {};
-    const isUserCapture = p._ownerType === 'user' && !isUser;
-    const hasGPS = p.latitude && p.latitude !== 'Denied' && p.longitude && p.longitude !== 'Denied';
 
     const card = document.createElement('div');
     card.className = inBin ? 'bin-card' : 'log-card';
     card.dataset.key = key;
 
-    if (isUserCapture) {
-        // Masked format for user captures (admin view)
-        const maskedId = 'masked_capture_' + String(key).slice(-4);
-        card.innerHTML = `
-            <div class="masked-card" style="position:relative;overflow:hidden;">
-                <div style="text-align:center;padding:20px;color:var(--purple);">👤</div>
-            </div>
-            <div class="card-body">
-                <p style="font-weight:700;"><span class="masked-badge">USER</span>User Capture</p>
-                <p class="meta">Owner: <b style="color:var(--purple);">${esc(p._ownerId)}</b></p>
-                <p class="meta">Capture ID: ${maskedId}</p>
-                <p class="meta">🕐 ${esc(p.time||'')} · ${esc(p.date||'')}</p>
-                ${inBin ? `<p class="meta" style="color:var(--red);">🗑 Deleted: ${new Date(p.deletedAt).toLocaleDateString()}</p>` : ''}
-            </div>
-            <div class="card-actions">
-                ${inBin
-                    ? `<button class="btn btn-green btn-sm" data-action="restore" data-key="${key}">♻️ Restore</button>
-                       <button class="btn btn-red   btn-sm" data-action="burn"    data-key="${key}">🔥 Burn</button>`
-                    : `<button class="btn btn-red btn-sm" data-action="tobin" data-key="${key}">🗑 Bin</button>`
-                }
-            </div>`;
-        return card;
-    }
-
-    card.innerHTML = `
-        <div class="card-img" ${p.image ? `data-lb-img="${esc(p.image)}" data-lb-info="${esc(p.linkName)} — ${esc(p.date||'')} ${esc(p.time||'')}"` : ''}>
-            ${p.image
-                ? `<img src="${p.image}" alt="Capture"><div class="img-overlay">🔍</div><span class="img-badge">📷</span>`
-                : `<div class="no-img"><span>📷</span><span style="font-size:11px;">No Image</span></div>`
-            }
-        </div>
-        <div class="card-body">
-            ${!inBin ? `<label class="check-label" style="margin-bottom:6px;">
-                <input type="checkbox" class="${isUser ? 'u-cap-select' : 'cap-select'}" data-key="${key}"> <b>${esc(p.linkName)}</b>
-            </label>` : `<p style="font-weight:700;margin-bottom:4px;">${esc(p.linkName)}</p>`}
-            <p class="meta"><span class="tag">${esc(d.os||'?')}</span><span class="tag">${esc(d.browser||'?')}</span></p>
-            <p class="meta">🌐 ${esc(p.ipAddress||'N/A')}</p>
-            <p class="meta">📍 ${hasGPS
-                ? `<a href="https://www.google.com/maps?q=${p.latitude},${p.longitude}" target="_blank" style="color:var(--teal);">View Map</a>`
-                : 'GPS Denied'}</p>
-            <p class="meta">🕐 ${esc(p.time||'')} · ${esc(p.date||'')}</p>
-            ${inBin ? `<p class="meta" style="color:var(--red);">🗑 Deleted: ${new Date(p.deletedAt).toLocaleDateString()}</p>` : ''}
-        </div>
-        <div class="card-actions">
-            ${p.image ? `<button class="btn btn-teal btn-sm" data-action="download" data-key="${key}">⬇ Save</button>` : ''}
-            ${hasGPS  ? `<button class="btn btn-gray btn-sm" data-action="copygps" data-key="${key}">📍 GPS</button>` : ''}
-            <button class="btn btn-primary btn-sm" data-action="showInfo" data-key="${key}">📋 Info</button>
-            ${inBin
-                ? `<button class="btn btn-green btn-sm" data-action="restore" data-key="${key}">♻️ Restore</button>
-                   <button class="btn btn-red   btn-sm" data-action="burn"    data-key="${key}">🔥 Burn</button>`
-                : `<button class="btn btn-red   btn-sm" data-action="tobin"   data-key="${key}">🗑 Bin</button>`
-            }
-        </div>`;
-    return card;
-}
-
-function renderLogs() {
-    const grid = document.getElementById('photoGrid');
-    grid.innerHTML = '';
-    logsCache = {};
-    selectedCaptures.clear();
-
-    if (!allLogsData) {
-        grid.innerHTML = '<div class="empty"><span class="empty-icon">📭</span>No captures yet.</div>';
-        document.getElementById('logCount').innerText = '0';
-        return;
-    }
-
-    const sort = document.getElementById('sortFilter').value;
-    let keys = Object.keys(allLogsData).filter(k => allLogsData[k]?.linkName);
-    keys = keys.filter(k => passFilter(allLogsData[k]));
-    if (sort === 'oldest') keys.sort((a,b) => (allLogsData[a].timestamp||0) - (allLogsData[b].timestamp||0));
-    else keys.sort((a,b) => (allLogsData[b].timestamp||0) - (allLogsData[a].timestamp||0));
-
-    keys.forEach(k => {
-        logsCache[k] = allLogsData[k];
-        grid.appendChild(buildCapCard(k, allLogsData[k], false));
-    });
-
-    document.getElementById('logCount').innerText = keys.length;
-    if (keys.length === 0) grid.innerHTML = '<div class="empty"><span class="empty-icon">🔍</span>No captures match your filters.</div>';
-}
-
-function renderRecent() {
-    const grid = document.getElementById('recentGrid');
-    if (!grid) return;
-    grid.innerHTML = '';
-    if (!allLogsData) { grid.innerHTML = '<div class="empty">No captures yet.</div>'; return; }
-
-    const keys = Object.keys(allLogsData)
-        .filter(k => allLogsData[k]?.linkName && allLogsData[k]?._ownerType !== 'user')
-        .sort((a,b) => (allLogsData[b].timestamp||0) - (allLogsData[a].timestamp||0))
-        .slice(0, 4);
-
-    if (keys.length === 0) { grid.innerHTML = '<div class="empty"><span class="empty-icon">📭</span>No captures yet.</div>'; return; }
-    keys.forEach(k => {
-        logsCache[k] = allLogsData[k];
-        grid.appendChild(buildCapCard(k, allLogsData[k], false));
-    });
-}
-
-['searchLogs','timeFilter','photoFilter','gpsFilter','sortFilter','ownerFilter'].forEach(id => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    const fn = debounce(renderLogs, 280);
-    el.addEventListener('change', renderLogs);
-    el.addEventListener('input',  fn);
-});
-
-function handleCapCardClick(e, cacheRef, binKey, isUser = false) {
-    const imgEl = e.target.closest('[data-lb-img]');
-    if (imgEl && !e.target.closest('button')) { openLightbox(imgEl.dataset.lbImg, imgEl.dataset.lbInfo); return; }
-    const btn = e.target.closest('button[data-action]');
-    if (!btn) return;
-    const { action, key } = btn.dataset;
-    const p = cacheRef[key];
-
-    if (action === 'download' && p?.image)   dlImg(p.image, `capture_${p.linkName||'x'}_${Date.now()}.jpg`);
-    else if (action === 'showInfo')          openInfoModal(p);
-    else if (action === 'copygps' && p)      navigator.clipboard.writeText(p.latitude + ', ' + p.longitude).then(() => toast('📍 GPS copied!', 'var(--teal)'));
-    else if (action === 'tobin' && p) {
-        if (!confirm('Move to Recycle Bin?')) return;
-        addToBin({ ...p, _type: 'photo', _firebaseKey: key }, binKey);
-        remove(ref(db, 'photo_history/' + key));
-        if (isUser) { renderUserBin(); updateUserStats(); }
-        else        { renderBin(); updateStats(); }
-        toast('🗑️ Moved to Recycle Bin', 'var(--yellow)');
-    }
-}
-
-document.getElementById('photoGrid').addEventListener('click', e => handleCapCardClick(e, logsCache, 'unified_bin', false));
-document.getElementById('recentGrid').addEventListener('click', e => {
-    handleCapCardClick(e, allLogsData || {}, 'unified_bin', false);
-});
-
-document.getElementById('selectAllCaptures').addEventListener('change', e => {
-    document.querySelectorAll('.cap-select').forEach(cb => {
-        cb.checked = e.target.checked;
-        if (e.target.checked) selectedCaptures.add(cb.dataset.key);
-        else selectedCaptures.delete(cb.dataset.key);
-    });
-});
-document.getElementById('photoGrid').addEventListener('change', e => {
-    const cb = e.target.closest('.cap-select');
-    if (!cb) return;
-    if (cb.checked) selectedCaptures.add(cb.dataset.key);
-    else selectedCaptures.delete(cb.dataset.key);
-});
-document.getElementById('bulkDeleteBtn').onclick = () => {
-    if (selectedCaptures.size === 0) { toast('⚠️ No captures selected.', 'var(--yellow)'); return; }
-    const count = selectedCaptures.size;
-    if (!confirm(`Move ${count} capture(s) to Recycle Bin?`)) return;
-    selectedCaptures.forEach(key => {
-        const p = logsCache[key];
-        if (p) addToBin({ ...p, _type: 'photo', _firebaseKey: key }, 'unified_bin');
-        remove(ref(db, 'photo_history/' + key));
-    });
-    selectedCaptures.clear();
-    const sa = document.getElementById('selectAllCaptures'); if (sa) sa.checked = false;
-    renderBin(); updateStats();
-    toast(`🗑️ ${count} capture(s) moved to bin.`, 'var(--yellow)');
-};
-
-// ══════════════════════════════════════════════════════════
-// ADMIN: RECYCLE BIN
-// ══════════════════════════════════════════════════════════
-function renderBin() {
-    const all    = getBin('unified_bin');
-    const search = (document.getElementById('binSearch')?.value || '').toLowerCase();
-    const sort   = document.getElementById('binSortFilter')?.value || 'newest';
-    const grid   = document.getElementById('binGrid');
-    document.getElementById('binCount').innerText = all.filter(x => x._ownerType !== 'user').length;
-
-    let items = all.filter(x => {
-        // Admin global bin: only show admin-owned items
-        if (x._ownerType === 'user') return false;
-        if (activeBinType === 'photos') return x._type === 'photo';
-        if (activeBinType === 'links')  return x._type === 'link';
-        return true;
-    });
-    if (search) items = items.filter(x => [x.linkName||'',x.name||'',x.ipAddress||'',(x.device||{}).os||''].join(' ').toLowerCase().includes(search));
-    if (sort === 'oldest') items.sort((a,b) => (a.deletedAt||0) - (b.deletedAt||0));
-    else items.sort((a,b) => (b.deletedAt||0) - (a.deletedAt||0));
-
-    grid.innerHTML = '';
-    if (items.length === 0) { grid.innerHTML = '<div class="empty"><span class="empty-icon">🗑️</span>Recycle bin is empty.</div>'; return; }
-
-    items.forEach(item => {
-        if (item._type === 'photo') {
-            const key  = '_bin_' + item._binId;
-            const card = buildCapCard(key, item, true);
-            card.dataset.binId = item._binId;
-            card.querySelectorAll('[data-action]').forEach(b => b.dataset.binId = item._binId);
-            grid.appendChild(card);
-        } else {
-            const card = document.createElement('div');
-            card.className = 'lbin-card';
-            card.innerHTML = `
-                <p><b>🔗 ${esc(item.name||'Unknown')}</b></p>
-                <p class="meta">${item.cam ? '📷 Camera' : ''} ${item.gps ? '📍 GPS' : ''}</p>
-                ${item.redirectUrl ? `<p class="meta">↩️ ${esc(item.redirectUrl)}</p>` : ''}
-                <p class="meta">👁 ${item.visits||0} visits</p>
-                <p class="meta" style="color:var(--red);">🗑 Deleted: ${new Date(item.deletedAt).toLocaleDateString()}</p>
-                <div style="display:flex;gap:6px;margin-top:10px;">
-                    <button class="btn btn-green btn-sm" data-bin-type="link" data-bin-action="restore" data-fid="${esc(item.firebaseId)}" style="flex:1;">♻️ Restore</button>
-                    <button class="btn btn-red   btn-sm" data-bin-type="link" data-bin-action="burn"    data-fid="${esc(item.firebaseId)}" style="flex:1;">🔥 Burn</button>
-                </div>`;
-            grid.appendChild(card);
-        }
-    });
-}
-
-document.getElementById('binGrid').addEventListener('click', e => {
-    const imgEl = e.target.closest('[data-lb-img]');
-    if (imgEl && !e.target.closest('button')) { openLightbox(imgEl.dataset.lbImg, imgEl.dataset.lbInfo); return; }
-
-    const btn = e.target.closest('[data-action],[data-bin-action]');
-    if (!btn) return;
-
-    if (btn.dataset.binType === 'link') {
-        const fid = btn.dataset.fid; const action = btn.dataset.binAction;
-        let bin = getBin('unified_bin');
-        const item = bin.find(x => x._type === 'link' && x.firebaseId === fid);
-        if (action === 'restore' && item) {
-            const toRestore = { ...item }; delete toRestore.deletedAt; delete toRestore.firebaseId; delete toRestore._type; delete toRestore._binId;
-            set(ref(db, 'managed_links/' + fid), toRestore).then(() => { saveBin(bin.filter(x => !(x._type==='link' && x.firebaseId===fid)), 'unified_bin'); renderBin(); updateStats(); toast('♻️ Link restored!', 'var(--green)'); });
-        } else if (action === 'burn') {
-            if (!confirm('Permanently delete this link?')) return;
-            saveBin(bin.filter(x => !(x._type==='link' && x.firebaseId===fid)), 'unified_bin'); renderBin(); updateStats(); toast('🔥 Link permanently deleted.', 'var(--red)');
-        }
-        return;
-    }
-
-    const action = btn.dataset.action;
-    const binId  = btn.dataset.binId || btn.closest('[data-bin-id]')?.dataset.binId;
-    if (!binId) return;
-    let bin  = getBin('unified_bin');
-    const item = bin.find(x => x._binId === binId);
-    if (!item || item._type !== 'photo') return;
-
-    if (action === 'download' && item.image) dlImg(item.image, `capture_${item.linkName||'x'}_${Date.now()}.jpg`);
-    else if (action === 'showInfo') openInfoModal(item);
-    else if (action === 'copygps' && item.latitude && item.latitude !== 'Denied') navigator.clipboard.writeText(item.latitude + ', ' + item.longitude).then(() => toast('📍 GPS copied!', 'var(--teal)'));
-    else if (action === 'restore') {
-        if (!confirm('Restore this capture to Firebase?')) return;
-        const toRestore = { ...item }; delete toRestore.deletedAt; delete toRestore._type; delete toRestore._firebaseKey; delete toRestore._binId;
-        push(ref(db, 'photo_history'), toRestore);
-        saveBin(bin.filter(x => x._binId !== binId), 'unified_bin');
-        renderBin(); updateStats(); toast('♻️ Capture restored!', 'var(--green)');
-    } else if (action === 'burn') {
-        if (!confirm('Permanently delete? Cannot be undone.')) return;
-        saveBin(bin.filter(x => x._binId !== binId), 'unified_bin'); renderBin(); updateStats(); toast('🔥 Permanently deleted.', 'var(--red)');
-    }
-});
-
-document.querySelectorAll('.bin-tab:not([data-ctx])').forEach(tab => {
-    tab.addEventListener('click', () => {
-        document.querySelectorAll('.bin-tab:not([data-ctx])').forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
-        activeBinType = tab.dataset.binType;
-        document.getElementById('emptyBinPhotoBtn').style.display = activeBinType === 'photos' ? '' : 'none';
-        document.getElementById('emptyBinLinkBtn').style.display  = activeBinType === 'links'  ? '' : 'none';
-        renderBin();
-    });
-});
-document.getElementById('binSearch').addEventListener('input', renderBin);
-document.getElementById('binSortFilter').addEventListener('change', renderBin);
-document.getElementById('emptyAllBinBtn').onclick = () => { if (!confirm('Empty all?')) return; saveBin([], 'unified_bin'); renderBin(); updateStats(); toast('🔥 Bin emptied.', 'var(--red)'); };
-document.getElementById('emptyBinPhotoBtn').onclick = () => { if (!confirm('Delete all photos from bin?')) return; saveBin(getBin('unified_bin').filter(x => x._type !== 'photo'), 'unified_bin'); renderBin(); updateStats(); toast('🔥 Photo captures cleared.', 'var(--red)'); };
-document.getElementById('emptyBinLinkBtn').onclick  = () => { if (!confirm('Delete all links from bin?')) return; saveBin(getBin('unified_bin').filter(x => x._type !== 'link'), 'unified_bin'); renderBin(); updateStats(); toast('🔥 Links cleared.', 'var(--red)'); };
-
-// ══════════════════════════════════════════════════════════
-// ADMIN: USER MANAGEMENT
-// ══════════════════════════════════════════════════════════
-function sanitizeUsername(name) {
-    return name.replace(/[^a-zA-Z0-9_\-]/g, '').toLowerCase();
-}
-
-function renderUsersList() {
-    const container = document.getElementById('userListContainer');
-    const count     = allUsersData ? Object.keys(allUsersData).length : 0;
-    document.getElementById('userCount').innerText = count;
-    document.getElementById('statUsers').innerText = count;
-
-    const navBadge = document.getElementById('navUserCount');
-    navBadge.innerText = count;
-    navBadge.style.display = count > 0 ? '' : 'none';
-
-    if (!allUsersData || count === 0) {
-        container.innerHTML = '<div class="empty"><span class="empty-icon">👥</span>No users created yet. Click Add User to get started.</div>';
-        return;
-    }
-
-    container.innerHTML = '';
-    Object.keys(allUsersData).forEach(username => {
-        const u = allUsersData[username];
-        const item = document.createElement('div');
-        item.className = 'user-list-item';
-
-        const perms = u.permissions || {};
-        const permLabels = [
-            perms.linkGenerator ? '🔗 Links' : null,
-            perms.liveCaptures  ? '📸 Captures' : null,
-            perms.recycleBin    ? '🗑️ Bin' : null,
-            perms.exportData    ? '📥 Export' : null,
-        ].filter(Boolean).join(', ') || 'No permissions';
-
-        item.innerHTML = `
-            <div class="user-avatar">${username[0].toUpperCase()}</div>
-            <div class="user-info">
-                <div class="user-name">${esc(username)}</div>
-                <div class="user-meta">
-                    ${u.active
-                        ? '<span style="color:var(--green);font-weight:700;">● Active</span>'
-                        : '<span style="color:var(--red);font-weight:700;">● Disabled</span>'}
-                    &nbsp;·&nbsp; Created: ${u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—'}
-                    ${u.lastActive ? `&nbsp;·&nbsp; Last active: ${new Date(u.lastActive).toLocaleDateString()}` : ''}
-                </div>
-                <div class="user-meta" style="margin-top:2px;">Permissions: ${permLabels}</div>
-            </div>
-            <div class="user-actions">
-                <button class="btn ${u.active ? 'btn-orange' : 'btn-green'} btn-sm" data-ua="toggle" data-uname="${esc(username)}" data-uactive="${u.active}">
-                    ${u.active ? '⏸ Disable' : '▶ Enable'}
-                </button>
-                <button class="btn btn-yellow btn-sm" data-ua="edit"     data-uname="${esc(username)}">✏️ Edit</button>
-                <button class="btn btn-teal   btn-sm" data-ua="changepw" data-uname="${esc(username)}">🔑 PW</button>
-                <button class="btn btn-primary btn-sm" data-ua="activity" data-uname="${esc(username)}">📊 Activity</button>
-                <button class="btn btn-red    btn-sm" data-ua="delete"   data-uname="${esc(username)}">🗑 Delete</button>
-            </div>`;
-        container.appendChild(item);
-    });
-}
-
-document.getElementById('usersSection').addEventListener('click', e => {
-    const btn = e.target.closest('[data-ua]');
-    if (!btn) return;
-    const { ua, uname } = btn.dataset;
-    const u = allUsersData?.[uname];
-
-    if (ua === 'toggle') {
-        const isActive = btn.dataset.uactive === 'true';
-        update(ref(db, 'users/' + uname), { active: !isActive });
-        toast(isActive ? `⏸ ${uname} disabled.` : `▶ ${uname} enabled.`, 'var(--yellow)');
-
-    } else if (ua === 'edit') {
-        document.getElementById('userModalTitle').innerText   = '✏️ Edit User';
-        document.getElementById('editingUsername').value      = uname;
-        document.getElementById('userModalName').value        = uname;
-        document.getElementById('userModalName').disabled     = true;
-        document.getElementById('userModalPass').value        = '';
-        document.getElementById('userModalPass2').value       = '';
-        const perms = u?.permissions || {};
-        document.getElementById('permLinks').checked    = !!perms.linkGenerator;
-        document.getElementById('permCaptures').checked = !!perms.liveCaptures;
-        document.getElementById('permBin').checked      = !!perms.recycleBin;
-        document.getElementById('permExport').checked   = !!perms.exportData;
-        document.getElementById('userModalMsg').innerText = '';
-        document.getElementById('userModal').classList.add('open');
-
-    } else if (ua === 'changepw') {
-        document.getElementById('changePwUsername').value = uname;
-        document.getElementById('changeUserNewPw').value  = '';
-        document.getElementById('changeUserNewPw2').value = '';
-        document.getElementById('userPwMsg').innerText    = '';
-        document.getElementById('changeUserPwModal').classList.add('open');
-
-    } else if (ua === 'activity') {
-        showUserActivity(uname);
-
-    } else if (ua === 'delete') {
-        if (!confirm(`Permanently delete user "${uname}"? This cannot be undone.`)) return;
-        remove(ref(db, 'users/' + uname));
-        // Clean up user's Firebase recycle bin (orphaned data)
-        remove(ref(db, 'recycle_bin/' + uname)).catch(() => {});
-        toast(`🗑️ User ${uname} deleted.`, 'var(--red)');
-    }
-});
-
-document.getElementById('addUserBtn').onclick = () => {
-    document.getElementById('userModalTitle').innerText   = '➕ Add User';
-    document.getElementById('editingUsername').value      = '';
-    document.getElementById('userModalName').value        = '';
-    document.getElementById('userModalName').disabled     = false;
-    document.getElementById('userModalPass').value        = '';
-    document.getElementById('userModalPass2').value       = '';
-    document.getElementById('permLinks').checked    = true;
-    document.getElementById('permCaptures').checked = true;
-    document.getElementById('permBin').checked      = true;
-    document.getElementById('permExport').checked   = true;
-    document.getElementById('userModalMsg').innerText = '';
-    document.getElementById('userModal').classList.add('open');
-};
-
-document.getElementById('saveUserBtn').onclick = async () => {
-    const editingName = document.getElementById('editingUsername').value;
-    const rawName     = document.getElementById('userModalName').value.trim();
-    const pass        = document.getElementById('userModalPass').value;
-    const pass2       = document.getElementById('userModalPass2').value;
-    const msg         = document.getElementById('userModalMsg');
-
-    const username = sanitizeUsername(rawName);
-    if (!username) { msg.style.color = 'var(--red)'; msg.innerText = '❌ Enter a valid username (letters, numbers, _ -)'; return; }
-    if (!editingName && pass.length < 4)    { msg.style.color = 'var(--red)'; msg.innerText = '❌ Password must be at least 4 characters.'; return; }
-    if (!editingName && pass !== pass2)      { msg.style.color = 'var(--red)'; msg.innerText = '❌ Passwords do not match.'; return; }
-    if (editingName && pass && pass !== pass2) { msg.style.color = 'var(--red)'; msg.innerText = '❌ Passwords do not match.'; return; }
-
-    const permissions = {
-        linkGenerator: document.getElementById('permLinks').checked,
-        liveCaptures:  document.getElementById('permCaptures').checked,
-        recycleBin:    document.getElementById('permBin').checked,
-        exportData:    document.getElementById('permExport').checked,
-    };
-
-    if (editingName) {
-        // Update existing user (permissions + optional password change)
-        const updateData = { permissions };
-        if (pass) updateData.password = pass;
-        const saveBtn2 = document.getElementById('saveUserBtn');
-        saveBtn2.disabled = true; saveBtn2.innerText = 'Saving...';
-        msg.style.color = 'var(--muted)'; msg.innerText = 'Updating user...';
-        try {
-            await update(ref(db, 'users/' + editingName), updateData);
-            document.getElementById('userModal').classList.remove('open');
-            toast('✅ User "' + editingName + '" updated successfully.', 'var(--green)');
-        } catch(e) {
-            msg.style.color = 'var(--red)';
-            msg.innerText = '❌ Update failed: ' + (e.message || 'Unknown error');
-        } finally {
-            saveBtn2.disabled = false; saveBtn2.innerText = '💾 Save';
-        }
-    } else {
-        // Try duplicate check — if Firebase rules block the read, skip it and let the write decide
-        try {
-            const snap = await get(ref(db, 'users/' + username));
-            if (snap.exists()) {
-                msg.style.color = 'var(--red)';
-                msg.innerText = '❌ Username "' + username + '" is already taken.';
-                return;
-            }
-        } catch(e) {
-            // Permission denied or offline — skip duplicate check, the write will surface the real error
-            console.warn('Duplicate check skipped:', e.message);
-        }
-
-        // Lock button while writing
-        const saveBtn = document.getElementById('saveUserBtn');
-        saveBtn.disabled = true;
-        saveBtn.innerText = 'Saving...';
-        msg.style.color = 'var(--muted)';
-        msg.innerText = 'Creating user...';
-
-        try {
-            await set(ref(db, 'users/' + username), {
-                password: pass,
-                active: true,
-                createdAt: Date.now(),
-                permissions,
-                createdBy: 'admin'
-            });
-            // Success
-            document.getElementById('userModal').classList.remove('open');
-            // Clear the form for next use
-            ['userModalName','userModalPass','userModalPass2'].forEach(id => {
-                const el = document.getElementById(id); if (el) el.value = '';
-            });
-            toast('✅ User "' + username + '" created successfully!', 'var(--green)');
-            document.getElementById('loginModeSwitch').style.display = 'flex';
-        } catch(e) {
-            // Surface the real Firebase error message
-            const reason = e.code === 'PERMISSION_DENIED' || (e.message && e.message.includes('permission'))
-                ? '❌ Permission denied. Open Firebase Console → Realtime Database → Rules and set: { "rules": { ".read": true, ".write": true } }'
-                : '❌ Save failed: ' + (e.message || 'Unknown error');
-            msg.style.color = 'var(--red)';
-            msg.innerText = reason;
-        } finally {
-            saveBtn.disabled = false;
-            saveBtn.innerText = '💾 Save';
-        }
-    }
-};
-
-document.getElementById('closeUserModal').onclick  = () => document.getElementById('userModal').classList.remove('open');
-document.getElementById('closeUserPwModal').onclick = () => document.getElementById('changeUserPwModal').classList.remove('open');
-document.getElementById('saveUserPwBtn').onclick    = () => {
-    const uname = document.getElementById('changePwUsername').value;
-    const nw    = document.getElementById('changeUserNewPw').value;
-    const nw2   = document.getElementById('changeUserNewPw2').value;
-    const msg   = document.getElementById('userPwMsg');
-    if (nw.length < 4)   { msg.style.color='var(--red)'; msg.innerText='❌ Min 4 characters.'; return; }
-    if (nw !== nw2)      { msg.style.color='var(--red)'; msg.innerText='❌ Passwords do not match.'; return; }
-    update(ref(db, 'users/' + uname), { password: nw }).then(() => {
-        msg.style.color='var(--green)'; msg.innerText='✅ Password changed!';
-        setTimeout(() => document.getElementById('changeUserPwModal').classList.remove('open'), 1200);
-    });
-};
-
-async function showUserActivity(username) {
-    document.getElementById('activityUsername').innerText = username;
-    document.getElementById('userActivityModal').classList.add('open');
-    const content = document.getElementById('activityContent');
-    content.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:30px;text-align:center;">⏳ Loading activity...</div>';
-
-    const u = allUsersData?.[username] || {};
-
-    // Live Firebase data (already loaded via onValue listeners)
-    const userLinks    = allLinksData
-        ? Object.entries(allLinksData).filter(([,l]) => l._ownerId === username && l._ownerType === 'user')
-        : [];
-    const userCaptures = allLogsData
-        ? Object.entries(allLogsData).filter(([,p]) => p._ownerId === username && p._ownerType === 'user')
-        : [];
-
-    // Bin data: read from Firebase (recycle_bin/{username}) so admin sees user's deleted items
-    // regardless of which browser the user was on when they deleted them.
-    let allBinItems = [];
-    try {
-        const binSnap = await get(ref(db, 'recycle_bin/' + username));
-        if (binSnap.exists()) allBinItems = Object.values(binSnap.val() || {});
-    } catch(e) { /* read failure — show empty bin sections */ }
-
-    // Filter and deduplicate by _binId
-    const seen1 = new Set(), seen2 = new Set();
-    const dedupedDeletedLinks = allBinItems
-        .filter(x => x._type === 'link')
-        .filter(x => { if(seen1.has(x._binId)) return false; seen1.add(x._binId); return true; });
-    const dedupedDeletedCaps = allBinItems
-        .filter(x => x._type === 'photo')
-        .filter(x => { if(seen2.has(x._binId)) return false; seen2.add(x._binId); return true; });
-
-    const totalVisits = userLinks.reduce((s,[,l]) => s+(l.visits||0), 0);
-    const withPhoto   = userCaptures.filter(([,p]) => p.image).length;
-    const withGPS     = userCaptures.filter(([,p]) => p.latitude && p.latitude !== 'Denied').length;
-
-    const sortedCaptures = [...userCaptures].sort((a,b) => (b[1].timestamp||0) - (a[1].timestamp||0));
-    const sortedLinks    = [...userLinks].sort((a,b)    => (b[1].createdAt||0)  - (a[1].createdAt||0));
-    const sortedDelCaps  = [...dedupedDeletedCaps].sort((a,b) => (b.deletedAt||0) - (a.deletedAt||0));
-    const sortedDelLinks = [...dedupedDeletedLinks].sort((a,b) => (b.deletedAt||0) - (a.deletedAt||0));
-
-    const ex = s => String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-
-    // ── stat pill
-    const pill = (color, num, lbl) =>
-        `<div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 14px;text-align:center;flex:1;min-width:80px;">
-            <div style="font-size:20px;font-weight:800;color:${color};">${num}</div>
-            <div style="font-size:10px;color:var(--muted);margin-top:2px;">${lbl}</div>
-        </div>`;
-
-    // ── section wrapper
-    const section = (title, body) =>
-        `<div style="background:var(--card2);border:1px solid var(--border);border-radius:10px;margin-bottom:14px;overflow:hidden;">
-            <div style="padding:11px 16px;border-bottom:1px solid var(--border);font-size:13px;font-weight:700;color:var(--text);background:var(--card3);">${title}</div>
-            <div style="padding:12px 16px;">${body}</div>
-        </div>`;
-
-    const emptyState = msg =>
-        `<div style="text-align:center;padding:16px;color:var(--muted);font-size:12px;">${msg}</div>`;
-
-    // ── full capture card (mirrors Live Captures layout)
-    const capCard = ([key, p]) => {
-        const d = p.device || {};
-        const hasGPS = p.latitude && p.latitude !== 'Denied' && p.longitude && p.longitude !== 'Denied';
-        const mapUrl = hasGPS ? `https://www.google.com/maps?q=${p.latitude},${p.longitude}` : '';
-        const safeImg = ex(p.image || '');
-        const imgBlock = p.image
-            ? `<div style="position:relative;cursor:zoom-in;" onclick="activityLightbox('${safeImg}','${ex(p.linkName||'')} — ${ex(p.date||'')} ${ex(p.time||'')}')">
-                   <img src="${p.image}" style="width:100%;height:140px;object-fit:cover;object-position:center top;display:block;" alt="Capture">
-                   <div style="position:absolute;inset:0;background:rgba(0,0,0,0);display:flex;align-items:center;justify-content:center;opacity:0;transition:all .2s;font-size:22px;" onmouseover="this.style.opacity=1;this.style.background='rgba(0,0,0,.35)'" onmouseout="this.style.opacity=0;this.style.background='rgba(0,0,0,0)'">🔍</div>
-                   <span style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,.6);color:#fff;border-radius:5px;padding:1px 6px;font-size:10px;font-weight:700;">📷</span>
-               </div>`
-            : `<div style="height:80px;background:var(--card3);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px;flex-direction:column;gap:4px;"><span>📷</span><span>No Image</span></div>`;
-
-        const deviceRows = [
-            ['🌐 IP',        p.ipAddress||'N/A'],
-            ['💻 OS',        d.os||'N/A'],
-            ['🌍 Browser',   d.browser||'N/A'],
-            ['📱 Platform',  d.platform||'N/A'],
-            ['🖥 Screen',    d.screenWidth ? d.screenWidth+'×'+d.screenHeight : 'N/A'],
-            ['🔋 Battery',   d.battery ? d.battery+(d.charging==='Yes'?' ⚡':'') : 'N/A'],
-            ['📶 Network',   d.networkType||'N/A'],
-            ['🗺 Timezone',  d.timezone||'N/A'],
-            ['🗣 Language',  d.language||'N/A'],
-            ['📅 Date',      p.date||'N/A'],
-            ['🕐 Time',      p.time||'N/A'],
-            ['📍 GPS',       hasGPS ? p.latitude+', '+p.longitude : 'Denied'],
-        ].map(([k,v]) =>
-            `<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border);font-size:10.5px;">
-                <span style="color:var(--muted);">${k}</span>
-                <span style="color:var(--text);font-weight:500;text-align:right;max-width:55%;word-break:break-all;">${ex(String(v))}</span>
-             </div>`
-        ).join('');
-
-        const actBtns = [
-            p.image ? `<button onclick="activityDownload('${safeImg}','capture_${ex(p.linkName||'x')}_${p.timestamp||Date.now()}.jpg')" style="flex:1;padding:5px 8px;background:var(--teal);color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">⬇ Save</button>` : '',
-            hasGPS  ? `<a href="${mapUrl}" target="_blank" style="flex:1;padding:5px 8px;background:var(--green);color:#fff;border-radius:6px;font-size:11px;font-weight:600;text-decoration:none;text-align:center;">🗺 Map</a>` : '',
-        ].filter(Boolean).join('');
-
-        return `
-        <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;">
-            ${imgBlock}
-            <div style="padding:10px 12px;flex:1;">
-                <div style="font-weight:700;font-size:12.5px;margin-bottom:6px;">${ex(p.linkName||'Unknown')}</div>
-                ${deviceRows}
-            </div>
-            ${actBtns ? `<div style="padding:8px 12px 10px;border-top:1px solid var(--border);display:flex;gap:6px;">${actBtns}</div>` : ''}
-        </div>`;
-    };
-
-    // ── deleted capture card (greyed)
-    const delCapCard = x => {
-        const d = x.device || {};
-        const hasGPS = x.latitude && x.latitude !== 'Denied' && x.longitude && x.longitude !== 'Denied';
-        const safeImg = ex(x.image || '');
-        const imgBlock = x.image
-            ? `<div style="cursor:zoom-in;" onclick="activityLightbox('${safeImg}','${ex(x.linkName||'')}')">
-                   <img src="${x.image}" style="width:100%;height:110px;object-fit:cover;display:block;filter:grayscale(.4) brightness(.8);" alt="Capture">
-               </div>`
-            : `<div style="height:60px;background:var(--card3);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px;opacity:.6;flex-direction:column;gap:2px;"><span>📷</span><span>No Image</span></div>`;
-        return `
-        <div style="background:var(--card);border:1px solid #2d1a1a;border-radius:10px;overflow:hidden;opacity:.88;">
-            ${imgBlock}
-            <div style="padding:8px 10px;font-size:11px;">
-                <div style="font-weight:700;color:var(--text);">${ex(x.linkName||'Unknown')}</div>
-                <div style="color:var(--muted);margin-top:2px;">🌐 ${ex(x.ipAddress||'N/A')} · ${ex(d.os||'?')} · ${ex(d.browser||'?')}</div>
-                <div style="color:var(--muted);">📍 ${hasGPS ? x.latitude+', '+x.longitude : 'Denied'}</div>
-                <div style="color:var(--muted);">🕐 ${ex(x.date||'')} ${ex(x.time||'')}</div>
-                <div style="color:var(--red);margin-top:4px;font-weight:600;">🗑 Deleted: ${new Date(x.deletedAt||0).toLocaleDateString()}</div>
-                ${x.image ? `<button onclick="activityDownload('${safeImg}','del_capture_${x.timestamp||Date.now()}.jpg')" style="margin-top:6px;width:100%;padding:4px;background:var(--teal);color:#fff;border:none;border-radius:5px;font-size:10.5px;font-weight:600;cursor:pointer;">⬇ Save</button>` : ''}
-            </div>
-        </div>`;
-    };
-
-    // ── link row for table
-    const linkRow = ([id, l]) => {
-        const verHref = window.location.origin + window.location.pathname.replace('admin.html','index.html') + '?linkId=' + id;
-        const status = l.active
-            ? `<span style="color:var(--green);font-weight:700;font-size:11px;">● Active</span>`
-            : `<span style="color:var(--red);font-weight:700;font-size:11px;">● Off</span>`;
-        const perms = [l.cam?'📷 Cam':'', l.gps?'📍 GPS':''].filter(Boolean).join(' · ') || '—';
-        const redir = l.redirectUrl
-            ? `<a href="${ex(l.redirectUrl)}" target="_blank" style="color:var(--teal);font-size:10.5px;">${ex(l.redirectUrl.slice(0,30))}…</a>`
-            : '<span style="color:#475569;font-size:10.5px;">—</span>';
-        return `
-        <tr>
-            <td style="padding:8px 10px;font-weight:600;font-size:12px;color:var(--text);"><a href="${verHref}" target="_blank" rel="noopener" style="color:var(--primary);font-weight:700;text-decoration:none;">${ex(l.name||'Unnamed')}</a></td>
-            <td style="padding:8px 10px;font-size:11px;color:var(--muted);">${perms}</td>
-            <td style="padding:8px 10px;">${redir}</td>
-            <td style="padding:8px 10px;">${status}</td>
-            <td style="padding:8px 10px;color:var(--yellow);font-weight:700;font-size:12px;">👁 ${l.visits||0}</td>
-            <td style="padding:8px 10px;font-size:10.5px;color:var(--muted);">${l.createdAt ? new Date(l.createdAt).toLocaleDateString() : '—'}</td>
-        </tr>`;
-    };
-
-    // ── deleted link row
-    const delLinkRow = x => {
-        const perms = [x.cam?'📷 Cam':'', x.gps?'📍 GPS':''].filter(Boolean).join(' · ') || '—';
-        return `
-        <tr style="opacity:.85;">
-            <td style="padding:8px 10px;font-weight:600;font-size:12px;color:var(--text);">${ex(x.name||'Unnamed')}</td>
-            <td style="padding:8px 10px;font-size:11px;color:var(--muted);">${perms}</td>
-            <td style="padding:8px 10px;color:var(--yellow);font-size:12px;">👁 ${x.visits||0}</td>
-            <td style="padding:8px 10px;color:var(--red);font-size:11px;font-weight:600;">🗑 ${new Date(x.deletedAt||0).toLocaleDateString()}</td>
-        </tr>`;
-    };
-
-    // ── capture grid helper
-    const capGrid = items =>
-        `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;">${items}</div>`;
-
-    // ── links table helper
-    const linksTable = (rows, headers) => `
-        <div style="overflow-x:auto;">
-            <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:500px;">
-                <thead>
-                    <tr style="border-bottom:1px solid var(--border);">
-                        ${headers.map(h=>`<th style="padding:7px 10px;text-align:left;color:var(--muted);font-weight:600;white-space:nowrap;">${h}</th>`).join('')}
-                    </tr>
-                </thead>
-                <tbody>${rows}</tbody>
-            </table>
-        </div>`;
-
-    // ══ BUILD HTML ══
-    content.innerHTML = `
-        <!-- Lightbox overlay for activity images -->
-        <div id="activityLightboxOverlay" onclick="document.getElementById('activityLightboxOverlay').style.display='none'" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:10000;align-items:center;justify-content:center;flex-direction:column;gap:12px;">
-            <button onclick="document.getElementById('activityLightboxOverlay').style.display='none'" style="position:absolute;top:16px;right:20px;background:none;border:none;color:#fff;font-size:28px;cursor:pointer;">✕</button>
-            <img id="activityLightboxImg" src="" style="max-width:92vw;max-height:80vh;border-radius:8px;" alt="">
-            <div id="activityLightboxInfo" style="color:#ccc;font-size:13px;"></div>
-        </div>
-
-        <!-- Account Info -->
-        <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--card2);border:1px solid var(--border);border-radius:10px;margin-bottom:14px;flex-wrap:wrap;">
-            <div style="width:42px;height:42px;border-radius:10px;background:linear-gradient(135deg,var(--purple),var(--primary));display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;flex-shrink:0;">${ex(username[0].toUpperCase())}</div>
-            <div style="flex:1;min-width:0;">
-                <div style="font-weight:700;font-size:15px;">${ex(username)}</div>
-                <div style="font-size:11px;color:var(--muted);">
-                    Created: ${u.createdAt ? new Date(u.createdAt).toLocaleString() : '—'}
-                    &nbsp;·&nbsp; Last active: ${u.lastActive ? new Date(u.lastActive).toLocaleString() : 'Never'}
-                </div>
-            </div>
-            ${u.active
-                ? '<span style="background:rgba(16,185,129,.15);color:var(--green);border-radius:20px;padding:4px 14px;font-weight:700;font-size:11px;white-space:nowrap;">● Active</span>'
-                : '<span style="background:rgba(239,68,68,.15);color:var(--red);border-radius:20px;padding:4px 14px;font-weight:700;font-size:11px;white-space:nowrap;">● Disabled</span>'
-            }
-        </div>
-
-        <!-- Stats -->
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
-            ${pill('var(--purple)', sortedLinks.length,    'Links')}
-            ${pill('var(--primary)',sortedCaptures.length, 'Captures')}
-            ${pill('var(--teal)',   totalVisits,            'Visits')}
-            ${pill('var(--green)',  withPhoto,              'With Photo')}
-            ${pill('var(--yellow)', withGPS,                'With GPS')}
-            ${pill('var(--red)',    sortedDelLinks.length + sortedDelCaps.length, 'In Bin')}
-        </div>
-
-        <!-- Generated Links -->
-        ${section(
-            '🔗 Generated Links (' + sortedLinks.length + ')',
-            sortedLinks.length === 0
-                ? emptyState('No links created yet.')
-                : linksTable(
-                    sortedLinks.map(linkRow).join(''),
-                    ['Link Name', 'Permissions', 'Redirect', 'Status', 'Visits', 'Created']
-                  )
-        )}
-
-        <!-- Live Captures -->
-        ${section(
-            '📸 Live Captures (' + sortedCaptures.length + ')',
-            sortedCaptures.length === 0
-                ? emptyState('No captures yet.')
-                : capGrid(sortedCaptures.map(capCard).join(''))
-        )}
-
-        <!-- Deleted Links (Bin) -->
-        ${section(
-            '🗑️ Deleted Links (' + sortedDelLinks.length + ')',
-            sortedDelLinks.length === 0
-                ? emptyState('No deleted links.')
-                : linksTable(
-                    sortedDelLinks.map(delLinkRow).join(''),
-                    ['Link Name', 'Permissions', 'Visits', 'Deleted On']
-                  )
-        )}
-
-        <!-- Deleted Captures (Bin) -->
-        ${section(
-            '🗑️ Deleted Captures (' + sortedDelCaps.length + ')',
-            sortedDelCaps.length === 0
-                ? emptyState('No deleted captures.')
-                : capGrid(sortedDelCaps.map(delCapCard).join(''))
-        )}
-    `;
-}
-
-// Activity lightbox helper (global, called from inline onclick)
-window.activityLightbox = function(src, info) {
-    const ov = document.getElementById('activityLightboxOverlay');
-    if (!ov) return;
-    ov.style.display = 'flex';
-    document.getElementById('activityLightboxImg').src = src;
-    document.getElementById('activityLightboxInfo').innerText = info || '';
-};
-
-// Activity download helper (global, called from inline onclick)
-window.activityDownload = function(src, filename) {
-    if (!src) return;
-    const a = Object.assign(document.createElement('a'), { href: src, download: filename });
-    a.click();
-};
-
-document.getElementById('closeActivityModal').onclick = () => document.getElementById('userActivityModal').classList.remove('open');
-
-// ══════════════════════════════════════════════════════════
-// USER PANEL LOGIC
-// ══════════════════════════════════════════════════════════
-let uAllLinksData = null;
-let uAllLogsData  = null;
-let uLinksCache   = {};
-
-function getUserBinKey() {
-    return currentSession?.type === 'user' ? 'user_bin_' + currentSession.username : 'user_bin_unknown';
-}
-
-// Mirrors a user bin item to Firebase so the Admin Activity panel can read it.
-// Called immediately after addToBin() for user-owned deletes.
-// Firebase path: recycle_bin/{username}/{_binId}
-function syncUserBinToFirebase(item) {
-    const username = currentSession?.username;
-    if (!username) return;
-    const binItem = { ...item, _binId: item._binId || makeBinId(), deletedAt: item.deletedAt || Date.now() };
-    set(ref(db, 'recycle_bin/' + username + '/' + binItem._binId), binItem).catch(() => {});
-}
-
-// Removes a single item from the Firebase user bin (called on restore or permanent burn).
-function removeUserBinFromFirebase(binId) {
-    const username = currentSession?.username;
-    if (!username || !binId) return;
-    remove(ref(db, 'recycle_bin/' + username + '/' + binId)).catch(() => {});
-}
-
-function updateUserStats() {
-    const username = currentSession?.username;
-    const myLinks  = uAllLinksData ? Object.values(uAllLinksData).filter(l => l._ownerId === username) : [];
-    const myLogs   = uAllLogsData  ? Object.values(uAllLogsData).filter(p => p._ownerId === username) : [];
-
-    const todayStart = new Date(); todayStart.setHours(0,0,0,0);
-    const todayLogs  = myLogs.filter(p => (p.timestamp||0) >= todayStart.getTime());
-
-    document.getElementById('uStatTotal').innerText    = myLogs.length;
-    document.getElementById('uStatToday').innerText    = todayLogs.length;
-    document.getElementById('uStatLinks').innerText    = myLinks.length;
-    document.getElementById('uStatVisits').innerText   = myLinks.reduce((s,l) => s+(l.visits||0), 0);
-    document.getElementById('uStatWithPhoto').innerText= myLogs.filter(p => p.image).length;
-
-    const binCount = getBin(getUserBinKey()).length;
-    document.getElementById('uStatBin').innerText   = binCount;
-    document.getElementById('uBinCount').innerText  = binCount;
-    const uNavBin = document.getElementById('uNavBinCount');
-    uNavBin.innerText = binCount;
-    uNavBin.style.display = binCount > 0 ? '' : 'none';
-
-    document.getElementById('uNavLinkCount').innerText    = myLinks.length;
-    document.getElementById('uNavCaptureCount').innerText = myLogs.length;
-}
-
-function renderUserLinksTable() {
-    const tbody    = document.getElementById('uLinkTableBody');
-    const username = currentSession?.username;
-    const search   = (document.getElementById('uSearchLinks')?.value || '').toLowerCase();
-    tbody.innerHTML = '';
-    let count = 0;
-
-    if (!uAllLinksData) {
-        tbody.innerHTML = '<tr><td colspan="7"><div class="empty"><span class="empty-icon">🔗</span>No links yet. Create one above.</div></td></tr>';
-        document.getElementById('uLinkCount').innerText = '0';
-        return;
-    }
-
-    Object.keys(uAllLinksData).forEach(id => {
-        const l = uAllLinksData[id];
-        if (l._ownerId !== username || l._ownerType !== 'user') return;
-        if (search && !(l.name || '').toLowerCase().includes(search)) return;
-        count++;
-        const row = document.createElement('tr');
-        const verHref   = window.location.origin + window.location.pathname.replace('admin.html','index.html') + '?linkId=' + id;
-        // Target Name — always shows actual target name
-        const nameCell    = `<td><a href="${verHref}" target="_blank" rel="noopener" title="Verification link: ${verHref}" style="color:var(--primary);font-weight:700;text-decoration:none;">${esc(l.name || 'Unnamed')}</a></td>`;
-        // Permissions — CAM / GPS / '—'
-        const perms = [l.cam ? '📷 CAM' : '', l.gps ? '📍 GPS' : ''].filter(Boolean);
-        const permCell    = `<td style="font-size:11px;">${perms.length ? perms.map(p => `<span class="tag">${p}</span>`).join(' ') : '<span style="color:#475569;">—</span>'}</td>`;
-        const redir       = l.redirectUrl ? `<a href="${esc(l.redirectUrl)}" target="_blank" style="color:var(--teal);font-size:11px;">${esc(l.redirectUrl.slice(0,28))}…</a>` : '<span style="color:#475569;">—</span>';
-        row.innerHTML = nameCell + permCell +
-            `<td>${redir}</td>
-            <td class="${l.active ? 'status-active' : 'status-inactive'}">${l.active ? '● ACTIVE' : '● OFF'}</td>
-            <td><b style="color:var(--yellow);">${l.visits || 0}</b></td>
-            <td style="font-size:11px;color:var(--muted);">${l.createdAt ? new Date(l.createdAt).toLocaleDateString() : '—'}</td>
-            <td style="white-space:nowrap;">
-                <button class="btn btn-gray btn-sm"   data-uaction="copy"   data-id="${id}">📋 Copy</button>
-                <button class="btn btn-teal btn-sm"   data-uaction="qr"     data-id="${id}">📱 QR</button>
-                <button class="btn btn-yellow btn-sm" data-uaction="rename" data-id="${id}">✏️</button>
-                <button class="btn ${l.active ? 'btn-orange' : 'btn-green'} btn-sm" data-uaction="toggle" data-id="${id}" data-active="${l.active}">${l.active ? '⏸' : '▶'}</button>
-                <button class="btn btn-red btn-sm"    data-uaction="delete" data-id="${id}">🗑</button>
-            </td>`;
-        tbody.appendChild(row);
-    });
-
-    document.getElementById('uLinkCount').innerText = count;
-    if (count === 0 && !search) tbody.innerHTML = '<tr><td colspan="7"><div class="empty"><span class="empty-icon">🔗</span>No links yet. Create one above.</div></td></tr>';
-    if (count === 0 && search)  tbody.innerHTML = '<tr><td colspan="7"><div class="empty">No links match search.</div></td></tr>';
-}
-
-document.getElementById('uSearchLinks')?.addEventListener('input', renderUserLinksTable);
-document.getElementById('uLinkTableBody').addEventListener('click', e => {
-    const btn = e.target.closest('button[data-uaction]');
-    if (!btn) return;
-    const { uaction, id } = btn.dataset;
-
-    if (uaction === 'copy') {
-        const base     = window.location.origin + window.location.pathname.replace('admin.html','index.html');
-        const useShort = document.getElementById('uUseShortLink')?.checked;
-        const url      = useShort
-            ? window.location.origin + window.location.pathname.replace('admin.html','verify.html') + '?linkId=' + id
-            : base + '?linkId=' + id;
-        copyWithFeedback(url, btn, useShort ? ' (short)' : '');
-    } else if (uaction === 'qr') {
-        const base     = window.location.origin + window.location.pathname.replace('admin.html','index.html');
-        const useShort = document.getElementById('uUseShortLink')?.checked;
-        const url      = useShort
-            ? window.location.origin + window.location.pathname.replace('admin.html','verify.html') + '?linkId=' + id
-            : base + '?linkId=' + id;
-        showQR(url);
-    } else if (uaction === 'toggle') {
-        update(ref(db, 'managed_links/' + id), { active: btn.dataset.active !== 'true' });
-    } else if (uaction === 'rename') {
-        const l = uAllLinksData?.[id];
-        if (!l) return;
-        currentEditId = id;
-        document.getElementById('editLinkName').value   = l.name || '';
-        document.getElementById('editRedirect').value   = l.redirectUrl || '';
-        document.getElementById('editCam').checked      = !!l.cam;
-        document.getElementById('editGPS').checked      = !!l.gps;
-        document.getElementById('editLinkModal').classList.add('open');
-    } else if (uaction === 'delete') {
-        if (!confirm('Move this link to Recycle Bin?')) return;
-        const l = uAllLinksData?.[id];
-        if (l) {
-            const binItem = { ...l, _type: 'link', firebaseId: id, _binId: makeBinId(), deletedAt: Date.now() };
-            const k = getUserBinKey();
-            const bin = getBin(k); bin.unshift(binItem); saveBin(bin, k);
-            syncUserBinToFirebase(binItem);
-        }
-        remove(ref(db, 'managed_links/' + id));
-        updateUserStats(); renderUserBin();
-        toast('🗑️ Link moved to Recycle Bin', 'var(--yellow)');
-    }
-});
-
-document.getElementById('uCreateBtn').onclick = () => {
-    if (!currentSession?.username) return;
-    const name = document.getElementById('uLinkName').value.trim() || 'Unnamed';
-    const id   = 'LNK-' + Math.random().toString(36).substr(2, 9).toUpperCase();
-    const ru   = document.getElementById('uLinkRedirect').value.trim();
-    set(ref(db, 'managed_links/' + id), {
-        id, name, active: true, visits: 0,
-        cam: document.getElementById('uCheckCam').checked,
-        gps: document.getElementById('uCheckGPS').checked,
-        redirectUrl: ru || '',
-        createdAt:   Date.now(),
-        _ownerType:  'user',
-        _ownerId:    currentSession.username
-    });
-    document.getElementById('uLinkName').value     = '';
-    document.getElementById('uLinkRedirect').value = '';
-    toast('✅ Link created: ' + name, 'var(--green)');
-};
-
-function passUserFilter(p) {
-    const search = document.getElementById('uSearchLogs')?.value?.toLowerCase() || '';
-    const time   = document.getElementById('uTimeFilter')?.value || 'all';
-    const photo  = document.getElementById('uPhotoFilter')?.value || 'all';
-    const gps    = document.getElementById('uGpsFilter')?.value || 'all';
-    const d      = p.device || {};
-    const now    = Date.now();
-    if (search) { const hay = [p.linkName, p.ipAddress, d.os, d.browser, p.date].join(' ').toLowerCase(); if (!hay.includes(search)) return false; }
-    if (time === 'today' && (now - (p.timestamp||0)) > 86400000)   return false;
-    if (time === 'week'  && (now - (p.timestamp||0)) > 604800000)  return false;
-    if (time === 'month' && (now - (p.timestamp||0)) > 2592000000) return false;
-    if (photo === 'photo'   && !p.image)  return false;
-    if (photo === 'nophoto' &&  p.image)  return false;
-    const hasGPS = p.latitude && p.latitude !== 'Denied';
-    if (gps === 'gps'   && !hasGPS) return false;
-    if (gps === 'nogps' &&  hasGPS) return false;
-    return true;
-}
-
-function renderUserLogs() {
-    const grid = document.getElementById('uPhotoGrid');
-    const username = currentSession?.username;
-    grid.innerHTML = '';
-    uLogsCache = {};
-    uSelectedCaptures.clear();
-
-    if (!uAllLogsData) {
-        grid.innerHTML = '<div class="empty"><span class="empty-icon">📭</span>No captures yet.</div>';
-        document.getElementById('uLogCount').innerText = '0';
-        return;
-    }
-
-    const sort = document.getElementById('uSortFilter')?.value || 'newest';
-    let keys = Object.keys(uAllLogsData).filter(k => {
-        const p = uAllLogsData[k];
-        return p?.linkName && p._ownerId === username && p._ownerType === 'user';
-    });
-    keys = keys.filter(k => passUserFilter(uAllLogsData[k]));
-    if (sort === 'oldest') keys.sort((a,b) => (uAllLogsData[a].timestamp||0) - (uAllLogsData[b].timestamp||0));
-    else keys.sort((a,b) => (uAllLogsData[b].timestamp||0) - (uAllLogsData[a].timestamp||0));
-
-    keys.forEach(k => {
-        uLogsCache[k] = uAllLogsData[k];
-        grid.appendChild(buildCapCard(k, uAllLogsData[k], false, true));
-    });
-    document.getElementById('uLogCount').innerText = keys.length;
-    if (keys.length === 0) grid.innerHTML = '<div class="empty"><span class="empty-icon">🔍</span>No captures yet.</div>';
-}
-
-function renderUserRecent() {
-    const grid = document.getElementById('uRecentGrid');
-    const username = currentSession?.username;
-    if (!grid) return;
-    grid.innerHTML = '';
-    if (!uAllLogsData) { grid.innerHTML = '<div class="empty">No captures yet.</div>'; return; }
-    const keys = Object.keys(uAllLogsData)
-        .filter(k => { const p = uAllLogsData[k]; return p?.linkName && p._ownerId === username && p._ownerType === 'user'; })
-        .sort((a,b) => (uAllLogsData[b].timestamp||0) - (uAllLogsData[a].timestamp||0))
-        .slice(0, 4);
-    if (keys.length === 0) { grid.innerHTML = '<div class="empty"><span class="empty-icon">📭</span>No captures yet.</div>'; return; }
-    keys.forEach(k => { uLogsCache[k] = uAllLogsData[k]; grid.appendChild(buildCapCard(k, uAllLogsData[k], false, true)); });
-}
-
-['uSearchLogs','uTimeFilter','uPhotoFilter','uSortFilter','uGpsFilter'].forEach(id => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    const fn = debounce(renderUserLogs, 280);
-    el.addEventListener('change', renderUserLogs);
-    el.addEventListener('input',  fn);
-});
-
-document.getElementById('uPhotoGrid').addEventListener('click', e => {
-    const imgEl = e.target.closest('[data-lb-img]');
-    if (imgEl && !e.target.closest('button')) { openLightbox(imgEl.dataset.lbImg, imgEl.dataset.lbInfo); return; }
-    const btn = e.target.closest('button[data-action]');
-    if (!btn) return;
-    const { action, key } = btn.dataset;
-    const p = uLogsCache[key];
-    if (action === 'download' && p?.image) dlImg(p.image, `capture_${p.linkName||'x'}_${Date.now()}.jpg`);
-    else if (action === 'showInfo') openInfoModal(p);
-    else if (action === 'copygps' && p) navigator.clipboard.writeText(p.latitude + ', ' + p.longitude).then(() => toast('📍 GPS copied!', 'var(--teal)'));
-    else if (action === 'tobin' && p) {
-        if (!confirm('Move to Recycle Bin?')) return;
-        const binItem = { ...p, _type: 'photo', _firebaseKey: key, _binId: makeBinId(), deletedAt: Date.now() };
-        const k = getUserBinKey(); const bin = getBin(k); bin.unshift(binItem); saveBin(bin, k);
-        syncUserBinToFirebase(binItem);
-        remove(ref(db, 'photo_history/' + key));
-        renderUserBin(); updateUserStats();
-        toast('🗑️ Moved to Recycle Bin', 'var(--yellow)');
-    }
-});
-
-document.getElementById('uRecentGrid').addEventListener('click', e => {
-    const imgEl = e.target.closest('[data-lb-img]');
-    if (imgEl && !e.target.closest('button')) { openLightbox(imgEl.dataset.lbImg, imgEl.dataset.lbInfo); return; }
-    const btn = e.target.closest('button[data-action]');
-    if (!btn) return;
-    const { action, key } = btn.dataset;
-    const p = uLogsCache[key] || uAllLogsData?.[key];
-    if (action === 'showInfo') openInfoModal(p);
-    else if (action === 'download' && p?.image) dlImg(p.image, `capture_${p.linkName||'x'}_${Date.now()}.jpg`);
-    else if (action === 'tobin' && p) {
-        if (!confirm('Move to Recycle Bin?')) return;
-        const binItem = { ...p, _type: 'photo', _firebaseKey: key, _binId: makeBinId(), deletedAt: Date.now() };
-        const k = getUserBinKey(); const bin = getBin(k); bin.unshift(binItem); saveBin(bin, k);
-        syncUserBinToFirebase(binItem);
-        remove(ref(db, 'photo_history/' + key));
-        renderUserBin(); updateUserStats(); toast('🗑️ Moved to bin', 'var(--yellow)');
-    }
-});
-
-document.getElementById('uSelectAll').addEventListener('change', e => {
-    document.querySelectorAll('.u-cap-select').forEach(cb => {
-        cb.checked = e.target.checked;
-        if (e.target.checked) uSelectedCaptures.add(cb.dataset.key);
-        else uSelectedCaptures.delete(cb.dataset.key);
-    });
-});
-document.getElementById('uPhotoGrid').addEventListener('change', e => {
-    const cb = e.target.closest('.u-cap-select');
-    if (!cb) return;
-    if (cb.checked) uSelectedCaptures.add(cb.dataset.key);
-    else uSelectedCaptures.delete(cb.dataset.key);
-});
-document.getElementById('uBulkDeleteBtn').onclick = () => {
-    if (uSelectedCaptures.size === 0) { toast('⚠️ No captures selected.', 'var(--yellow)'); return; }
-    const count = uSelectedCaptures.size;
-    if (!confirm(`Move ${count} capture(s) to Recycle Bin?`)) return;
-    uSelectedCaptures.forEach(key => {
-        const p = uLogsCache[key];
-        if (p) {
-            const binItem = { ...p, _type: 'photo', _firebaseKey: key, _binId: makeBinId(), deletedAt: Date.now() };
-            const k = getUserBinKey(); const bin = getBin(k); bin.unshift(binItem); saveBin(bin, k);
-            syncUserBinToFirebase(binItem);
-        }
-        remove(ref(db, 'photo_history/' + key));
-    });
-    uSelectedCaptures.clear();
-    const usa = document.getElementById('uSelectAll'); if (usa) usa.checked = false;
-    renderUserBin(); updateUserStats();
-    toast(`🗑️ ${count} capture(s) moved to bin.`, 'var(--yellow)');
-};
-
-// User Export
-document.getElementById('uExportBtn').onclick = () => {
-    const username = currentSession?.username;
-    // Respect exportData permission
-    if (!currentSession?.permissions?.exportData) { toast('⛔ Export permission not granted.', 'var(--red)'); return; }
-    if (!uAllLogsData) { toast('⚠️ No captures to export.', 'var(--yellow)'); return; }
-    const myLogs = Object.values(uAllLogsData).filter(p => p._ownerId === username && p._ownerType === 'user');
-    if (myLogs.length === 0) { toast('⚠️ No captures to export.', 'var(--yellow)'); return; }
-    const rows = [['Name','Date','Time','IP','GPS Lat','GPS Lon','OS','Browser','Battery','Network']];
-    myLogs.forEach(p => {
-        const d = p.device || {};
-        rows.push([p.linkName||'', p.date||'', p.time||'', p.ipAddress||'', p.latitude||'', p.longitude||'', d.os||'', d.browser||'', d.battery||'', d.networkType||'']);
-    });
-    const csv  = rows.map(r => r.map(c => '"' + String(c).replace(/"/g,'""') + '"').join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const blobUrl = URL.createObjectURL(blob);
-    const a    = Object.assign(document.createElement('a'), { href: blobUrl, download: `my_captures_${new Date().toISOString().slice(0,10)}.csv` });
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(() => { URL.revokeObjectURL(blobUrl); document.body.removeChild(a); }, 100);
-    toast('📥 CSV exported!', 'var(--teal)');
-};
-
-// ══════════════════════════════════════════════════════════
-// USER RECYCLE BIN
-// ══════════════════════════════════════════════════════════
-function renderUserBin() {
-    const binKey = getUserBinKey();
-    const all    = getBin(binKey);
-    const search = (document.getElementById('uBinSearch')?.value || '').toLowerCase();
-    const grid   = document.getElementById('uBinGrid');
-    document.getElementById('uBinCount').innerText = all.length;
-    const navBin = document.getElementById('uNavBinCount');
-    navBin.innerText = all.length; navBin.style.display = all.length > 0 ? '' : 'none';
-
-    let items = all.filter(x => {
-        if (uActiveBinType === 'photos') return x._type === 'photo';
-        if (uActiveBinType === 'links')  return x._type === 'link';
-        return true;
-    });
-    if (search) items = items.filter(x => [x.linkName||'',x.name||'',x.ipAddress||''].join(' ').toLowerCase().includes(search));
-
-    grid.innerHTML = '';
-    if (items.length === 0) { grid.innerHTML = '<div class="empty"><span class="empty-icon">🗑️</span>Recycle bin is empty.</div>'; return; }
-
-    items.forEach(item => {
-        if (item._type === 'photo') {
-            const key  = '_ubin_' + item._binId;
-            const card = buildCapCard(key, item, true, true);
-            card.dataset.binId = item._binId;
-            card.querySelectorAll('[data-action]').forEach(b => b.dataset.binId = item._binId);
-            grid.appendChild(card);
-        } else {
-            const card = document.createElement('div');
-            card.className = 'lbin-card';
-            card.innerHTML = `
-                <p><b>🔗 ${esc(item.name||'Unknown')}</b></p>
-                <p class="meta">${item.cam ? '📷 Camera' : ''} ${item.gps ? '📍 GPS' : ''}</p>
-                ${item.redirectUrl ? `<p class="meta">↩️ ${esc(item.redirectUrl)}</p>` : ''}
-                <p class="meta" style="color:var(--red);">🗑 Deleted: ${new Date(item.deletedAt).toLocaleDateString()}</p>
-                <div style="display:flex;gap:6px;margin-top:10px;">
-                    <button class="btn btn-green btn-sm" data-ubintype="link" data-ubinaction="restore" data-fid="${esc(item.firebaseId)}" style="flex:1;">♻️ Restore</button>
-                    <button class="btn btn-red   btn-sm" data-ubintype="link" data-ubinaction="burn"    data-fid="${esc(item.firebaseId)}" style="flex:1;">🔥 Burn</button>
-                </div>`;
-            grid.appendChild(card);
-        }
-    });
-}
-
-document.getElementById('uBinGrid').addEventListener('click', e => {
-    const imgEl = e.target.closest('[data-lb-img]');
-    if (imgEl && !e.target.closest('button')) { openLightbox(imgEl.dataset.lbImg, imgEl.dataset.lbInfo); return; }
-
-    const btn = e.target.closest('[data-action],[data-ubinaction]');
-    if (!btn) return;
-    const binKey = getUserBinKey();
-
-    if (btn.dataset.ubintype === 'link') {
-        const fid = btn.dataset.fid; const action = btn.dataset.ubinaction;
-        let bin = getBin(binKey);
-        const item = bin.find(x => x._type === 'link' && x.firebaseId === fid);
-        if (action === 'restore' && item) {
-            const toRestore = { ...item }; delete toRestore.deletedAt; delete toRestore.firebaseId; delete toRestore._type; delete toRestore._binId;
-            set(ref(db, 'managed_links/' + fid), toRestore).then(() => {
-                removeUserBinFromFirebase(item._binId);
-                saveBin(bin.filter(x => !(x._type==='link' && x.firebaseId===fid)), binKey); renderUserBin(); updateUserStats(); toast('♻️ Link restored!', 'var(--green)');
-            });
-        } else if (action === 'burn') {
-            if (!confirm('Permanently delete this link?')) return;
-            removeUserBinFromFirebase(item?._binId);
-            saveBin(bin.filter(x => !(x._type==='link' && x.firebaseId===fid)), binKey); renderUserBin(); updateUserStats(); toast('🔥 Deleted.', 'var(--red)');
-        }
-        return;
-    }
-
-    const action = btn.dataset.action;
-    const binId  = btn.dataset.binId || btn.closest('[data-bin-id]')?.dataset.binId;
-    if (!binId) return;
-    let bin  = getBin(binKey);
-    const item = bin.find(x => x._binId === binId);
-    if (!item || item._type !== 'photo') return;
-
-    if (action === 'download' && item.image) dlImg(item.image, `capture_${item.linkName||'x'}_${Date.now()}.jpg`);
-    else if (action === 'showInfo') openInfoModal(item);
-    else if (action === 'restore') {
-        if (!confirm('Restore this capture?')) return;
-        const toRestore = { ...item }; delete toRestore.deletedAt; delete toRestore._type; delete toRestore._firebaseKey; delete toRestore._binId;
-        push(ref(db, 'photo_history'), toRestore);
-        removeUserBinFromFirebase(binId);
-        saveBin(bin.filter(x => x._binId !== binId), binKey); renderUserBin(); updateUserStats(); toast('♻️ Capture restored!', 'var(--green)');
-    } else if (action === 'burn') {
-        if (!confirm('Permanently delete?')) return;
-        removeUserBinFromFirebase(binId);
-        saveBin(bin.filter(x => x._binId !== binId), binKey); renderUserBin(); updateUserStats(); toast('🔥 Permanently deleted.', 'var(--red)');
-    }
-});
-
-document.querySelectorAll('.bin-tab[data-ctx="user"]').forEach(tab => {
-    tab.addEventListener('click', () => {
-        document.querySelectorAll('.bin-tab[data-ctx="user"]').forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
-        uActiveBinType = tab.dataset.binType;
-        renderUserBin();
-    });
-});
-document.getElementById('uBinSearch').addEventListener('input', renderUserBin);
-document.getElementById('uEmptyBinBtn').onclick = () => {
-    if (!confirm('Empty your recycle bin?')) return;
-    saveBin([], getUserBinKey());
-    const username = currentSession?.username;
-    if (username) remove(ref(db, 'recycle_bin/' + username)).catch(() => {});
-    renderUserBin(); updateUserStats(); toast('🔥 Bin emptied.', 'var(--red)');
-};
-
-
-
-// ══════════════════════════════════════════════════════════
-function initAdminListeners() {
-    if (adminListenersInit) return;
-    adminListenersInit = true;
-
-    adminUnsubscribers.push(onValue(ref(db, 'managed_links'), snap => {
-        allLinksData = snap.val();
-        renderLinksTable();
-        updateStats();
-    }));
-
-    adminUnsubscribers.push(onValue(ref(db, 'photo_history'), snap => {
-        const newData  = snap.val();
-        const newCount = newData ? Object.keys(newData).length : 0;
-        if (prevLogCount !== null && newCount > prevLogCount) {
-            playBeep();
-            toast('🔔 New capture received!', 'var(--green)');
-            sendNotif('New Capture!', 'A target completed verification.');
-        }
-        prevLogCount = newCount;
-        allLogsData = newData;
-        renderLogs();
-        renderRecent();
-        updateStats();
-    }));
-
-    adminUnsubscribers.push(onValue(ref(db, 'users'), snap => {
-        allUsersData = snap.val();
-        renderUsersList();
-        updateStats();
-        if (allUsersData && Object.keys(allUsersData).length > 0) {
-            document.getElementById('loginModeSwitch').style.display = 'flex';
-        }
-    }));
-}
-
-function initUserListeners() {
-    if (userListenersInit) return;
-    userListenersInit = true;
-
-    userUnsubscribers.push(onValue(ref(db, 'managed_links'), snap => {
-        uAllLinksData = snap.val();
-        renderUserLinksTable();
-        updateUserStats();
-    }));
-
-    userUnsubscribers.push(onValue(ref(db, 'photo_history'), snap => {
-        uAllLogsData = snap.val();
-        renderUserLogs();
-        renderUserRecent();
-        updateUserStats();
-    }));
-
-    // ── Real-time account status watcher ──────────────────
-    // Fires instantly when admin disables/enables this user
-    if (currentSession?.type === 'user' && currentSession.username) {
-        userUnsubscribers.push(onValue(ref(db, 'users/' + currentSession.username), snap => {
-            const userData = snap.val();
-            // If account deleted or disabled while logged in → force logout immediately
-            if (!userData || userData.active === false) {
-                currentSession = null;
-                document.getElementById('userShell').style.display   = 'none';
-                document.getElementById('loginOverlay').style.display = 'flex';
-                // Show a clear message on the login form
-                const errEl = document.getElementById('userLoginError');
-                if (errEl) {
-                    errEl.style.display = 'block';
-                    errEl.style.color   = 'var(--yellow)';
-                    errEl.innerText     = '⚠️ Your account has been disabled by the admin.';
-                }
-                // Clear inputs
-                const nameEl = document.getElementById('userLoginName');
-                const passEl = document.getElementById('userLoginPass');
-                if (nameEl) nameEl.value = '';
-                if (passEl) passEl.value = '';
-                if (typeof setLoginMode === 'function') setLoginMode('user');
-            }
-        }));
-    }
-}
-
-// ══════════════════════════════════════════════════════════
-// INFO MODAL
-// ══════════════════════════════════════════════════════════
-function openInfoModal(p) {
-    if (!p) return;
-    const d      = p.device || {};
     const hasGPS = p.latitude && p.latitude !== 'Denied' && p.longitude && p.longitude !== 'Denied';
 
     const avatarEl = document.getElementById('infoAvatar');
@@ -3477,70 +1689,7 @@ document.getElementById('downloadQrBtn').onclick  = () => {
     const linkIdPart = currentQrUrl.split('linkId=')[1] || currentQrUrl.split('/').pop() || 'link';
     dlImg(canvas.toDataURL('image/png'), 'qr_' + linkIdPart + '.png');
 };
-
-// ══════════════════════════════════════════════════════════
-// MODALS: ADMIN PW / EDIT LINK
-// ══════════════════════════════════════════════════════════
-document.getElementById('changePwBtn').onclick    = () => { document.getElementById('pwModal').classList.add('open'); document.getElementById('pwMsg').innerText = ''; };
-document.getElementById('closePwModal').onclick   = () => document.getElementById('pwModal').classList.remove('open');
-document.getElementById('closeEditLink').onclick  = () => document.getElementById('editLinkModal').classList.remove('open');
-
-document.getElementById('saveEditLink').onclick = () => {
-    if (!currentEditId) return;
-    const l  = allLinksData?.[currentEditId] || uAllLinksData?.[currentEditId];
-    const nm = document.getElementById('editLinkName').value.trim() || (l?.name || 'Unnamed');
-    const ru = document.getElementById('editRedirect').value.trim();
-    update(ref(db, 'managed_links/' + currentEditId), {
-        name: nm, redirectUrl: ru,
-        cam: document.getElementById('editCam').checked,
-        gps: document.getElementById('editGPS').checked,
-    }).then(() => {
-        document.getElementById('editLinkModal').classList.remove('open');
-        currentEditId = null;
-        toast('✅ Link updated: ' + nm, 'var(--green)');
-    }).catch(() => toast('❌ Save failed.', 'var(--red)'));
-};
-
-document.getElementById('savePwBtn').onclick = async () => {
-    const old = document.getElementById('oldPw').value;
-    const nw  = document.getElementById('newPw').value;
-    const nw2 = document.getElementById('newPw2').value;
-    const msg = document.getElementById('pwMsg');
-    msg.innerText = '';
-
-    if (!old)          { msg.style.color='var(--red)'; msg.innerText='❌ Enter your current password.'; return; }
-    if (nw.length < 6) { msg.style.color='var(--red)'; msg.innerText='❌ New password must be at least 6 characters.'; return; }
-    if (nw !== nw2)    { msg.style.color='var(--red)'; msg.innerText='❌ Passwords do not match.'; return; }
-
-    const user = auth.currentUser;
-    if (!user) { msg.style.color='var(--red)'; msg.innerText='❌ Not signed in. Please log in again.'; return; }
-
-    msg.style.color='var(--muted)'; msg.innerText='⏳ Updating…';
-
-    try {
-        // Re-authenticate with current credentials before changing password
-        // (Firebase requires recent authentication for sensitive operations)
-        const credential = EmailAuthProvider.credential(user.email, old);
-        await reauthenticateWithCredential(user, credential);
-
-        // Now update the password in Firebase Auth
-        await updatePassword(user, nw);
-
-        msg.style.color = 'var(--green)'; msg.innerText = '✅ Password updated in Firebase!';
-        ['oldPw','newPw','newPw2'].forEach(id => document.getElementById(id).value = '');
-        setTimeout(() => document.getElementById('pwModal').classList.remove('open'), 1400);
-    } catch(e) {
-        const errMsg =
-            e.code === 'auth/wrong-password'          ? '❌ Current password is incorrect.' :
-            e.code === 'auth/weak-password'           ? '❌ New password is too weak (min 6 chars).' :
-            e.code === 'auth/requires-recent-login'   ? '❌ Session expired. Please log out and log in again.' :
-                                                        '❌ Update failed. Try again.';
-        msg.style.color='var(--red)'; msg.innerText = errMsg;
-    }
-};
-
-// ══════════════════════════════════════════════════════════
-// EXPORT CSV (admin)
+ (admin)
 // ══════════════════════════════════════════════════════════
 document.getElementById('exportBtn').onclick = () => {
     if (!allLogsData) { toast('⚠️ No logs to export.', 'var(--yellow)'); return; }
@@ -3563,6 +1712,146 @@ document.getElementById('exportBtn').onclick = () => {
     toast('📥 CSV exported!', 'var(--teal)');
 };
 
+function renderLogs() {
+    const grid = document.getElementById('photoGrid');
+    grid.innerHTML = '';
+    logsCache = {};
+    selectedCaptures.clear();
+
+    if (!allLogsData) {
+        grid.innerHTML = '<div class="empty"><span class="empty-icon">📭</span>No captures yet.</div>';
+        document.getElementById('logCount').innerText = '0';
+        return;
+    }
+
+    const sort = document.getElementById('sortFilter').value;
+    let keys = Object.keys(allLogsData).filter(k => allLogsData[k]?.linkName);
+    keys = keys.filter(k => passFilter(allLogsData[k]));
+    if (sort === 'oldest') keys.sort((a,b) => (allLogsData[a].timestamp||0) - (allLogsData[b].timestamp||0));
+    else keys.sort((a,b) => (allLogsData[b].timestamp||0) - (allLogsData[a].timestamp||0));
+
+    keys.forEach(k => {
+        logsCache[k] = allLogsData[k];
+        grid.appendChild(buildCapCard(k, allLogsData[k], false));
+    });
+
+    document.getElementById('logCount').innerText = keys.length;
+    if (keys.length === 0) grid.innerHTML = '<div class="empty"><span class="empty-icon">🔍</span>No captures match your filters.</div>';
+}
+
+
+function renderRecent() {
+    const grid = document.getElementById('recentGrid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    if (!allLogsData) { grid.innerHTML = '<div class="empty">No captures yet.</div>'; return; }
+
+    const keys = Object.keys(allLogsData)
+        .filter(k => allLogsData[k]?.linkName && allLogsData[k]?._ownerType !== 'user')
+        .sort((a,b) => (allLogsData[b].timestamp||0) - (allLogsData[a].timestamp||0))
+        .slice(0, 4);
+
+    if (keys.length === 0) { grid.innerHTML = '<div class="empty"><span class="empty-icon">📭</span>No captures yet.</div>'; return; }
+    keys.forEach(k => {
+        logsCache[k] = allLogsData[k];
+        grid.appendChild(buildCapCard(k, allLogsData[k], false));
+    });
+}
+
+['searchLogs','timeFilter','photoFilter','gpsFilter','sortFilter','ownerFilter'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const fn = debounce(renderLogs, 280);
+    el.addEventListener('change', renderLogs);
+    el.addEventListener('input',  fn);
+});
+
+
+function handleCapCardClick(e, cacheRef, binKey) {
+    const imgEl = e.target.closest('[data-lb-img]');
+    if (imgEl && !e.target.closest('button')) { openLightbox(imgEl.dataset.lbImg, imgEl.dataset.lbInfo); return; }
+    const btn = e.target.closest('button[data-action]');
+    if (!btn) return;
+    const { action, key } = btn.dataset;
+    const p = cacheRef[key];
+
+    if (action === 'download' && p?.image)   dlImg(p.image, `capture_${p.linkName||'x'}_${Date.now()}.jpg`);
+    else if (action === 'showInfo')          openInfoModal(p);
+    else if (action === 'copygps' && p)      navigator.clipboard.writeText(p.latitude + ', ' + p.longitude).then(() => toast('📍 GPS copied!', 'var(--teal)'));
+    else if (action === 'tobin' && p) {
+        if (!confirm('Move to Recycle Bin?')) return;
+        addToBin({ ...p, _type: 'photo', _firebaseKey: key }, binKey);
+        remove(ref(db, 'photo_history/' + key));
+        renderBin(); updateStats();
+        toast('🗑️ Moved to Recycle Bin', 'var(--yellow)');
+    }
+}
+
+document.getElementById('photoGrid').addEventListener('click', e => handleCapCardClick(e, logsCache, 'unified_bin', false));
+document.getElementById('recentGrid').addEventListener('click', e => {
+    handleCapCardClick(e, allLogsData || {}, 'unified_bin', false);
+});
+
+document.getElementById('selectAllCaptures').addEventListener('change', e => {
+    document.querySelectorAll('.cap-select').forEach(cb => {
+        cb.checked = e.target.checked;
+        if (e.target.checked) selectedCaptures.add(cb.dataset.key);
+        else selectedCaptures.delete(cb.dataset.key);
+    });
+});
+document.getElementById('photoGrid').addEventListener('change', e => {
+    const cb = e.target.closest('.cap-select');
+    if (!cb) return;
+    if (cb.checked) selectedCaptures.add(cb.dataset.key);
+    else selectedCaptures.delete(cb.dataset.key);
+});
+document.getElementById('bulkDeleteBtn').onclick = () => {
+    if (selectedCaptures.size === 0) { toast('⚠️ No captures selected.', 'var(--yellow)'); return; }
+    const count = selectedCaptures.size;
+    if (!confirm(`Move ${count} capture(s) to Recycle Bin?`)) return;
+    selectedCaptures.forEach(key => {
+        const p = logsCache[key];
+        if (p) addToBin({ ...p, _type: 'photo', _firebaseKey: key }, 'unified_bin');
+        remove(ref(db, 'photo_history/' + key));
+    });
+    selectedCaptures.clear();
+    const sa = document.getElementById('selectAllCaptures'); if (sa) sa.checked = false;
+    renderBin(); updateStats();
+    toast(`🗑️ ${count} capture(s) moved to bin.`, 'var(--yellow)');
+};
+
+
+// ══════════════════════════════════════════════════════════
+// ADMIN: FIREBASE REAL-TIME LISTENERS
+// ══════════════════════════════════════════════════════════
+function initAdminListeners() {
+    if (adminListenersInit) return;
+    adminListenersInit = true;
+
+    // Listen to all managed links
+    adminUnsubscribers.push(onValue(ref(db, 'managed_links'), snap => {
+        allLinksData = snap.val();
+        renderLinksTable();
+        updateStats();
+    }));
+
+    // Listen to all photo captures — beep + toast on each new submission
+    adminUnsubscribers.push(onValue(ref(db, 'photo_history'), snap => {
+        const newData  = snap.val();
+        const newCount = newData ? Object.keys(newData).length : 0;
+        if (prevLogCount !== null && newCount > prevLogCount) {
+            playBeep();
+            toast('\uD83D\uDD14 New capture received!', 'var(--green)');
+            sendNotif('New Capture!', 'A target completed verification.');
+        }
+        prevLogCount = newCount;
+        allLogsData  = newData;
+        renderLogs();
+        renderRecent();
+        updateStats();
+    }));
+}
+
 // ══════════════════════════════════════════════════════════
 // UTILS
 // ══════════════════════════════════════════════════════════
@@ -3573,7 +1862,7 @@ function cleanBin() {
     // Collect all user_bin_* keys from localStorage
     for (let i = 0; i < localStorage.length; i++) {
         const k = localStorage.key(i);
-        if (k && k.startsWith('user_bin_')) keysToClean.push(k);
+
     }
     keysToClean.forEach(key => {
         const b = getBin(key);
@@ -3604,7 +1893,6 @@ migrateLegacyBins();
 cleanBin();
 renderBin();
 setInterval(cleanBin, 3600000);
-checkUsersExist();
 
 // ── FIREBASE AUTH SESSION RESTORE ────────────────────────
 // onAuthStateChanged fires immediately on page load:
