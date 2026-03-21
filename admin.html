@@ -5410,20 +5410,50 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
                 if (ambWaveAnimFrame) { cancelAnimationFrame(ambWaveAnimFrame); ambWaveAnimFrame = null; }
                 var W = canvas.offsetWidth || 260, H = canvas.height || 48;
                 canvas.width = W;
+
+                // ── Reuse an existing AudioContext + analyser for this card ──────
+                // NEVER close a context that already captured the audio element via
+                // createMediaElementSource.  Closing it routes the element through a
+                // dead graph and silences all subsequent playback.  Instead, keep the
+                // same ctx+analyser alive for the lifetime of the card and just resume
+                // the context when needed.
+                var existing = ambAudioCtxMap[dateKey];
+                if (existing && existing.analyser) {
+                    try {
+                        if (existing.ctx.state === 'suspended') existing.ctx.resume();
+                        var analyser = existing.analyser;
+                        var dataArr  = new Uint8Array(analyser.frequencyBinCount);
+                        var ctx2d    = canvas.getContext('2d');
+                        var barW=3, gap=2, bars=Math.floor(W/(barW+gap));
+                        (function draw() {
+                            ambWaveAnimFrame = requestAnimationFrame(draw);
+                            analyser.getByteFrequencyData(dataArr);
+                            ctx2d.clearRect(0,0,W,H);
+                            for (var i=0;i<bars;i++) {
+                                var val  = dataArr[i % dataArr.length] / 255;
+                                var barH = Math.max(2, val * H * 0.9);
+                                ctx2d.fillStyle = 'rgba(139,92,246,' + (0.4+val*0.6) + ')';
+                                ctx2d.fillRect(i*(barW+gap), (H-barH)/2, barW, barH);
+                            }
+                        })();
+                        return;
+                    } catch(e) { /* fall through to fake waveform */ }
+                }
+
+                // ── First play for this card: try to set up real analyser ────────
                 try {
-                    // Each card gets its own AudioContext to avoid "already connected" errors
-                    if (ambAudioCtxMap[dateKey]) { try { ambAudioCtxMap[dateKey].close(); } catch(e){} }
                     var actx = new (window.AudioContext || window.webkitAudioContext)();
-                    ambAudioCtxMap[dateKey] = actx;
                     if (actx.state === 'suspended') actx.resume();
                     var src      = actx.createMediaElementSource(audioEl);
                     var analyser = actx.createAnalyser();
                     analyser.fftSize = 64;
                     src.connect(analyser); analyser.connect(actx.destination);
+                    // Store both so we can reuse without reconnecting the element
+                    ambAudioCtxMap[dateKey] = { ctx: actx, analyser: analyser };
                     var dataArr = new Uint8Array(analyser.frequencyBinCount);
                     var ctx2d   = canvas.getContext('2d');
                     var barW=3, gap=2, bars=Math.floor(W/(barW+gap));
-                    function draw() {
+                    (function draw() {
                         ambWaveAnimFrame = requestAnimationFrame(draw);
                         analyser.getByteFrequencyData(dataArr);
                         ctx2d.clearRect(0,0,W,H);
@@ -5433,13 +5463,14 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
                             ctx2d.fillStyle = 'rgba(139,92,246,' + (0.4+val*0.6) + ')';
                             ctx2d.fillRect(i*(barW+gap), (H-barH)/2, barW, barH);
                         }
-                    }
-                    draw();
+                    })();
                 } catch(e) {
-                    // AudioContext failed — use animated sine-wave fallback
+                    // AudioContext / CORS failed — animated sine-wave fallback.
+                    // The audio element was NOT captured in this path, so it continues
+                    // playing normally through the browser's default audio output.
                     var ctx2d = canvas.getContext('2d'), t=0;
                     var barW=3, gap=2, bars=Math.floor(W/(barW+gap));
-                    function drawFake() {
+                    (function drawFake() {
                         ambWaveAnimFrame = requestAnimationFrame(drawFake);
                         ctx2d.clearRect(0,0,W,H); t+=0.08;
                         for (var i=0;i<bars;i++) {
@@ -5448,8 +5479,7 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
                             ctx2d.fillStyle = 'rgba(139,92,246,'+(0.4+val*0.5)+')';
                             ctx2d.fillRect(i*(barW+gap),(H-barH)/2,barW,barH);
                         }
-                    }
-                    drawFake();
+                    })();
                 }
             }
 
