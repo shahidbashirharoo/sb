@@ -785,6 +785,34 @@
         }
         .amb-chip-val { font-size: 22px; font-weight: 800; color: var(--purple); }
         .amb-chip-lbl { font-size: 10px; color: var(--muted); margin-top: 2px; text-transform: uppercase; letter-spacing: .05em; }
+
+        /* Waveform canvas inside player */
+        .amb-waveform-canvas {
+            width: 100%; height: 48px; border-radius: 8px;
+            background: rgba(139,92,246,.08); display: block; margin-bottom: 6px;
+        }
+        /* Per-day checkbox */
+        .amb-day-cb-wrap { display: flex; align-items: center; padding: 0 8px 0 4px; }
+        .amb-day-cb { width: 17px; height: 17px; accent-color: var(--purple); cursor: pointer; }
+        /* Bulk action bar */
+        .amb-bulk-bar {
+            display: none; align-items: center; gap: 10px; flex-wrap: wrap;
+            background: rgba(139,92,246,.1); border: 1px solid rgba(139,92,246,.3);
+            border-radius: 10px; padding: 10px 14px; margin-bottom: 14px;
+        }
+        .amb-bulk-bar.active { display: flex; }
+        .amb-bulk-label { font-size: 13px; font-weight: 700; color: var(--purple); flex: 1; }
+        /* Relative date label */
+        .amb-rel-label {
+            font-size: 10px; font-weight: 800; padding: 2px 8px;
+            border-radius: 10px; margin-left: 6px;
+            background: rgba(6,182,212,.15); color: var(--teal);
+            border: 1px solid rgba(6,182,212,.25);
+        }
+        .amb-rel-label.today { background:rgba(34,197,94,.15); color:var(--green); border-color:rgba(34,197,94,.3); }
+        .amb-rel-label.yest  { background:rgba(251,191,36,.12); color:var(--yellow); border-color:rgba(251,191,36,.25); }
+        /* Card selected highlight */
+        .amb-day-card.amb-selected { border-color:rgba(139,92,246,.6); box-shadow:0 0 0 2px rgba(139,92,246,.18); }
     </style>
 
 </head>
@@ -1499,6 +1527,13 @@
                                         Each day is grouped as one "Full Day Recording" entry.
                                     </div>
                                 </div>
+                            </div>
+
+                            <!-- Bulk action bar (shown when ≥1 day selected) -->
+                            <div class="amb-bulk-bar" id="appAmbBulkBar">
+                                <span class="amb-bulk-label" id="appAmbBulkLabel">0 selected</span>
+                                <button class="btn btn-teal btn-sm" onclick="window.__ambBulkDownload()">⬇ Download Selected</button>
+                                <button class="btn btn-red  btn-sm" onclick="window.__ambBulkDelete()">🗑 Delete Selected</button>
                             </div>
 
                             <!-- Day-grouped recordings list -->
@@ -5180,39 +5215,46 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
         (function () {
 
             // ── Ambient state ──────────────────────────────────────────────────
-            var ambCurrentDevice  = null;  // deviceId being viewed
-            var ambDayGroups      = [];    // array of { dateKey, dateLabel, chunks[] }
-            var ambActiveAudio    = null;  // currently playing <audio> element
-            var ambPlayQueue      = [];    // remaining chunk URLs for current session
-            var ambActiveDayKey   = null;  // which day card has the player open
+            var ambCurrentDevice  = null;   // deviceId being viewed
+            var ambDayGroups      = [];     // array of { dateKey, dateLabel, chunks[], relLabel }
+            var ambActiveAudio    = null;   // currently playing <audio> element
+            var ambPlayQueue      = [];     // (unused — kept for compat)
+            var ambActiveDayKey   = null;   // kept for __ambDeleteDay compat
+            var ambPlayingDayKey  = null;   // which day's Play btn shows "⏹ Stop"
+            var ambWaveAnimFrame  = null;   // rAF id
+            var ambAudioCtxMap    = {};     // dateKey → AudioContext (one per card)
+            var ambMergedURLs     = {};     // cache: dateKey → blob object URL
+            var ambSelectedDays   = new Set();
 
-            // ── Stop any active playback and clean up audio element ────────────
+            // ── Stop playback, reset UI, cancel animation ──────────────────────
             function ambCleanup() {
+                if (ambWaveAnimFrame) { cancelAnimationFrame(ambWaveAnimFrame); ambWaveAnimFrame = null; }
                 if (ambActiveAudio) {
                     ambActiveAudio.pause();
                     ambActiveAudio.src = '';
                     ambActiveAudio = null;
                 }
-                ambPlayQueue    = [];
-                ambActiveDayKey = null;
+                // Reset the play button that was in "Stop" state
+                if (ambPlayingDayKey) {
+                    var btn = document.getElementById('ambPlayBtn-' + ambPlayingDayKey);
+                    if (btn) { btn.textContent = '▶ Play All'; btn.classList.remove('btn-red'); btn.classList.add('btn-purple'); }
+                    var canvas = document.getElementById('ambWave-' + ambPlayingDayKey);
+                    if (canvas) ambDrawFlatWaveform(canvas);
+                }
+                ambPlayQueue     = [];
+                ambActiveDayKey  = null;
+                ambPlayingDayKey = null;
             }
-            // Expose cleanup for the Back button (registered above)
             window.__ambCleanup = ambCleanup;
-            // Also call ambCleanup when the main Back button fires
             var _origTlCleanup = window.__appTlCleanup;
-            window.__appTlCleanup = function () {
-                ambCleanup();
-                if (_origTlCleanup) _origTlCleanup();
-            };
+            window.__appTlCleanup = function () { ambCleanup(); if (_origTlCleanup) _origTlCleanup(); };
 
-            // ── Format helpers (local, don't pollute TL scope) ────────────────
+            // ── Format helpers ────────────────────────────────────────────────
             function ambFmtDate(isoStr) {
                 if (!isoStr) return 'Unknown Date';
                 var d = new Date(isoStr);
                 if (isNaN(d.getTime())) return isoStr;
-                return d.toLocaleDateString([], {
-                    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-                });
+                return d.toLocaleDateString([], { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
             }
             function ambFmtShortDate(isoStr) {
                 if (!isoStr) return '—';
@@ -5226,7 +5268,6 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
                 if (isNaN(d.getTime())) return isoStr;
                 return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
             }
-            // Convert total seconds → "Xh Ym" or "Ym Zs" or "Zs"
             function ambFmtDuration(totalSecs) {
                 if (!totalSecs || totalSecs <= 0) return '0s';
                 var h = Math.floor(totalSecs / 3600);
@@ -5236,384 +5277,504 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
                 if (m > 0) return m + 'm ' + (s > 0 ? s + 's' : '');
                 return s + 's';
             }
-            // Calendar date key "YYYY-MM-DD" from an ISO start_time string
             function ambDateKey(isoStr) {
                 if (!isoStr) return 'unknown';
                 var d = new Date(isoStr);
                 if (isNaN(d.getTime())) return 'unknown';
-                // Use local date parts to match device timezone display
                 var y = d.getFullYear();
                 var mo = String(d.getMonth() + 1).padStart(2, '0');
                 var dy = String(d.getDate()).padStart(2, '0');
                 return y + '-' + mo + '-' + dy;
             }
+            // FIX 6: Returns "Today" / "Yesterday" / short date
+            function ambRelativeLabel(isoStr) {
+                if (!isoStr) return null;
+                var d = new Date(isoStr); if (isNaN(d.getTime())) return null;
+                var today = new Date(); today.setHours(0,0,0,0);
+                var yest  = new Date(today); yest.setDate(yest.getDate() - 1);
+                var day   = new Date(d); day.setHours(0,0,0,0);
+                if (day.getTime() === today.getTime()) return { text: 'Today',     cls: 'today' };
+                if (day.getTime() === yest.getTime())  return { text: 'Yesterday', cls: 'yest'  };
+                return null;
+            }
+            // FIX 3: Filename helpers  →  "DD-MM-YYYY" and "10AM" / "2:30PM"
+            function ambFmtFileDate(isoStr) {
+                if (!isoStr) return 'unknown-date';
+                var d = new Date(isoStr); if (isNaN(d.getTime())) return 'unknown-date';
+                return String(d.getDate()).padStart(2,'0') + '-' +
+                       String(d.getMonth()+1).padStart(2,'0') + '-' + d.getFullYear();
+            }
+            function ambFmtFileTime(isoStr) {
+                if (!isoStr) return '';
+                var d = new Date(isoStr); if (isNaN(d.getTime())) return '';
+                var h = d.getHours(), m = d.getMinutes();
+                var ampm = h >= 12 ? 'PM' : 'AM';
+                var h12  = h % 12 || 12;
+                return m > 0 ? h12 + ':' + String(m).padStart(2,'0') + ampm : h12 + ampm;
+            }
 
-            // ── Build day groups from raw recordings data ──────────────────────
-            // Reads the shared appRecordingsData (owned by outer IIFE).
-            // Filters to ambient chunks only (direction === "ambient").
-            // Groups by calendar date, sorts newest-date-first, chunks oldest-first.
-            function ambBuildGroups(deviceId) {
-                var allRecs = appAmbientRecordingsData[deviceId] || {};
-                var groups  = {};  // dateKey → { dateLabel, chunks[] }
-
-                Object.entries(allRecs).forEach(function (entry) {
-                    var recId = entry[0];
-                    var r     = entry[1];
-                    // Skip soft-deleted entries
-                    if (r.deleted_at) return;
-
-                    var dk    = ambDateKey(r.start_time);
-                    if (!groups[dk]) {
-                        groups[dk] = {
-                            dateKey  : dk,
-                            dateLabel: ambFmtDate(r.start_time),
-                            shortDate: ambFmtShortDate(r.start_time),
-                            chunks   : []
-                        };
-                    }
-                    groups[dk].chunks.push({
-                        recId     : recId,
-                        start_time: r.start_time,
-                        duration_seconds: r.duration_seconds || 0,
-                        audio_url : r.audio_url || r.audio_data || null,
-                        _device_id: deviceId
-                    });
-                });
-
-                // Sort chunks within each day oldest-first (sequential playback order)
-                Object.values(groups).forEach(function (g) {
-                    g.chunks.sort(function (a, b) {
-                        return new Date(a.start_time || 0) - new Date(b.start_time || 0);
-                    });
-                });
-
-                // Return array sorted newest-date-first
-                return Object.values(groups).sort(function (a, b) {
-                    return b.dateKey.localeCompare(a.dateKey);
+            // ── FIX 4 & 8: Merge all chunk blobs into ONE blob URL ─────────────
+            // Uses Blob concatenation (fast, no CORS re-encoding).
+            // Returns a Promise<string|null> (blob: URL).
+            function ambMergeChunks(chunks) {
+                var urls = chunks.filter(function(c){ return !!c.audio_url; }).map(function(c){ return c.audio_url; });
+                if (urls.length === 0) return Promise.resolve(null);
+                toast('🔄 Merging ' + urls.length + ' chunk(s)…', 'var(--purple)');
+                return Promise.all(urls.map(function(url) {
+                    return fetch(url).then(function(r){ return r.blob(); });
+                })).then(function(blobs) {
+                    var mimeType = (blobs[0] && blobs[0].type) ? blobs[0].type : 'audio/mpeg';
+                    var merged   = new Blob(blobs, { type: mimeType });
+                    return URL.createObjectURL(merged);
+                }).catch(function(e) {
+                    toast('❌ Merge failed: ' + e.message, 'var(--red)');
+                    return null;
                 });
             }
 
-            // ── Update the summary strip ───────────────────────────────────────
-            function ambUpdateSummary(groups) {
-                var totalChunks   = 0;
-                var totalSecs     = 0;
-                groups.forEach(function (g) {
-                    totalChunks += g.chunks.length;
-                    g.chunks.forEach(function (c) { totalSecs += (c.duration_seconds || 0); });
+            // ── FIX 7: Waveform drawing helpers ───────────────────────────────
+            function ambDrawFlatWaveform(canvas) {
+                var ctx = canvas.getContext('2d');
+                var W = canvas.offsetWidth || 260, H = canvas.height || 48;
+                canvas.width = W;
+                ctx.clearRect(0,0,W,H);
+                var barW=3, gap=2, bars=Math.floor(W/(barW+gap));
+                ctx.fillStyle = 'rgba(139,92,246,0.3)';
+                for (var i=0;i<bars;i++) ctx.fillRect(i*(barW+gap), H/2-1, barW, 2);
+            }
+            function ambStartWaveform(canvas, audioEl, dateKey) {
+                if (ambWaveAnimFrame) { cancelAnimationFrame(ambWaveAnimFrame); ambWaveAnimFrame = null; }
+                var W = canvas.offsetWidth || 260, H = canvas.height || 48;
+                canvas.width = W;
+                try {
+                    // Each card gets its own AudioContext to avoid "already connected" errors
+                    if (ambAudioCtxMap[dateKey]) { try { ambAudioCtxMap[dateKey].close(); } catch(e){} }
+                    var actx = new (window.AudioContext || window.webkitAudioContext)();
+                    ambAudioCtxMap[dateKey] = actx;
+                    if (actx.state === 'suspended') actx.resume();
+                    var src      = actx.createMediaElementSource(audioEl);
+                    var analyser = actx.createAnalyser();
+                    analyser.fftSize = 64;
+                    src.connect(analyser); analyser.connect(actx.destination);
+                    var dataArr = new Uint8Array(analyser.frequencyBinCount);
+                    var ctx2d   = canvas.getContext('2d');
+                    var barW=3, gap=2, bars=Math.floor(W/(barW+gap));
+                    function draw() {
+                        ambWaveAnimFrame = requestAnimationFrame(draw);
+                        analyser.getByteFrequencyData(dataArr);
+                        ctx2d.clearRect(0,0,W,H);
+                        for (var i=0;i<bars;i++) {
+                            var val  = dataArr[i % dataArr.length] / 255;
+                            var barH = Math.max(2, val * H * 0.9);
+                            ctx2d.fillStyle = 'rgba(139,92,246,' + (0.4+val*0.6) + ')';
+                            ctx2d.fillRect(i*(barW+gap), (H-barH)/2, barW, barH);
+                        }
+                    }
+                    draw();
+                } catch(e) {
+                    // AudioContext failed — use animated sine-wave fallback
+                    var ctx2d = canvas.getContext('2d'), t=0;
+                    var barW=3, gap=2, bars=Math.floor(W/(barW+gap));
+                    function drawFake() {
+                        ambWaveAnimFrame = requestAnimationFrame(drawFake);
+                        ctx2d.clearRect(0,0,W,H); t+=0.08;
+                        for (var i=0;i<bars;i++) {
+                            var val  = 0.3+0.7*Math.abs(Math.sin(t+i*0.4));
+                            var barH = Math.max(2, val*H*0.85);
+                            ctx2d.fillStyle = 'rgba(139,92,246,'+(0.4+val*0.5)+')';
+                            ctx2d.fillRect(i*(barW+gap),(H-barH)/2,barW,barH);
+                        }
+                    }
+                    drawFake();
+                }
+            }
+
+            // ── FIX 6: Build day groups (newest first, with relativeLabel) ─────
+            function ambBuildGroups(deviceId) {
+                var allRecs = appAmbientRecordingsData[deviceId] || {};
+                var groups  = {};
+                Object.entries(allRecs).forEach(function(entry) {
+                    var recId = entry[0], r = entry[1];
+                    if (r.deleted_at) return;
+                    var dk = ambDateKey(r.start_time);
+                    if (!groups[dk]) {
+                        groups[dk] = {
+                            dateKey   : dk,
+                            dateLabel : ambFmtDate(r.start_time),
+                            shortDate : ambFmtShortDate(r.start_time),
+                            relLabel  : ambRelativeLabel(r.start_time),
+                            chunks    : []
+                        };
+                    }
+                    groups[dk].chunks.push({
+                        recId           : recId,
+                        start_time      : r.start_time,
+                        duration_seconds: r.duration_seconds || 0,
+                        audio_url       : r.audio_url || r.audio_data || null,
+                        _device_id      : deviceId
+                    });
                 });
+                // Sort chunks oldest-first within each day
+                Object.values(groups).forEach(function(g) {
+                    g.chunks.sort(function(a,b){ return new Date(a.start_time||0)-new Date(b.start_time||0); });
+                });
+                // Return newest-date-first (FIX 6: latest on top)
+                return Object.values(groups).sort(function(a,b){ return b.dateKey.localeCompare(a.dateKey); });
+            }
 
-                var latestGroup = groups[0];
-                var latestChunk = latestGroup
-                    ? latestGroup.chunks[latestGroup.chunks.length - 1]
-                    : null;
-
-                function setEl(id, val) { var el = document.getElementById(id); if (el) el.textContent = val; }
+            // ── Summary strip ─────────────────────────────────────────────────
+            function ambUpdateSummary(groups) {
+                var totalChunks=0, totalSecs=0;
+                groups.forEach(function(g) {
+                    totalChunks += g.chunks.length;
+                    g.chunks.forEach(function(c){ totalSecs += (c.duration_seconds||0); });
+                });
+                var latestChunk = groups[0] ? groups[0].chunks[groups[0].chunks.length-1] : null;
+                function setEl(id,val){ var el=document.getElementById(id); if(el) el.textContent=val; }
                 setEl('appAmbChipDays',   groups.length);
                 setEl('appAmbChipChunks', totalChunks);
                 setEl('appAmbChipTotal',  ambFmtDuration(totalSecs));
                 setEl('appAmbChipLatest', latestChunk ? ambFmtShortDate(latestChunk.start_time) : '—');
-
-                // Day count badge in header
                 var dayBadge = document.getElementById('appAmbDayCount');
-                if (dayBadge) {
-                    dayBadge.textContent = groups.length + ' day' + (groups.length !== 1 ? 's' : '');
-                    dayBadge.style.display = groups.length > 0 ? '' : 'none';
-                }
-                // Sub-nav button sub-label
+                if (dayBadge) { dayBadge.textContent=groups.length+' day'+(groups.length!==1?'s':''); dayBadge.style.display=groups.length>0?'':'none'; }
                 var ambSub = document.getElementById('appSubNavAmbSub');
-                if (ambSub) {
-                    ambSub.textContent = groups.length > 0
-                        ? groups.length + ' day' + (groups.length !== 1 ? 's' : '') + ' recorded'
-                        : 'Daily ambient audio';
+                if (ambSub) ambSub.textContent = groups.length>0 ? groups.length+' day'+(groups.length!==1?'s':'')+' recorded' : 'Daily ambient audio';
+            }
+
+            // ── UI state helper ───────────────────────────────────────────────
+            function ambSetState(state) {
+                var loading=document.getElementById('appAmbLoading');
+                var empty  =document.getElementById('appAmbEmpty');
+                var list   =document.getElementById('appAmbDayList');
+                var summary=document.getElementById('appAmbSummary');
+                if(loading) loading.style.display = state==='loading' ? '' : 'none';
+                if(empty)   empty.style.display   = state==='empty'   ? '' : 'none';
+                if(list)    list.style.display    = state==='list'    ? '' : 'none';
+                if(summary) summary.style.display = state==='list'    ? '' : 'none';
+            }
+
+            // ── FIX 5: Update bulk bar based on selection set ─────────────────
+            function ambUpdateBulkBar() {
+                var bar   = document.getElementById('appAmbBulkBar');
+                var label = document.getElementById('appAmbBulkLabel');
+                if (!bar) return;
+                var n = ambSelectedDays.size;
+                if (n > 0) {
+                    bar.classList.add('active');
+                    if (label) label.textContent = n + ' day' + (n!==1?'s':'') + ' selected';
+                } else {
+                    bar.classList.remove('active');
                 }
             }
 
-            // ── UI state helper ────────────────────────────────────────────────
-            function ambSetState(state) {
-                // states: 'loading' | 'empty' | 'list'
-                var loading = document.getElementById('appAmbLoading');
-                var empty   = document.getElementById('appAmbEmpty');
-                var list    = document.getElementById('appAmbDayList');
-                var summary = document.getElementById('appAmbSummary');
-                if (loading) loading.style.display = state === 'loading' ? '' : 'none';
-                if (empty)   empty.style.display   = state === 'empty'   ? '' : 'none';
-                if (list)    list.style.display    = state === 'list'    ? '' : 'none';
-                if (summary) summary.style.display = state === 'list'    ? '' : 'none';
-            }
-
-            // ── Render all day cards ───────────────────────────────────────────
+            // ── Render all day cards ──────────────────────────────────────────
             function ambRender() {
                 var container = document.getElementById('appAmbDayList');
                 if (!container) return;
+
+                // Revoke cached merged URLs on re-render (data may have changed)
+                Object.values(ambMergedURLs).forEach(function(u){ try{URL.revokeObjectURL(u);}catch(e){} });
+                ambMergedURLs = {};
+                ambSelectedDays.clear();
+                ambUpdateBulkBar();
 
                 var groups = ambBuildGroups(ambCurrentDevice);
                 ambDayGroups = groups;
                 ambUpdateSummary(groups);
 
-                if (groups.length === 0) {
-                    ambSetState('empty');
-                    return;
-                }
+                if (groups.length === 0) { ambSetState('empty'); return; }
                 ambSetState('list');
 
-                container.innerHTML = groups.map(function (g) {
-                    var totalSecs = 0;
-                    g.chunks.forEach(function (c) { totalSecs += (c.duration_seconds || 0); });
-                    var chunksWithAudio = g.chunks.filter(function (c) { return !!c.audio_url; });
-                    var hasAudio        = chunksWithAudio.length > 0;
-                    var dk              = esc(g.dateKey);
+                container.innerHTML = groups.map(function(g) {
+                    var totalSecs=0;
+                    g.chunks.forEach(function(c){ totalSecs+=(c.duration_seconds||0); });
+                    var hasAudio = g.chunks.some(function(c){ return !!c.audio_url; });
+                    var dk       = esc(g.dateKey);
+
+                    // FIX 6: relative label badge (Today / Yesterday)
+                    var relBadge = '';
+                    if (g.relLabel) {
+                        relBadge = '<span class="amb-rel-label ' + g.relLabel.cls + '">' + g.relLabel.text + '</span>';
+                    }
+
+                    // FIX 2: Details — build full detail panel HTML
+                    var firstChunk = g.chunks[0], lastChunk = g.chunks[g.chunks.length-1];
+                    var detailRows = g.chunks.map(function(c,i){
+                        return '<div class="amb-chunk-item">' +
+                            '<div class="amb-chunk-num">'+(i+1)+'</div>' +
+                            '<div class="amb-chunk-info">' +
+                              '<div class="amb-chunk-time">'+ambFmtTime(c.start_time)+'</div>' +
+                              '<div class="amb-chunk-dur">⏱ '+ambFmtDuration(c.duration_seconds)+(c.audio_url?'':' · <span style="color:var(--red);">no audio</span>')+'</div>' +
+                            '</div>' +
+                            (c.audio_url
+                              ? '<button class="btn btn-gray btn-sm" onclick="window.__ambPlayChunk(\''+esc(g.dateKey)+'\','+i+')">▶</button>'
+                              : '<span style="font-size:11px;color:var(--muted);">—</span>') +
+                            '</div>';
+                    }).join('');
 
                     return [
-                        '<div class="amb-day-card" id="ambCard-' + dk + '">',
+                        // FIX 5: checkbox in header
+                        '<div class="amb-day-card" id="ambCard-'+dk+'">',
                         '  <div class="amb-day-header">',
+                        '    <div class="amb-day-cb-wrap">',
+                        '      <input type="checkbox" class="amb-day-cb" id="ambCb-'+dk+'" onchange="window.__ambToggleSelect(\''+dk+'\',this.checked)">',
+                        '    </div>',
                         '    <div class="amb-day-icon">🎧</div>',
                         '    <div class="amb-day-title">',
-                        '      <div class="amb-day-date">📅 ' + esc(g.shortDate) + ' &nbsp;<span style="font-size:12px;font-weight:500;color:var(--muted);">Full Day Recording</span></div>',
+                        '      <div class="amb-day-date">📅 '+esc(g.shortDate)+relBadge+' <span style="font-size:12px;font-weight:500;color:var(--muted);">Full Day Recording</span></div>',
                         '      <div class="amb-day-meta">',
-                        '        <span class="amb-badge">⏱ ' + ambFmtDuration(totalSecs) + ' total</span>',
-                        '        <span class="amb-badge amb-badge-teal">🗂 ' + g.chunks.length + ' chunk' + (g.chunks.length !== 1 ? 's' : '') + '</span>',
-                        '        ' + (hasAudio ? '' : '<span style="color:var(--red);font-size:10px;">⚠ No audio URLs</span>'),
+                        '        <span class="amb-badge">⏱ '+ambFmtDuration(totalSecs)+' total</span>',
+                        '        <span class="amb-badge amb-badge-teal">🗂 '+g.chunks.length+' chunk'+(g.chunks.length!==1?'s':'')+'</span>',
+                        '        <span class="amb-badge">🕐 '+ambFmtTime(firstChunk&&firstChunk.start_time)+' → '+ambFmtTime(lastChunk&&lastChunk.start_time)+'</span>',
+                        '        '+(hasAudio?'':'<span style="color:var(--red);font-size:10px;">⚠ No audio URLs</span>'),
                         '      </div>',
                         '    </div>',
                         '  </div>',
 
-                        // ─ Player area (hidden until Play is pressed) ─
-                        '  <div class="amb-day-player" id="ambPlayer-' + dk + '">',
-                        '    <div class="amb-player-label">',
-                        '      <span>▶</span>',
-                        '      <span id="ambPlayerLabel-' + dk + '">Playing chunk 1 of ' + g.chunks.length + '</span>',
+                        // FIX 1 & 7: Player with waveform canvas
+                        '  <div class="amb-day-player" id="ambPlayer-'+dk+'">',
+                        '    <canvas class="amb-waveform-canvas" id="ambWave-'+dk+'" height="48"></canvas>',
+                        '    <audio id="ambAudio-'+dk+'" controls preload="none" style="width:100%;border-radius:8px;height:36px;margin-bottom:4px;"></audio>',
+                        '    <div class="amb-player-chunk-info" id="ambChunkInfo-'+dk+'"></div>',
+                        '  </div>',
+
+                        // FIX 2: Details panel (hidden by default via inline style)
+                        '  <div class="amb-chunk-list" id="ambChunks-'+dk+'" style="display:none;">',
+                        '    <div style="font-size:12px;color:var(--muted);padding:0 0 8px;">',
+                        '      <strong>Total chunks:</strong> '+g.chunks.length+' &nbsp;·&nbsp; ',
+                        '      <strong>Duration:</strong> '+ambFmtDuration(totalSecs)+' &nbsp;·&nbsp; ',
+                        '      <strong>Start:</strong> '+ambFmtTime(firstChunk&&firstChunk.start_time)+' &nbsp;→&nbsp; ',
+                        '      <strong>End:</strong> '+ambFmtTime(lastChunk&&lastChunk.start_time),
                         '    </div>',
-                        '    <audio id="ambAudio-' + dk + '" controls preload="auto"></audio>',
-                        '    <div class="amb-player-chunk-info" id="ambChunkInfo-' + dk + '"></div>',
+                        detailRows,
                         '  </div>',
 
-                        // ─ Chunk list (hidden toggle) ─
-                        '  <div class="amb-chunk-list" id="ambChunks-' + dk + '">',
-                        g.chunks.map(function (c, idx) {
-                            return [
-                                '<div class="amb-chunk-item">',
-                                '  <div class="amb-chunk-num">' + (idx + 1) + '</div>',
-                                '  <div class="amb-chunk-info">',
-                                '    <div class="amb-chunk-time">' + ambFmtTime(c.start_time) + '</div>',
-                                '    <div class="amb-chunk-dur">⏱ ' + ambFmtDuration(c.duration_seconds) + (c.audio_url ? '' : ' · <span style="color:var(--red);">no audio</span>') + '</div>',
-                                '  </div>',
-                                '  ' + (c.audio_url
-                                    ? '<button class="btn btn-gray btn-sm" onclick="window.__ambPlayChunk(\'' + esc(g.dateKey) + '\',' + idx + ')">▶</button>'
-                                    : '<span style="font-size:11px;color:var(--muted);">—</span>'),
-                                '</div>'
-                            ].join('');
-                        }).join(''),
-                        '  </div>',
-
-                        // ─ Action buttons ─
+                        // Action buttons
                         '  <div class="amb-day-actions">',
-                        '    <button class="btn btn-purple btn-sm" onclick="window.__ambPlayDay(\'' + dk + '\')" ' + (!hasAudio ? 'disabled title="No audio available"' : '') + '>',
-                        '      ▶ Play All',
-                        '    </button>',
-                        '    <button class="btn btn-teal btn-sm" onclick="window.__ambToggleChunks(\'' + dk + '\')">',
-                        '      🗂 Details',
-                        '    </button>',
-                        '    <button class="btn btn-gray btn-sm" onclick="window.__ambDownloadDay(\'' + dk + '\')" ' + (!hasAudio ? 'disabled title="No audio available"' : '') + '>',
-                        '      ⬇ Download',
-                        '    </button>',
-                        '    <button class="btn btn-red btn-sm" onclick="window.__ambDeleteDay(\'' + dk + '\')">',
-                        '      🗑 Delete',
-                        '    </button>',
+                        // FIX 1: Play button with id for toggle, FIX 8: merges before play
+                        '    <button class="btn btn-purple btn-sm" id="ambPlayBtn-'+dk+'" onclick="window.__ambPlayDay(\''+dk+'\')" '+(hasAudio?'':'disabled title="No audio available"')+'>▶ Play All</button>',
+                        // FIX 2: Details button
+                        '    <button class="btn btn-teal btn-sm" onclick="window.__ambToggleChunks(\''+dk+'\')">🗂 Details</button>',
+                        // FIX 3: Download merges into one file
+                        '    <button class="btn btn-gray btn-sm" onclick="window.__ambDownloadDay(\''+dk+'\')" '+(hasAudio?'':'disabled title="No audio available"')+'>⬇ Download</button>',
+                        '    <button class="btn btn-red  btn-sm" onclick="window.__ambDeleteDay(\''+dk+'\')">🗑 Delete</button>',
                         '  </div>',
                         '</div>'
                     ].join('\n');
                 }).join('\n');
+
+                // Draw flat waveform on all visible canvases after DOM settles
+                setTimeout(function() {
+                    groups.forEach(function(g) {
+                        var canvas = document.getElementById('ambWave-' + g.dateKey);
+                        if (canvas) ambDrawFlatWaveform(canvas);
+                    });
+                }, 50);
             }
 
-            // ── Play entire day's chunks sequentially ──────────────────────────
-            window.__ambPlayDay = function (dateKey) {
-                var group = ambDayGroups.find(function (g) { return g.dateKey === dateKey; });
+            // ── FIX 1 & 8: Play Day — merge all chunks then play as ONE audio ──
+            window.__ambPlayDay = function(dateKey) {
+                var group = ambDayGroups.find(function(g){ return g.dateKey === dateKey; });
                 if (!group) return;
 
-                var queue = group.chunks.filter(function (c) { return !!c.audio_url; });
-                if (queue.length === 0) { toast('⚠️ No audio available for this day.', 'var(--yellow)'); return; }
-
-                // Stop any existing playback
-                ambCleanup();
-
-                // Show player panel
-                var playerEl = document.getElementById('ambPlayer-' + dateKey);
-                if (playerEl) playerEl.style.display = '';
-
-                // Create audio element bound to card's <audio> tag
-                var audioEl = document.getElementById('ambAudio-' + dateKey);
-                if (!audioEl) return;
-
-                ambActiveAudio  = audioEl;
-                ambPlayQueue    = queue.slice(); // copy queue
-                ambActiveDayKey = dateKey;
-
-                function playNext() {
-                    if (ambPlayQueue.length === 0) {
-                        // Playback complete
-                        var labelEl = document.getElementById('ambPlayerLabel-' + dateKey);
-                        var infoEl  = document.getElementById('ambChunkInfo-' + dateKey);
-                        if (labelEl) labelEl.textContent = '✅ Playback complete (' + queue.length + ' chunks)';
-                        if (infoEl)  infoEl.textContent  = '';
-                        return;
-                    }
-                    var chunk   = ambPlayQueue.shift();
-                    var chunkNo = queue.length - ambPlayQueue.length;
-
-                    // Update UI labels
-                    var labelEl = document.getElementById('ambPlayerLabel-' + dateKey);
-                    var infoEl  = document.getElementById('ambChunkInfo-' + dateKey);
-                    if (labelEl) labelEl.textContent = 'Playing chunk ' + chunkNo + ' of ' + queue.length;
-                    if (infoEl)  infoEl.textContent  = '🕐 ' + ambFmtTime(chunk.start_time) + ' — ⏱ ' + ambFmtDuration(chunk.duration_seconds);
-
-                    // Load and play this chunk
-                    audioEl.src = chunk.audio_url;
-                    audioEl.load();
-                    audioEl.play().catch(function () {
-                        // Auto-play blocked → user must press play manually,
-                        // set up ended handler so next chunk queues correctly.
-                    });
+                // Toggle: if already playing this day → Stop
+                if (ambPlayingDayKey === dateKey) {
+                    ambCleanup();
+                    return;
                 }
 
-                // When a chunk ends, play the next one
-                audioEl.addEventListener('ended', playNext);
-                playNext();
+                var chunks = group.chunks.filter(function(c){ return !!c.audio_url; });
+                if (chunks.length === 0) { toast('⚠️ No audio available for this day.', 'var(--yellow)'); return; }
+
+                // Stop anything else playing
+                ambCleanup();
+
+                var btn = document.getElementById('ambPlayBtn-' + dateKey);
+                if (btn) { btn.textContent = '⏳ Merging…'; btn.disabled = true; }
+
+                // FIX 8: merge first, then play
+                ambMergeChunks(chunks).then(function(blobURL) {
+                    if (!blobURL) {
+                        if (btn) { btn.textContent = '▶ Play All'; btn.disabled = false; }
+                        return;
+                    }
+
+                    // Cache URL for later download reuse
+                    ambMergedURLs[dateKey] = blobURL;
+
+                    var audioEl = document.getElementById('ambAudio-' + dateKey);
+                    if (!audioEl) return;
+
+                    ambActiveAudio   = audioEl;
+                    ambActiveDayKey  = dateKey;
+                    ambPlayingDayKey = dateKey;
+
+                    // Show player, update button to Stop
+                    var playerEl = document.getElementById('ambPlayer-' + dateKey);
+                    if (playerEl) playerEl.style.display = '';
+                    if (btn) { btn.textContent = '⏹ Stop'; btn.disabled = false; btn.classList.remove('btn-purple'); btn.classList.add('btn-red'); }
+
+                    // Start waveform animation (FIX 7)
+                    var canvas = document.getElementById('ambWave-' + dateKey);
+
+                    audioEl.src = blobURL;
+                    audioEl.load();
+                    audioEl.play().then(function() {
+                        if (canvas) ambStartWaveform(canvas, audioEl, dateKey);
+                    }).catch(function() {
+                        // Autoplay blocked: user needs to press play on audio controls
+                        if (canvas) ambStartWaveform(canvas, audioEl, dateKey);
+                    });
+
+                    // Set info label
+                    var totalSecs=0; chunks.forEach(function(c){ totalSecs+=(c.duration_seconds||0); });
+                    var infoEl = document.getElementById('ambChunkInfo-' + dateKey);
+                    if (infoEl) infoEl.textContent = '🎵 ' + chunks.length + ' chunks merged · ⏱ ' + ambFmtDuration(totalSecs);
+
+                    // When playback ends, reset button
+                    audioEl.onended = function() { ambCleanup(); };
+                });
             };
 
-            // ── Play a single specific chunk by index ─────────────────────────
-            window.__ambPlayChunk = function (dateKey, chunkIdx) {
-                var group = ambDayGroups.find(function (g) { return g.dateKey === dateKey; });
+            // ── Play a single chunk by index ──────────────────────────────────
+            window.__ambPlayChunk = function(dateKey, chunkIdx) {
+                var group = ambDayGroups.find(function(g){ return g.dateKey===dateKey; });
                 if (!group || !group.chunks[chunkIdx]) return;
                 var chunk = group.chunks[chunkIdx];
                 if (!chunk.audio_url) { toast('⚠️ No audio for this chunk.', 'var(--yellow)'); return; }
-
                 ambCleanup();
-
                 var playerEl = document.getElementById('ambPlayer-' + dateKey);
                 if (playerEl) playerEl.style.display = '';
-
                 var audioEl = document.getElementById('ambAudio-' + dateKey);
                 if (!audioEl) return;
-
                 ambActiveAudio  = audioEl;
                 ambActiveDayKey = dateKey;
-
-                var labelEl = document.getElementById('ambPlayerLabel-' + dateKey);
-                var infoEl  = document.getElementById('ambChunkInfo-' + dateKey);
-                if (labelEl) labelEl.textContent = 'Playing chunk ' + (chunkIdx + 1) + ' of ' + group.chunks.length;
-                if (infoEl)  infoEl.textContent  = '🕐 ' + ambFmtTime(chunk.start_time) + ' — ⏱ ' + ambFmtDuration(chunk.duration_seconds);
-
+                var infoEl = document.getElementById('ambChunkInfo-' + dateKey);
+                if (infoEl) infoEl.textContent = '🕐 ' + ambFmtTime(chunk.start_time) + ' — ⏱ ' + ambFmtDuration(chunk.duration_seconds);
                 audioEl.src = chunk.audio_url;
                 audioEl.load();
-                audioEl.play().catch(function () {});
+                audioEl.play().catch(function(){});
             };
 
-            // ── Toggle chunk detail list ───────────────────────────────────────
-            window.__ambToggleChunks = function (dateKey) {
+            // ── FIX 2: Toggle Details panel (fixed CSS-vs-inline bug) ─────────
+            // Old code checked el.style.display which starts as '' (not 'none') even
+            // when CSS class hides the element. Fix: track open state via data attr.
+            window.__ambToggleChunks = function(dateKey) {
                 var el = document.getElementById('ambChunks-' + dateKey);
                 if (!el) return;
-                var isOpen = el.style.display !== 'none' && el.style.display !== '';
-                el.style.display = isOpen ? 'none' : '';
+                var isOpen = el.dataset.open === '1';
+                el.dataset.open      = isOpen ? '0' : '1';
+                el.style.display     = isOpen ? 'none' : 'block';
             };
 
-            // ── Download all chunks for a day ──────────────────────────────────
-            // Triggers one <a download> per chunk with a 300ms delay between each
-            // to avoid browser throttling / simultaneous download dialogs.
-            window.__ambDownloadDay = function (dateKey) {
-                var group = ambDayGroups.find(function (g) { return g.dateKey === dateKey; });
+            // ── FIX 5: Toggle day selection ───────────────────────────────────
+            window.__ambToggleSelect = function(dateKey, checked) {
+                if (checked) ambSelectedDays.add(dateKey);
+                else         ambSelectedDays.delete(dateKey);
+                var card = document.getElementById('ambCard-' + dateKey);
+                if (card) card.classList.toggle('amb-selected', checked);
+                ambUpdateBulkBar();
+            };
+
+            // ── FIX 5: Bulk download selected days ────────────────────────────
+            window.__ambBulkDownload = function() {
+                if (ambSelectedDays.size === 0) return;
+                ambSelectedDays.forEach(function(dk) { window.__ambDownloadDay(dk); });
+            };
+
+            // ── FIX 5: Bulk delete selected days ─────────────────────────────
+            window.__ambBulkDelete = function() {
+                if (ambSelectedDays.size === 0) return;
+                var days = Array.from(ambSelectedDays);
+                if (!confirm('Delete recordings for ' + days.length + ' day(s)? They will be moved to App Bin.')) return;
+                var now = Date.now(), updates = {};
+                days.forEach(function(dk) {
+                    var group = ambDayGroups.find(function(g){ return g.dateKey===dk; });
+                    if (!group) return;
+                    if (ambActiveDayKey === dk) ambCleanup();
+                    group.chunks.forEach(function(chunk) {
+                        updates['ambient_recordings/' + chunk._device_id + '/' + chunk.recId + '/deleted_at'] = now;
+                    });
+                });
+                update(ref(db), updates)
+                    .then(function(){ toast('🗑️ Selected days moved to App Bin.', 'var(--yellow)'); ambRender(); })
+                    .catch(function(e){ toast('❌ Delete failed: ' + e.message, 'var(--red)'); });
+            };
+
+            // ── FIX 3: Download as ONE merged file with proper filename ────────
+            window.__ambDownloadDay = function(dateKey) {
+                var group = ambDayGroups.find(function(g){ return g.dateKey===dateKey; });
                 if (!group) return;
+                var chunks = group.chunks.filter(function(c){ return !!c.audio_url; });
+                if (chunks.length === 0) { toast('⚠️ No audio available.', 'var(--yellow)'); return; }
 
-                var chunks = group.chunks.filter(function (c) { return !!c.audio_url; });
-                if (chunks.length === 0) { toast('⚠️ No audio available to download.', 'var(--yellow)'); return; }
+                // Build filename: "<Device Name> <DD-MM-YYYY> <StartTime> to <EndTime>.mp3"
+                var devInfo  = appDevicesData[ambCurrentDevice] || {};
+                var devName  = (devInfo.custom_name || devInfo.model || 'Device').replace(/[\/\\:*?"<>|]/g,'');
+                var dateStr  = ambFmtFileDate(chunks[0].start_time);
+                var startStr = ambFmtFileTime(chunks[0].start_time);
+                var endChunk = chunks[chunks.length - 1];
+                var endTime  = new Date(endChunk.start_time || 0);
+                if (!isNaN(endTime.getTime()) && endChunk.duration_seconds) {
+                    endTime = new Date(endTime.getTime() + endChunk.duration_seconds * 1000);
+                }
+                var endStr   = ambFmtFileTime(endTime.toISOString ? endTime.toISOString() : endChunk.start_time);
+                var filename = devName + ' ' + dateStr + ' ' + startStr + ' to ' + endStr + '.mp3';
 
-                toast('⬇️ Starting download for ' + chunks.length + ' chunk(s)…', 'var(--teal)');
+                // Re-use cached merged URL if available, otherwise merge now
+                if (ambMergedURLs[dateKey]) {
+                    var a = document.createElement('a');
+                    a.href = ambMergedURLs[dateKey]; a.download = filename;
+                    document.body.appendChild(a); a.click();
+                    setTimeout(function(){ document.body.removeChild(a); }, 200);
+                    return;
+                }
 
-                chunks.forEach(function (chunk, idx) {
-                    setTimeout(function () {
-                        var filename = 'ambient_' + group.dateKey + '_chunk' + String(idx + 1).padStart(2, '0') + '.m4a';
-                        var a = document.createElement('a');
-                        a.href     = chunk.audio_url;
-                        a.download = filename;
-                        a.target   = '_blank';
-                        document.body.appendChild(a);
-                        a.click();
-                        setTimeout(function () { document.body.removeChild(a); }, 200);
-                    }, idx * 350); // stagger by 350ms per chunk
+                ambMergeChunks(chunks).then(function(blobURL) {
+                    if (!blobURL) return;
+                    ambMergedURLs[dateKey] = blobURL;
+                    var a = document.createElement('a');
+                    a.href = blobURL; a.download = filename;
+                    document.body.appendChild(a); a.click();
+                    setTimeout(function(){ document.body.removeChild(a); }, 200);
+                    toast('✅ Downloaded: ' + filename, 'var(--green)');
                 });
             };
 
-            // ── Delete all chunks for a day (soft-delete via RTDB) ────────────
-            window.__ambDeleteDay = function (dateKey) {
-                var group = ambDayGroups.find(function (g) { return g.dateKey === dateKey; });
+            // ── Delete all chunks for a day (soft-delete — UNCHANGED) ─────────
+            window.__ambDeleteDay = function(dateKey) {
+                var group = ambDayGroups.find(function(g){ return g.dateKey===dateKey; });
                 if (!group || group.chunks.length === 0) return;
-
                 var confirmMsg = 'Delete all ' + group.chunks.length + ' chunk(s) for ' +
                     group.shortDate + '?\n\nThey will be moved to the App Bin and can be restored later.';
                 if (!confirm(confirmMsg)) return;
-
-                // Stop playback if this day is playing
                 if (ambActiveDayKey === dateKey) ambCleanup();
-
-                var now     = Date.now();
-                var updates = {};
-                group.chunks.forEach(function (chunk) {
+                var now=Date.now(), updates={};
+                group.chunks.forEach(function(chunk) {
                     updates['ambient_recordings/' + chunk._device_id + '/' + chunk.recId + '/deleted_at'] = now;
                 });
-
                 update(ref(db), updates)
-                    .then(function () {
-                        toast('🗑️ ' + group.chunks.length + ' chunk(s) moved to App Bin.', 'var(--yellow)');
-                        // Re-render; the deleted chunks will be filtered out
-                        ambRender();
-                    })
-                    .catch(function (e) {
-                        toast('❌ Delete failed: ' + e.message, 'var(--red)');
-                    });
+                    .then(function(){ toast('🗑️ ' + group.chunks.length + ' chunk(s) moved to App Bin.', 'var(--yellow)'); ambRender(); })
+                    .catch(function(e){ toast('❌ Delete failed: ' + e.message, 'var(--red)'); });
             };
 
-            // ── Entry point: called when admin opens "Recording" sub-view ──────
+            // ── Entry point ───────────────────────────────────────────────────
             function ambOpenForDevice(deviceId) {
                 ambCurrentDevice = deviceId;
                 ambCleanup();
                 ambSetState('loading');
-
-                // Data is already live in appRecordingsData (shared listener).
-                // Use a short timer to let the first render happen without blocking.
-                setTimeout(function () {
-                    ambRender();
-                }, 80);
+                setTimeout(function() { ambRender(); }, 80);
             }
-
-            // Make ambOpenForDevice accessible to __appShowSubView (same IIFE scope)
             window.__ambOpenForDevice = ambOpenForDevice;
 
-            // ── Re-render when recordings data updates (live listener hook) ────
-            // The outer onValue listener for call_recordings already calls
-            // buildRecordingsList + renderRecordingsList.  We piggyback here:
-            // if the ambient view is currently open, also re-render it.
-            var _origAttachAppListeners = window.__appBinSwitchTab; // just a sentinel
-            (function patchDataListener() {
-                // We need to re-render ambient view whenever appRecordingsData changes
-                // while the ambient sub-view is visible.
-                var origOnValue = window.__onValueHook; // may be undefined
-                // Simpler approach: patch ambOpenForDevice call via the data event
-                // already wired in attachAppListeners → onValue(call_recordings).
-                // Since ambRender reads appRecordingsData directly (outer var),
-                // we just need to call ambRender() when the view is open.
-                // The cleanest hook: override ambCleanup check per render cycle.
-                var _origRenderRecList = window.__ambRenderHook; // sentinel only
-                // Set a periodic sync while ambient view is visible
-                setInterval(function () {
-                    var ambView = document.getElementById('appSubViewAmbient');
-                    if (ambView && ambView.style.display !== 'none' && ambCurrentDevice) {
-                        // Only re-render if data changed (cheap since it reads an in-mem object)
-                        var newGroups = ambBuildGroups(ambCurrentDevice);
-                        if (newGroups.length !== ambDayGroups.length) {
-                            ambRender();
-                        }
-                    }
-                }, 5000); // poll every 5 seconds while view is open
-            })();
+            // ── Periodic re-render while view is open (live data sync) ────────
+            setInterval(function() {
+                var ambView = document.getElementById('appSubViewAmbient');
+                if (ambView && ambView.style.display !== 'none' && ambCurrentDevice) {
+                    var newGroups = ambBuildGroups(ambCurrentDevice);
+                    if (newGroups.length !== ambDayGroups.length) ambRender();
+                }
+            }, 5000);
 
         })(); // end Ambient Recording module
 
