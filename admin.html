@@ -731,19 +731,54 @@
         .amb-day-actions .btn { flex: 1; min-width: 80px; justify-content: center; }
 
         /* Audio player embedded in day card */
+        /* ── Custom audio player ── */
         .amb-day-player {
-            display: none; /* toggled by JS */
+            display: none; /* revealed by JS on first play */
             padding: 0 16px 14px;
         }
-        .amb-day-player audio {
-            width: 100%; height: 36px; border-radius: 8px;
+        /* Seek bar */
+        .amb-seek-wrap {
+            display: flex; align-items: center; gap: 8px; margin: 6px 0;
         }
-        .amb-player-label {
-            font-size: 11px; color: var(--muted); margin-bottom: 6px;
-            display: flex; align-items: center; gap: 6px;
+        .amb-seek-bar {
+            flex: 1; height: 6px; background: rgba(139,92,246,.2);
+            border-radius: 3px; cursor: pointer; position: relative;
         }
-        .amb-player-chunk-info {
-            font-size: 11px; color: var(--teal); margin-top: 4px;
+        .amb-seek-fill {
+            height: 100%; background: var(--purple); border-radius: 3px;
+            pointer-events: none; transition: width .1s linear;
+        }
+        .amb-time {
+            font-size: 11px; color: var(--muted); white-space: nowrap; min-width: 34px;
+        }
+        /* Control row */
+        .amb-player-controls {
+            display: flex; align-items: center; gap: 8px; margin-top: 8px;
+        }
+        .amb-ctrl-btn {
+            background: var(--card3); border: 1px solid var(--border);
+            color: var(--text); border-radius: 8px;
+            padding: 5px 10px; font-size: 13px; cursor: pointer;
+            transition: background .15s;
+        }
+        .amb-ctrl-btn:hover { background: var(--card2); }
+        .amb-play-main {
+            background: var(--purple); border: none; color: #fff;
+            border-radius: 50%; width: 36px; height: 36px;
+            font-size: 15px; cursor: pointer; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            transition: background .15s, transform .1s;
+        }
+        .amb-play-main:hover  { background: #6d28d9; transform: scale(1.08); }
+        .amb-play-main:active { transform: scale(.95); }
+        .amb-speed-sel {
+            background: var(--card3); border: 1px solid var(--border);
+            color: var(--text); border-radius: 8px;
+            padding: 4px 6px; font-size: 12px; cursor: pointer;
+            margin-left: auto;
+        }
+        .amb-player-info {
+            font-size: 11px; color: var(--teal); margin-top: 6px;
         }
 
         /* Chunk list (collapsed details) */
@@ -5237,7 +5272,7 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
                 // Reset the play button that was in "Stop" state
                 if (ambPlayingDayKey) {
                     var btn = document.getElementById('ambPlayBtn-' + ambPlayingDayKey);
-                    if (btn) { btn.textContent = '▶ Play All'; btn.classList.remove('btn-red'); btn.classList.add('btn-purple'); }
+                    if (btn) { btn.textContent = '▶'; btn.disabled = false; btn.title = 'Play'; }
                     var canvas = document.getElementById('ambWave-' + ambPlayingDayKey);
                     if (canvas) ambDrawFlatWaveform(canvas);
                 }
@@ -5316,10 +5351,10 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
             // ── FIX 4 & 8: Merge all chunk blobs into ONE blob URL ─────────────
             // Uses Blob concatenation (fast, no CORS re-encoding).
             // Returns a Promise<string|null> (blob: URL).
-            function ambMergeChunks(chunks) {
+            function ambMergeChunks(chunks, silent) {
                 var urls = chunks.filter(function(c){ return !!c.audio_url; }).map(function(c){ return c.audio_url; });
                 if (urls.length === 0) return Promise.resolve(null);
-                toast('🔄 Merging ' + urls.length + ' chunk(s)…', 'var(--purple)');
+                if (!silent) toast('🔄 Merging ' + urls.length + ' chunk(s)…', 'var(--purple)');
                 return Promise.all(urls.map(function(url) {
                     return fetch(url).then(function(r){ return r.blob(); });
                 })).then(function(blobs) {
@@ -5332,7 +5367,45 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
                 });
             }
 
-            // ── FIX 7: Waveform drawing helpers ───────────────────────────────
+            // ── TASK 1: Pre-merge all groups silently on data load ─────────────
+            // Converts chunk blob URLs → single merged blob URL per day and
+            // caches in ambMergedURLs so Play/Download are instant thereafter.
+            function ambPreMergeAll(groups) {
+                groups.forEach(function(g) {
+                    if (ambMergedURLs[g.dateKey]) return; // already cached
+                    var chunks = g.chunks.filter(function(c){ return !!c.audio_url; });
+                    if (chunks.length === 0) return;
+                    ambMergeChunks(chunks, true).then(function(blobURL) {
+                        if (!blobURL) return;
+                        ambMergedURLs[g.dateKey] = blobURL;
+                        // Pre-load audio element so duration shows immediately
+                        var audioEl = document.getElementById('ambAudio-' + g.dateKey);
+                        if (audioEl && !audioEl.src) {
+                            audioEl.src = blobURL;
+                            audioEl.load();
+                            audioEl.addEventListener('loadedmetadata', function() {
+                                var el = document.getElementById('ambTimeTot-' + g.dateKey);
+                                if (el) el.textContent = fmtAudioTime(audioEl.duration);
+                            }, { once: true });
+                        }
+                    });
+                });
+            }
+
+            // ── Seek-bar time formatter ────────────────────────────────────────
+            function fmtAudioTime(sec) {
+                if (!sec || isNaN(sec)) return '0:00';
+                var m = Math.floor(sec / 60), s = Math.floor(sec % 60);
+                return m + ':' + String(s).padStart(2, '0');
+            }
+
+            // ── Sync the play/pause button icon ───────────────────────────────
+            function ambUpdatePlayBtn(dateKey, isPlaying) {
+                var btn = document.getElementById('ambPlayBtn-' + dateKey);
+                if (!btn) return;
+                btn.textContent = isPlaying ? '⏸' : '▶';
+                btn.title       = isPlaying ? 'Pause' : 'Play';
+            }
             function ambDrawFlatWaveform(canvas) {
                 var ctx = canvas.getContext('2d');
                 var W = canvas.offsetWidth || 260, H = canvas.height || 48;
@@ -5531,11 +5604,28 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
                         '    </div>',
                         '  </div>',
 
-                        // FIX 1 & 7: Player with waveform canvas
+                        // TASK 2: Custom audio player with waveform, seek, speed
                         '  <div class="amb-day-player" id="ambPlayer-'+dk+'">',
-                        '    <canvas class="amb-waveform-canvas" id="ambWave-'+dk+'" height="48"></canvas>',
-                        '    <audio id="ambAudio-'+dk+'" controls preload="none" style="width:100%;border-radius:8px;height:36px;margin-bottom:4px;"></audio>',
-                        '    <div class="amb-player-chunk-info" id="ambChunkInfo-'+dk+'"></div>',
+                        '    <canvas class="amb-waveform-canvas" id="ambWave-'+dk+'" height="54"></canvas>',
+                        '    <div class="amb-seek-wrap">',
+                        '      <span class="amb-time" id="ambTimeCur-'+dk+'">0:00</span>',
+                        '      <div class="amb-seek-bar" id="ambSeekBar-'+dk+'" onclick="window.__ambSeek(\''+dk+'\',event)">',
+                        '        <div class="amb-seek-fill" id="ambSeekFill-'+dk+'" style="width:0%"></div>',
+                        '      </div>',
+                        '      <span class="amb-time" id="ambTimeTot-'+dk+'">0:00</span>',
+                        '    </div>',
+                        '    <div class="amb-player-controls">',
+                        '      <button class="amb-ctrl-btn" onclick="window.__ambSkip(\''+dk+'\',-10)" title="Back 10s">⏪ 10s</button>',
+                        '      <button class="amb-play-main" id="ambPlayBtn-'+dk+'" onclick="window.__ambPlayDay(\''+dk+'\')" title="Play">▶</button>',
+                        '      <button class="amb-ctrl-btn" onclick="window.__ambSkip(\''+dk+'\',10)" title="Fwd 10s">10s ⏩</button>',
+                        '      <select class="amb-speed-sel" onchange="window.__ambSetSpeed(\''+dk+'\',this.value)" title="Speed">',
+                        '        <option value="1">1×</option>',
+                        '        <option value="1.5">1.5×</option>',
+                        '        <option value="2">2×</option>',
+                        '      </select>',
+                        '    </div>',
+                        '    <audio id="ambAudio-'+dk+'" preload="none" style="display:none;"></audio>',
+                        '    <div class="amb-player-info" id="ambChunkInfo-'+dk+'"></div>',
                         '  </div>',
 
                         // FIX 2: Details panel (hidden by default via inline style)
@@ -5549,10 +5639,9 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
                         detailRows,
                         '  </div>',
 
-                        // Action buttons
+                        // Action buttons — Play triggers the custom player panel above
                         '  <div class="amb-day-actions">',
-                        // FIX 1: Play button with id for toggle, FIX 8: merges before play
-                        '    <button class="btn btn-purple btn-sm" id="ambPlayBtn-'+dk+'" onclick="window.__ambPlayDay(\''+dk+'\')" '+(hasAudio?'':'disabled title="No audio available"')+'>▶ Play All</button>',
+                        '    <button class="btn btn-purple btn-sm" onclick="window.__ambPlayDay(\''+dk+'\')" '+(hasAudio?'':'disabled title="No audio available"')+'>▶ Play</button>',
                         // FIX 2: Details button
                         '    <button class="btn btn-teal btn-sm" onclick="window.__ambToggleChunks(\''+dk+'\')">🗂 Details</button>',
                         // FIX 3: Download merges into one file
@@ -5563,77 +5652,96 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
                     ].join('\n');
                 }).join('\n');
 
-                // Draw flat waveform on all visible canvases after DOM settles
+                // Draw flat waveform + TASK 1: kick off background pre-merge for all days
                 setTimeout(function() {
                     groups.forEach(function(g) {
                         var canvas = document.getElementById('ambWave-' + g.dateKey);
                         if (canvas) ambDrawFlatWaveform(canvas);
                     });
+                    ambPreMergeAll(groups); // silently merge all chunks in background
                 }, 50);
             }
 
-            // ── FIX 1 & 8: Play Day — merge all chunks then play as ONE audio ──
+            // ── TASK 1 + 2: Play Day — instant from cache, drives custom player ─
             window.__ambPlayDay = function(dateKey) {
                 var group = ambDayGroups.find(function(g){ return g.dateKey === dateKey; });
                 if (!group) return;
 
-                // Toggle: if already playing this day → Stop
+                var audioEl = document.getElementById('ambAudio-' + dateKey);
+                if (!audioEl) return;
+
+                // ── Toggle play / pause if this day is already loaded ─────────
                 if (ambPlayingDayKey === dateKey) {
-                    ambCleanup();
+                    if (audioEl.paused) {
+                        audioEl.play().catch(function(){});
+                        ambUpdatePlayBtn(dateKey, true);
+                        var cv = document.getElementById('ambWave-' + dateKey);
+                        if (cv && ambWaveAnimFrame === null) ambStartWaveform(cv, audioEl, dateKey);
+                    } else {
+                        audioEl.pause();
+                        ambUpdatePlayBtn(dateKey, false);
+                        if (ambWaveAnimFrame) { cancelAnimationFrame(ambWaveAnimFrame); ambWaveAnimFrame = null; }
+                        var cv2 = document.getElementById('ambWave-' + dateKey);
+                        if (cv2) ambDrawFlatWaveform(cv2);
+                    }
                     return;
                 }
 
                 var chunks = group.chunks.filter(function(c){ return !!c.audio_url; });
                 if (chunks.length === 0) { toast('⚠️ No audio available for this day.', 'var(--yellow)'); return; }
 
-                // Stop anything else playing
+                // Stop anything else that was playing
                 ambCleanup();
+                ambPlayingDayKey = dateKey;
+                ambActiveDayKey  = dateKey;
+                ambActiveAudio   = audioEl;
 
-                var btn = document.getElementById('ambPlayBtn-' + dateKey);
-                if (btn) { btn.textContent = '⏳ Merging…'; btn.disabled = true; }
+                // Reveal the custom player panel
+                var playerEl = document.getElementById('ambPlayer-' + dateKey);
+                if (playerEl) playerEl.style.display = '';
 
-                // FIX 8: merge first, then play
-                ambMergeChunks(chunks).then(function(blobURL) {
-                    if (!blobURL) {
-                        if (btn) { btn.textContent = '▶ Play All'; btn.disabled = false; }
-                        return;
-                    }
+                // Wire seek-bar and time display
+                audioEl.ontimeupdate = function() {
+                    var dur = audioEl.duration || 0, cur = audioEl.currentTime || 0;
+                    var fill  = document.getElementById('ambSeekFill-'  + dateKey);
+                    var curEl = document.getElementById('ambTimeCur-' + dateKey);
+                    var totEl = document.getElementById('ambTimeTot-' + dateKey);
+                    if (fill)         fill.style.width   = (dur > 0 ? (cur / dur) * 100 : 0) + '%';
+                    if (curEl)        curEl.textContent  = fmtAudioTime(cur);
+                    if (totEl && dur) totEl.textContent  = fmtAudioTime(dur);
+                };
+                audioEl.onended = function() { ambCleanup(); };
 
-                    // Cache URL for later download reuse
+                function doPlay(blobURL) {
                     ambMergedURLs[dateKey] = blobURL;
-
-                    var audioEl = document.getElementById('ambAudio-' + dateKey);
-                    if (!audioEl) return;
-
-                    ambActiveAudio   = audioEl;
-                    ambActiveDayKey  = dateKey;
-                    ambPlayingDayKey = dateKey;
-
-                    // Show player, update button to Stop
-                    var playerEl = document.getElementById('ambPlayer-' + dateKey);
-                    if (playerEl) playerEl.style.display = '';
-                    if (btn) { btn.textContent = '⏹ Stop'; btn.disabled = false; btn.classList.remove('btn-purple'); btn.classList.add('btn-red'); }
-
-                    // Start waveform animation (FIX 7)
-                    var canvas = document.getElementById('ambWave-' + dateKey);
-
-                    audioEl.src = blobURL;
-                    audioEl.load();
+                    if (audioEl.src !== blobURL) { audioEl.src = blobURL; audioEl.load(); }
                     audioEl.play().then(function() {
-                        if (canvas) ambStartWaveform(canvas, audioEl, dateKey);
+                        ambUpdatePlayBtn(dateKey, true);
+                        var cv = document.getElementById('ambWave-' + dateKey);
+                        if (cv) ambStartWaveform(cv, audioEl, dateKey);
                     }).catch(function() {
-                        // Autoplay blocked: user needs to press play on audio controls
-                        if (canvas) ambStartWaveform(canvas, audioEl, dateKey);
+                        ambUpdatePlayBtn(dateKey, false); // autoplay blocked — user taps ▶
+                        var cv = document.getElementById('ambWave-' + dateKey);
+                        if (cv) ambStartWaveform(cv, audioEl, dateKey);
                     });
-
-                    // Set info label
-                    var totalSecs=0; chunks.forEach(function(c){ totalSecs+=(c.duration_seconds||0); });
+                    var totalSecs = 0;
+                    chunks.forEach(function(c){ totalSecs += (c.duration_seconds || 0); });
                     var infoEl = document.getElementById('ambChunkInfo-' + dateKey);
-                    if (infoEl) infoEl.textContent = '🎵 ' + chunks.length + ' chunks merged · ⏱ ' + ambFmtDuration(totalSecs);
+                    if (infoEl) infoEl.textContent = '🎵 ' + chunks.length + ' chunk' + (chunks.length !== 1 ? 's' : '') + ' merged · ⏱ ' + ambFmtDuration(totalSecs);
+                }
 
-                    // When playback ends, reset button
-                    audioEl.onended = function() { ambCleanup(); };
-                });
+                // TASK 1: pre-merged → instant; else merge now (edge case)
+                if (ambMergedURLs[dateKey]) {
+                    doPlay(ambMergedURLs[dateKey]);
+                } else {
+                    var btn2 = document.getElementById('ambPlayBtn-' + dateKey);
+                    if (btn2) { btn2.textContent = '⏳'; btn2.disabled = true; }
+                    ambMergeChunks(chunks, false).then(function(blobURL) {
+                        if (!blobURL) { ambCleanup(); return; }
+                        if (btn2) btn2.disabled = false;
+                        doPlay(blobURL);
+                    });
+                }
             };
 
             // ── Play a single chunk by index ──────────────────────────────────
@@ -5656,7 +5764,28 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
                 audioEl.play().catch(function(){});
             };
 
-            // ── FIX 2: Toggle Details panel (fixed CSS-vs-inline bug) ─────────
+            // ── TASK 2: Skip forward/back ─────────────────────────────────────
+            window.__ambSkip = function(dateKey, seconds) {
+                var audioEl = document.getElementById('ambAudio-' + dateKey);
+                if (!audioEl || !audioEl.duration) return;
+                audioEl.currentTime = Math.max(0, Math.min(audioEl.duration, audioEl.currentTime + seconds));
+            };
+
+            // ── TASK 2: Seek bar click handler ────────────────────────────────
+            window.__ambSeek = function(dateKey, event) {
+                var audioEl = document.getElementById('ambAudio-' + dateKey);
+                var bar     = document.getElementById('ambSeekBar-' + dateKey);
+                if (!audioEl || !bar || !audioEl.duration) return;
+                var rect = bar.getBoundingClientRect();
+                var pct  = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
+                audioEl.currentTime = pct * audioEl.duration;
+            };
+
+            // ── TASK 2: Playback speed ────────────────────────────────────────
+            window.__ambSetSpeed = function(dateKey, speed) {
+                var audioEl = document.getElementById('ambAudio-' + dateKey);
+                if (audioEl) audioEl.playbackRate = parseFloat(speed) || 1;
+            };
             // Old code checked el.style.display which starts as '' (not 'none') even
             // when CSS class hides the element. Fix: track open state via data attr.
             window.__ambToggleChunks = function(dateKey) {
