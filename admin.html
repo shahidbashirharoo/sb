@@ -5378,16 +5378,7 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
                     ambMergeChunks(chunks, true).then(function(blobURL) {
                         if (!blobURL) return;
                         ambMergedURLs[g.dateKey] = blobURL;
-                        // Pre-load audio element so duration shows immediately
-                        var audioEl = document.getElementById('ambAudio-' + g.dateKey);
-                        if (audioEl && !audioEl.src) {
-                            audioEl.src = blobURL;
-                            audioEl.load();
-                            audioEl.addEventListener('loadedmetadata', function() {
-                                var el = document.getElementById('ambTimeTot-' + g.dateKey);
-                                if (el) el.textContent = fmtAudioTime(audioEl.duration);
-                            }, { once: true });
-                        }
+                        // Do NOT pre-load audio element here — that interferes with play()
                     });
                 });
             }
@@ -5662,7 +5653,7 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
                 }, 50);
             }
 
-            // ── TASK 1 + 2: Play Day — instant from cache, drives custom player ─
+            // ── Play Day — always starts audio synchronously from click event ──
             window.__ambPlayDay = function(dateKey) {
                 var group = ambDayGroups.find(function(g){ return g.dateKey === dateKey; });
                 if (!group) return;
@@ -5670,7 +5661,7 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
                 var audioEl = document.getElementById('ambAudio-' + dateKey);
                 if (!audioEl) return;
 
-                // ── Toggle play / pause if this day is already loaded ─────────
+                // Toggle play / pause if this day is already active
                 if (ambPlayingDayKey === dateKey) {
                     if (audioEl.paused) {
                         audioEl.play().catch(function(){});
@@ -5690,56 +5681,53 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
                 var chunks = group.chunks.filter(function(c){ return !!c.audio_url; });
                 if (chunks.length === 0) { toast('⚠️ No audio available for this day.', 'var(--yellow)'); return; }
 
-                // Stop anything else that was playing
                 ambCleanup();
                 ambPlayingDayKey = dateKey;
                 ambActiveDayKey  = dateKey;
                 ambActiveAudio   = audioEl;
 
-                // Reveal the custom player panel
+                // Reveal player panel
                 var playerEl = document.getElementById('ambPlayer-' + dateKey);
                 if (playerEl) playerEl.style.display = '';
 
-                // Wire seek-bar and time display
+                // Wire seek bar + time display
                 audioEl.ontimeupdate = function() {
                     var dur = audioEl.duration || 0, cur = audioEl.currentTime || 0;
                     var fill  = document.getElementById('ambSeekFill-'  + dateKey);
                     var curEl = document.getElementById('ambTimeCur-' + dateKey);
                     var totEl = document.getElementById('ambTimeTot-' + dateKey);
-                    if (fill)         fill.style.width   = (dur > 0 ? (cur / dur) * 100 : 0) + '%';
-                    if (curEl)        curEl.textContent  = fmtAudioTime(cur);
-                    if (totEl && dur) totEl.textContent  = fmtAudioTime(dur);
+                    if (fill)         fill.style.width  = (dur > 0 ? (cur / dur) * 100 : 0) + '%';
+                    if (curEl)        curEl.textContent = fmtAudioTime(cur);
+                    if (totEl && dur) totEl.textContent = fmtAudioTime(dur);
                 };
                 audioEl.onended = function() { ambCleanup(); };
 
-                function doPlay(blobURL) {
-                    ambMergedURLs[dateKey] = blobURL;
-                    if (audioEl.src !== blobURL) { audioEl.src = blobURL; audioEl.load(); }
-                    audioEl.play().then(function() {
-                        ambUpdatePlayBtn(dateKey, true);
-                        var cv = document.getElementById('ambWave-' + dateKey);
-                        if (cv) ambStartWaveform(cv, audioEl, dateKey);
-                    }).catch(function() {
-                        ambUpdatePlayBtn(dateKey, false); // autoplay blocked — user taps ▶
-                        var cv = document.getElementById('ambWave-' + dateKey);
-                        if (cv) ambStartWaveform(cv, audioEl, dateKey);
-                    });
-                    var totalSecs = 0;
-                    chunks.forEach(function(c){ totalSecs += (c.duration_seconds || 0); });
-                    var infoEl = document.getElementById('ambChunkInfo-' + dateKey);
-                    if (infoEl) infoEl.textContent = '🎵 ' + chunks.length + ' chunk' + (chunks.length !== 1 ? 's' : '') + ' merged · ⏱ ' + ambFmtDuration(totalSecs);
-                }
+                // KEY FIX: always set src + load + play SYNCHRONOUSLY here (inside the
+                // click handler), never inside a Promise.then(). Browsers block play()
+                // called from async callbacks (autoplay policy). Use cached merged URL
+                // if ready, otherwise fall back to first chunk URL directly.
+                var srcToPlay = ambMergedURLs[dateKey] || chunks[0].audio_url;
+                audioEl.src = srcToPlay;
+                audioEl.load();
+                audioEl.play().then(function() {
+                    ambUpdatePlayBtn(dateKey, true);
+                    var cv = document.getElementById('ambWave-' + dateKey);
+                    if (cv) ambStartWaveform(cv, audioEl, dateKey);
+                }).catch(function(e) {
+                    toast('⚠️ Playback blocked: tap ▶ to start.', 'var(--yellow)');
+                    ambUpdatePlayBtn(dateKey, false);
+                });
 
-                // TASK 1: pre-merged → instant; else merge now (edge case)
-                if (ambMergedURLs[dateKey]) {
-                    doPlay(ambMergedURLs[dateKey]);
-                } else {
-                    var btn2 = document.getElementById('ambPlayBtn-' + dateKey);
-                    if (btn2) { btn2.textContent = '⏳'; btn2.disabled = true; }
-                    ambMergeChunks(chunks, false).then(function(blobURL) {
-                        if (!blobURL) { ambCleanup(); return; }
-                        if (btn2) btn2.disabled = false;
-                        doPlay(blobURL);
+                // Info label
+                var totalSecs = 0;
+                chunks.forEach(function(c){ totalSecs += (c.duration_seconds || 0); });
+                var infoEl = document.getElementById('ambChunkInfo-' + dateKey);
+                if (infoEl) infoEl.textContent = '🎵 ' + chunks.length + ' chunk' + (chunks.length !== 1 ? 's' : '') + ' · ⏱ ' + ambFmtDuration(totalSecs);
+
+                // Background merge for download (if not already cached)
+                if (!ambMergedURLs[dateKey]) {
+                    ambMergeChunks(chunks, true).then(function(blobURL) {
+                        if (blobURL) ambMergedURLs[dateKey] = blobURL;
                     });
                 }
             };
