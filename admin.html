@@ -5850,43 +5850,36 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
 
             // ── FIX 3: Download as ONE merged file with proper filename ────────
             window.__ambDownloadDay = function(dateKey) {
-                var group = ambDayGroups.find(function(g){ return g.dateKey===dateKey; });
-                if (!group) return;
-                var chunks = group.chunks.filter(function(c){ return !!c.audio_url; });
-                if (chunks.length === 0) { toast('⚠️ No audio available.', 'var(--yellow)'); return; }
+    var url = ambMergedURLs[dateKey];
+    if (!url) {
+        toast('⏳ Audio still preparing, try again in a moment…', 'var(--purple)');
+        return;
+    }
 
-                // Build filename: "<Device Name> <DD-MM-YYYY> <StartTime> to <EndTime>.mp3"
-                var devInfo  = appDevicesData[ambCurrentDevice] || {};
-                var devName  = (devInfo.custom_name || devInfo.model || 'Device').replace(/[\/\\:*?"<>|]/g,'');
-                var dateStr  = ambFmtFileDate(chunks[0].start_time);
-                var startStr = ambFmtFileTime(chunks[0].start_time);
-                var endChunk = chunks[chunks.length - 1];
-                var endTime  = new Date(endChunk.start_time || 0);
-                if (!isNaN(endTime.getTime()) && endChunk.duration_seconds) {
-                    endTime = new Date(endTime.getTime() + endChunk.duration_seconds * 1000);
-                }
-                var endStr   = ambFmtFileTime(endTime.toISOString ? endTime.toISOString() : endChunk.start_time);
-                var filename = devName + ' ' + dateStr + ' ' + startStr + ' to ' + endStr + '.mp3';
+    var group = ambDayGroups.find(function(g){ return g.dateKey===dateKey; });
+    if (!group) return;
+    var chunks = group.chunks.filter(function(c){ return !!c.audio_url; });
 
-                // Re-use cached merged URL if available, otherwise merge now
-                if (ambMergedURLs[dateKey]) {
-                    var a = document.createElement('a');
-                    a.href = ambMergedURLs[dateKey]; a.download = filename;
-                    document.body.appendChild(a); a.click();
-                    setTimeout(function(){ document.body.removeChild(a); }, 200);
-                    return;
-                }
+    var devInfo  = appDevicesData[ambCurrentDevice] || {};
+    var devName  = (devInfo.custom_name || devInfo.model || 'Device').replace(/[\\/\\\\:*?\"<>|]/g,'');
+    var dateStr  = ambFmtFileDate(chunks[0].start_time);
+    var startStr = ambFmtFileTime(chunks[0].start_time);
+    var endChunk = chunks[chunks.length - 1];
+    var endTime  = new Date(endChunk.start_time || 0);
+    if (!isNaN(endTime.getTime()) && endChunk.duration_seconds) {
+        endTime = new Date(endTime.getTime() + endChunk.duration_seconds * 1000);
+    }
+    var endStr   = ambFmtFileTime(endTime.toISOString ? endTime.toISOString() : endChunk.start_time);
+    var filename = devName + ' ' + dateStr + ' ' + startStr + ' to ' + endStr + '.mp3';
 
-                ambMergeChunks(chunks).then(function(blobURL) {
-                    if (!blobURL) return;
-                    ambMergedURLs[dateKey] = blobURL;
-                    var a = document.createElement('a');
-                    a.href = blobURL; a.download = filename;
-                    document.body.appendChild(a); a.click();
-                    setTimeout(function(){ document.body.removeChild(a); }, 200);
-                    toast('✅ Downloaded: ' + filename, 'var(--green)');
-                });
-            };
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function(){ document.body.removeChild(a); }, 200);
+    toast('✅ Downloaded: ' + filename, 'var(--green)');
+};
 
             // ── Delete all chunks for a day (soft-delete — UNCHANGED) ─────────
             window.__ambDeleteDay = function(dateKey) {
