@@ -110,6 +110,74 @@
         .topbar-left h2 { font-size: 16px; font-weight: 700; }
         .live-dot { width: 8px; height: 8px; background: var(--green); border-radius: 50%; animation: pulse 2s infinite; }
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+        /* ══════════════════════════════════════════════════
+           SKELETON / SHIMMER — Google-Photos-style loading
+           Used by all three sub-modules during initial load.
+           shimmer animation moves a gradient stripe L→R.
+        ══════════════════════════════════════════════════ */
+        @keyframes shimmer {
+            0%   { background-position: -600px 0; }
+            100% { background-position:  600px 0; }
+        }
+        .skel {
+            background: linear-gradient(90deg,
+                var(--card2) 25%, var(--card3) 50%, var(--card2) 75%);
+            background-size: 600px 100%;
+            animation: shimmer 1.4s infinite linear;
+            border-radius: 6px;
+        }
+        .skel-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+        }
+        .skel-line  { height: 13px; margin-bottom: 8px; }
+        .skel-short { width: 40%; }
+        .skel-med   { width: 65%; }
+        .skel-full  { width: 100%; }
+        .skel-thin  { height: 10px; }
+
+        /* ── Progress bar (percentage loading indicator) ──
+           Shows beneath the section header during load.
+           Width is driven by JS: el.style.width = pct+'%'  */
+        .load-progress-wrap {
+            height: 3px;
+            background: var(--border);
+            border-radius: 2px;
+            margin: 0 0 14px;
+            overflow: hidden;
+            display: none; /* shown by JS when loading */
+        }
+        .load-progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--primary), var(--teal));
+            border-radius: 2px;
+            transition: width 0.25s ease;
+        }
+        .load-pct-label {
+            font-size: 11px;
+            color: var(--muted);
+            text-align: right;
+            margin-top: -10px;
+            margin-bottom: 10px;
+            display: none;
+        }
+
+        /* ── IndexedDB cache badge (shows "From cache" on instant load) ── */
+        .cache-badge {
+            display: inline-flex; align-items: center; gap: 4px;
+            font-size: 10px; font-weight: 700;
+            color: var(--teal);
+            background: rgba(6,182,212,0.12);
+            border: 1px solid rgba(6,182,212,0.3);
+            padding: 2px 7px; border-radius: 8px;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
         .topbar-right { display: flex; gap: 8px; flex-wrap: wrap; }
         .content { padding: 22px 24px; flex: 1; }
         .panel { display: none; }
@@ -1431,6 +1499,17 @@
                                     <input type="checkbox" id="appRecSelectAll"> Select All
                                 </label>
                             </div>
+                            <!-- Progress bar for Call Recordings initial load -->
+                            <div class="load-progress-wrap" id="appRecProgressWrap">
+                                <div class="load-progress-bar" id="appRecProgressBar"></div>
+                            </div>
+                            <div class="load-pct-label" id="appRecProgressLabel"></div>
+                            <!-- Skeleton cards shown immediately while recordings load -->
+                            <div id="appRecSkeleton" style="display:none;">
+                                <div class="skel-card"><div class="skel skel-line skel-short" style="margin-bottom:8px;"></div><div class="skel skel-line skel-med"></div><div class="skel skel-line skel-thin skel-full" style="margin-top:8px;"></div></div>
+                                <div class="skel-card"><div class="skel skel-line skel-short" style="margin-bottom:8px;"></div><div class="skel skel-line skel-med"></div><div class="skel skel-line skel-thin skel-full" style="margin-top:8px;"></div></div>
+                                <div class="skel-card"><div class="skel skel-line skel-short" style="margin-bottom:8px;"></div><div class="skel skel-line skel-full"></div></div>
+                            </div>
                             <div id="appRecordingsList"></div>
                             <div id="appNoRecMsg" style="display:none;text-align:center;padding:40px 0;color:var(--muted);">
                                 <div style="font-size:36px;margin-bottom:10px;">🎙️</div>
@@ -1487,11 +1566,33 @@
 
                             <!-- Timeline states -->
                             <div id="appTlContent">
-                                <!-- Loading -->
-                                <div class="dtl-placeholder" id="appTlLoading">
-                                    <div class="dtl-placeholder-icon">⏳</div>
-                                    <div class="dtl-placeholder-title">Loading Timeline…</div>
-                                    <div class="dtl-placeholder-sub">Connecting to real-time database.</div>
+                                <!-- Progress bar (hidden until loading starts) -->
+                                <div class="load-progress-wrap" id="appTlProgressWrap">
+                                    <div class="load-progress-bar" id="appTlProgressBar"></div>
+                                </div>
+                                <div class="load-pct-label" id="appTlProgressLabel"></div>
+
+                                <!-- Skeleton loading cards (shown immediately on click) -->
+                                <div id="appTlLoading" style="display:none;">
+                                    <div class="skel-card">
+                                        <div class="skel skel-line skel-short" style="margin-bottom:10px;"></div>
+                                        <div class="skel skel-line skel-med"></div>
+                                        <div class="skel skel-line skel-thin skel-full"></div>
+                                    </div>
+                                    <div class="skel-card">
+                                        <div class="skel skel-line skel-short" style="margin-bottom:10px;"></div>
+                                        <div class="skel skel-line skel-med"></div>
+                                        <div class="skel skel-line skel-thin skel-full"></div>
+                                    </div>
+                                    <div class="skel-card">
+                                        <div class="skel skel-line skel-short" style="margin-bottom:10px;"></div>
+                                        <div class="skel skel-line skel-med"></div>
+                                        <div class="skel skel-line skel-thin skel-full"></div>
+                                    </div>
+                                    <div class="skel-card">
+                                        <div class="skel skel-line skel-short" style="margin-bottom:10px;"></div>
+                                        <div class="skel skel-line skel-full"></div>
+                                    </div>
                                 </div>
                                 <!-- Empty -->
                                 <div class="dtl-empty" id="appTlEmpty" style="display:none;">
@@ -1546,10 +1647,46 @@
                                 </div>
                             </div>
 
-                            <!-- Loading state -->
-                            <div id="appAmbLoading" style="text-align:center;padding:48px 0;color:var(--muted);">
-                                <div style="font-size:36px;margin-bottom:10px;">⏳</div>
-                                <div style="font-size:13px;font-weight:600;">Loading recordings…</div>
+                            <!-- Progress bar -->
+                            <div class="load-progress-wrap" id="appAmbProgressWrap">
+                                <div class="load-progress-bar" id="appAmbProgressBar"></div>
+                            </div>
+                            <div class="load-pct-label" id="appAmbProgressLabel"></div>
+
+                            <!-- Skeleton loading state (shown immediately on click) -->
+                            <div id="appAmbLoading" style="display:none;">
+                                <div class="skel-card">
+                                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                                        <div class="skel" style="width:38px;height:38px;border-radius:50%;flex-shrink:0;"></div>
+                                        <div style="flex:1;">
+                                            <div class="skel skel-line skel-med" style="margin-bottom:6px;"></div>
+                                            <div class="skel skel-line skel-thin skel-short"></div>
+                                        </div>
+                                    </div>
+                                    <div class="skel skel-line skel-full" style="height:8px;margin-bottom:5px;"></div>
+                                    <div class="skel skel-line skel-med" style="height:8px;"></div>
+                                </div>
+                                <div class="skel-card">
+                                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                                        <div class="skel" style="width:38px;height:38px;border-radius:50%;flex-shrink:0;"></div>
+                                        <div style="flex:1;">
+                                            <div class="skel skel-line skel-full" style="margin-bottom:6px;"></div>
+                                            <div class="skel skel-line skel-thin skel-short"></div>
+                                        </div>
+                                    </div>
+                                    <div class="skel skel-line skel-full" style="height:8px;margin-bottom:5px;"></div>
+                                    <div class="skel skel-line skel-short" style="height:8px;"></div>
+                                </div>
+                                <div class="skel-card">
+                                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                                        <div class="skel" style="width:38px;height:38px;border-radius:50%;flex-shrink:0;"></div>
+                                        <div style="flex:1;">
+                                            <div class="skel skel-line skel-med" style="margin-bottom:6px;"></div>
+                                            <div class="skel skel-line skel-thin skel-short"></div>
+                                        </div>
+                                    </div>
+                                    <div class="skel skel-line skel-full" style="height:8px;"></div>
+                                </div>
                             </div>
 
                             <!-- Empty state -->
@@ -1854,6 +1991,116 @@
         "firebase-auth":     "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js"
     }
 }
+</script>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     IndexedDB PERSISTENCE LAYER
+     ────────────────────────────────────────────────────────────────────
+     Provides durable, cross-session caching for the three sub-modules:
+       • call_recordings   per device  (store: 'call_recs')
+       • ambient_recordings per device (store: 'amb_recs')
+       • device_timeline   per device  (store: 'tl_stays')
+
+     API (window.AppDB):
+       AppDB.getDevice(store, deviceId)      → cached object or null
+       AppDB.putDevice(store, deviceId, data)→ persists to IDB
+       AppDB.getAll(store)                   → {deviceId → data}
+       AppDB.clearDevice(store, deviceId)    → removes one device entry
+       AppDB.clear(store)                    → wipes whole store
+
+     Data format per entry: { id: deviceId, data: { ...records }, ts: Date.now() }
+     TTL: 24 hours — stale entries cause a re-fetch, not a blank screen.
+     The cache is a supplement: if IDB fails, Firebase listeners fill the gap.
+════════════════════════════════════════════════════════════════════ -->
+<script>
+(function () {
+    var DB_NAME    = 'AppDeviceCache';
+    var DB_VERSION = 2;
+    var STORES     = ['call_recs', 'amb_recs', 'tl_stays'];
+    var TTL_MS     = 24 * 60 * 60 * 1000; // 24 hours
+
+    var _db = null;
+
+    function openDB() {
+        if (_db) return Promise.resolve(_db);
+        return new Promise(function (resolve, reject) {
+            var req = indexedDB.open(DB_NAME, DB_VERSION);
+            req.onupgradeneeded = function (e) {
+                var db = e.target.result;
+                STORES.forEach(function (name) {
+                    if (!db.objectStoreNames.contains(name)) {
+                        db.createObjectStore(name, { keyPath: 'id' });
+                    }
+                });
+            };
+            req.onsuccess = function (e) { _db = e.target.result; resolve(_db); };
+            req.onerror   = function ()  { reject(req.error); };
+        });
+    }
+
+    function tx(storeName, mode, fn) {
+        return openDB().then(function (db) {
+            return new Promise(function (resolve, reject) {
+                var t   = db.transaction(storeName, mode);
+                var st  = t.objectStore(storeName);
+                var req = fn(st);
+                req.onsuccess = function () { resolve(req.result); };
+                req.onerror   = function () { reject(req.error); };
+            });
+        });
+    }
+
+    window.AppDB = {
+        // Returns cached data for a device, or null if missing/stale
+        getDevice: function (store, deviceId) {
+            return tx(store, 'readonly', function (st) { return st.get(deviceId); })
+                .then(function (row) {
+                    if (!row) return null;
+                    if (Date.now() - row.ts > TTL_MS) return null; // stale
+                    return row.data;
+                })
+                .catch(function () { return null; });
+        },
+
+        // Persists data for a device
+        putDevice: function (store, deviceId, data) {
+            return tx(store, 'readwrite', function (st) {
+                return st.put({ id: deviceId, data: data, ts: Date.now() });
+            }).catch(function () {});
+        },
+
+        // Returns all cached entries as { deviceId → data }
+        getAll: function (store) {
+            return openDB().then(function (db) {
+                return new Promise(function (resolve) {
+                    var t    = db.transaction(store, 'readonly');
+                    var st   = t.objectStore(store);
+                    var req  = st.getAll();
+                    req.onsuccess = function () {
+                        var out = {}, now = Date.now();
+                        (req.result || []).forEach(function (row) {
+                            if (now - row.ts <= TTL_MS) out[row.id] = row.data;
+                        });
+                        resolve(out);
+                    };
+                    req.onerror = function () { resolve({}); };
+                });
+            }).catch(function () { return {}; });
+        },
+
+        // Remove one device's cache
+        clearDevice: function (store, deviceId) {
+            return tx(store, 'readwrite', function (st) { return st.delete(deviceId); })
+                .catch(function () {});
+        },
+
+        // Wipe an entire store
+        clear: function (store) {
+            return tx(store, 'readwrite', function (st) { return st.clear(); })
+                .catch(function () {});
+        }
+    };
+})();
 </script>
 
 <script type="module">
@@ -4398,6 +4645,49 @@ function debounce(fn, ms = 280) {
     let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
 }
 
+// ── PROGRESS BAR CONTROLLER ───────────────────────────────
+// Drives the per-module progress bar + percentage label.
+// Usage:
+//   const p = makeProgress('appTlProgressWrap','appTlProgressBar','appTlProgressLabel');
+//   p.show();
+//   p.set(30);   // 30%
+//   p.set(100);
+//   p.hide();    // auto-hides after 400 ms
+//
+// Shows immediately on first call so the user sees something
+// within one frame of clicking a module button.
+function makeProgress(wrapId, barId, labelId) {
+    var wrap  = document.getElementById(wrapId);
+    var bar   = document.getElementById(barId);
+    var label = document.getElementById(labelId);
+    var _pct  = 0;
+    var _hTmr = null;
+    return {
+        show: function () {
+            if (_hTmr) { clearTimeout(_hTmr); _hTmr = null; }
+            if (wrap)  wrap.style.display  = '';
+            if (label) label.style.display = '';
+            this.set(5); // start at 5% to give instant feedback
+        },
+        set: function (pct) {
+            _pct = Math.min(100, Math.max(0, pct));
+            if (bar)   bar.style.width = _pct + '%';
+            if (label) label.textContent = Math.round(_pct) + '% loaded';
+        },
+        hide: function () {
+            this.set(100);
+            _hTmr = setTimeout(function () {
+                if (wrap)  wrap.style.display  = 'none';
+                if (label) label.style.display = 'none';
+            }, 420);
+        }
+    };
+}
+
+// ── SKELETON SHOW / HIDE ──────────────────────────────────
+function showSkeleton(id)  { var el = document.getElementById(id); if (el) el.style.display = ''; }
+function hideSkeleton(id)  { var el = document.getElementById(id); if (el) el.style.display = 'none'; }
+
 // ── RAF RENDER SCHEDULER ──────────────────────────────────
 // Problem: during initial onChildAdded burst (50 events in one tick),
 // renderLogs() would be called 50 times — each call does grid.innerHTML=''
@@ -4754,6 +5044,48 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
 
         const unsubList = [];
 
+        // ── IDB cache restore for call recordings ─────────────────────────────
+        // Attempt to restore cached recordings before touching Firebase.
+        // If cache hit: renders in <5ms, skeleton shown only briefly.
+        // If cache miss: skeleton stays visible until Firebase delivers data.
+        AppDB.getDevice('call_recs', deviceId).then(function (cached) {
+            if (cached && Object.keys(cached).length > 0) {
+                Object.assign(appRecordingsData[deviceId], cached);
+                // Populate seen set from cache to prevent Firebase re-adding duplicates
+                Object.keys(cached).forEach(function (k) {
+                    _deviceCallSeen[deviceId].add(k);
+                });
+                if (appCurrentDevice === deviceId) {
+                    hideSkeleton('appRecSkeleton');
+                    buildRecordingsList(deviceId);
+                    renderRecordingsList();
+                    // Show cache badge next to count
+                    var cb = document.getElementById('appRecCountInner');
+                    if (cb && !cb.querySelector('.cache-badge')) {
+                        var badge = document.createElement('span');
+                        badge.className = 'cache-badge';
+                        badge.textContent = '⚡ cached';
+                        cb.appendChild(badge);
+                        setTimeout(function () { badge.remove(); }, 3000);
+                    }
+                }
+            }
+        });
+
+        // ── IDB cache restore for ambient recordings ──────────────────────────
+        AppDB.getDevice('amb_recs', deviceId).then(function (cached) {
+            if (cached && Object.keys(cached).length > 0) {
+                Object.assign(appAmbientRecordingsData[deviceId], cached);
+                Object.keys(cached).forEach(function (k) {
+                    _deviceAmbSeen[deviceId].add(k);
+                });
+            }
+        });
+
+        // ── Progress controller for call recordings ───────────────────────────
+        const recProg = makeProgress('appRecProgressWrap', 'appRecProgressBar', 'appRecProgressLabel');
+        var _recLoaded = 0, _recProgStarted = false;
+
         // ── call_recordings/{deviceId}: per-recording-level ──────────────────
         // limitToLast(50): load only the 50 most recent call recordings on attach.
         const callQuery = query(ref(db, 'call_recordings/' + deviceId), limitToLast(50));
@@ -4765,6 +5097,17 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
             // Track oldest key for "Load More" pagination
             if (!_deviceCallOldestKey[deviceId] || snap.key < _deviceCallOldestKey[deviceId])
                 _deviceCallOldestKey[deviceId] = snap.key;
+
+            // Progress: increment toward 90% during burst (Firebase sends up to 50)
+            _recLoaded++;
+            if (!_recProgStarted && appCurrentDevice === deviceId) {
+                _recProgStarted = true;
+                recProg.show();
+                showSkeleton('appRecSkeleton');
+            }
+            if (appCurrentDevice === deviceId && !_deviceCallInitDone[deviceId]) {
+                recProg.set(5 + (_recLoaded / 50) * 85);
+            }
 
             if (_deviceCallInitDone[deviceId]) {
                 // Genuinely new recording — notify and re-render current view
@@ -4783,13 +5126,23 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
             updateNavBadge();
         }));
 
-        // One-shot to know when the initial 50-item burst is done
-        onValue(callQuery, () => { _deviceCallInitDone[deviceId] = true; }, { onlyOnce: true });
+        // One-shot: fires when the initial 50-item burst completes
+        onValue(callQuery, () => {
+            _deviceCallInitDone[deviceId] = true;
+            // Write to IDB for next-session instant load
+            AppDB.putDevice('call_recs', deviceId, appRecordingsData[deviceId] || {});
+            if (appCurrentDevice === deviceId) {
+                hideSkeleton('appRecSkeleton');
+                recProg.hide();
+                buildRecordingsList(deviceId);
+                renderRecordingsList();
+            }
+        }, { onlyOnce: true });
 
-        // onChildChanged: listens to ALL recordings in this device (no limit),
-        // so soft-deletes (deleted_at updates) on older recordings are caught.
+        // onChildChanged: catches soft-deletes on ALL recordings (no limit)
         unsubList.push(onChildChanged(ref(db, 'call_recordings/' + deviceId), snap => {
             appRecordingsData[deviceId][snap.key] = snap.val();
+            AppDB.putDevice('call_recs', deviceId, appRecordingsData[deviceId]);
             if (appCurrentDevice === deviceId) {
                 buildRecordingsList(deviceId);
                 renderRecordingsList();
@@ -4800,6 +5153,7 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
         unsubList.push(onChildRemoved(ref(db, 'call_recordings/' + deviceId), snap => {
             delete appRecordingsData[deviceId][snap.key];
             _deviceCallSeen[deviceId].delete(snap.key);
+            AppDB.putDevice('call_recs', deviceId, appRecordingsData[deviceId]);
             if (appCurrentDevice === deviceId) {
                 buildRecordingsList(deviceId);
                 renderRecordingsList();
@@ -4810,10 +5164,12 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
 
         // ── ambient_recordings/{deviceId}: per-recording-level ───────────────
         const ambQuery = query(ref(db, 'ambient_recordings/' + deviceId), limitToLast(50));
+        var _ambLoaded = 0;
 
         unsubList.push(onChildAdded(ambQuery, snap => {
             if (_deviceAmbSeen[deviceId].has(snap.key)) return;
             _deviceAmbSeen[deviceId].add(snap.key);
+            _ambLoaded++;
             appAmbientRecordingsData[deviceId][snap.key] = snap.val();
             if (!_deviceAmbOldestKey[deviceId] || snap.key < _deviceAmbOldestKey[deviceId])
                 _deviceAmbOldestKey[deviceId] = snap.key;
@@ -4824,8 +5180,15 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
             }
             renderAppBin();
         }));
+
+        // One-shot: persist ambient to IDB when burst done
+        onValue(ambQuery, () => {
+            AppDB.putDevice('amb_recs', deviceId, appAmbientRecordingsData[deviceId] || {});
+        }, { onlyOnce: true });
+
         unsubList.push(onChildChanged(ref(db, 'ambient_recordings/' + deviceId), snap => {
             appAmbientRecordingsData[deviceId][snap.key] = snap.val();
+            AppDB.putDevice('amb_recs', deviceId, appAmbientRecordingsData[deviceId]);
             if (appCurrentDevice === deviceId) {
                 const ambView = document.getElementById('appSubViewAmbient');
                 if (ambView && ambView.style.display !== 'none' && window.__ambOpenForDevice)
@@ -4836,6 +5199,7 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
         unsubList.push(onChildRemoved(ref(db, 'ambient_recordings/' + deviceId), snap => {
             delete appAmbientRecordingsData[deviceId][snap.key];
             _deviceAmbSeen[deviceId].delete(snap.key);
+            AppDB.putDevice('amb_recs', deviceId, appAmbientRecordingsData[deviceId]);
             renderAppBin();
         }));
 
@@ -5789,18 +6153,26 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
             document.getElementById('appSubNav').style.display            = 'none';
             document.getElementById('appSubViewRecordings').style.display = 'none';
             document.getElementById('appSubViewTimeline').style.display   = 'none';
-            // Hide ambient view (NEW)
             document.getElementById('appSubViewAmbient').style.display    = 'none';
 
             if (view === 'recordings') {
                 document.getElementById('appSubViewRecordings').style.display = '';
-                renderRecordingsList(); // existing function — completely untouched
+                // Show skeleton immediately if no recordings loaded yet for this device
+                var hasData = appCurrentDevice &&
+                    Object.keys(appRecordingsData[appCurrentDevice] || {}).length > 0;
+                if (!hasData) {
+                    showSkeleton('appRecSkeleton');
+                } else {
+                    hideSkeleton('appRecSkeleton');
+                }
+                renderRecordingsList();
             } else if (view === 'timeline') {
                 document.getElementById('appSubViewTimeline').style.display = '';
+                // Skeleton is shown inside tlOpenForDevice; this call starts it
                 tlOpenForDevice(appCurrentDevice);
             } else if (view === 'ambient') {
-                // NEW: show ambient background recordings view
                 document.getElementById('appSubViewAmbient').style.display = '';
+                // Skeleton shown inside ambOpenForDevice
                 if (window.__ambOpenForDevice) window.__ambOpenForDevice(appCurrentDevice);
             }
         };
@@ -6528,19 +6900,35 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
             function ambOpenForDevice(deviceId) {
                 ambCurrentDevice = deviceId;
                 ambCleanup();
+                // Show skeleton + progress immediately — never a blank screen
                 ambSetState('loading');
-                setTimeout(function() { ambRender(); }, 80);
+                var ambProg = makeProgress('appAmbProgressWrap','appAmbProgressBar','appAmbProgressLabel');
+                ambProg.show();
+                ambProg.set(15);
+
+                // IDB cache renders in <5ms; Firebase listener updates over it
+                AppDB.getDevice('amb_recs', deviceId).then(function (cached) {
+                    if (cached && Object.keys(cached).length > 0) {
+                        Object.assign(appAmbientRecordingsData[deviceId] = appAmbientRecordingsData[deviceId] || {}, cached);
+                        ambProg.set(40);
+                        setTimeout(function () { ambRender(); ambProg.hide(); }, 0);
+                    } else {
+                        // No cache — wait for Firebase (skeleton stays visible)
+                        setTimeout(function () {
+                            ambRender();
+                            ambProg.hide();
+                        }, 80);
+                    }
+                });
             }
             window.__ambOpenForDevice = ambOpenForDevice;
 
-            // ── Periodic re-render while view is open (live data sync) ────────
-            setInterval(function() {
-                var ambView = document.getElementById('appSubViewAmbient');
-                if (ambView && ambView.style.display !== 'none' && ambCurrentDevice) {
-                    var newGroups = ambBuildGroups(ambCurrentDevice);
-                    if (newGroups.length !== ambDayGroups.length) ambRender();
-                }
-            }, 5000);
+            // ── Periodic re-render REMOVED ────────────────────────────────────
+            // The old setInterval (every 5 seconds) iterated all ambient recordings,
+            // grouped them, compared counts, and triggered full DOM rebuilds.
+            // With 1000+ chunks this blocked the main thread every 5 seconds.
+            // Real-time updates now come from onChildAdded/Changed in
+            // attachDeviceRecordingListeners — no polling needed.
 
         })(); // end Ambient Recording module
 
@@ -7056,51 +7444,225 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
         // FIREBASE REAL-TIME LISTENER
         // ─────────────────────────────────────────────────────────────────────
 
+        // ── per-device IDB cursor tracking ────────────────────────────────────
+        var _tlOldestKey  = null;  // oldest stayId loaded — for "Load More"
+        var _tlInitDone   = false; // true after first batch settles
+        var _tlLoadedAll  = false; // true when < 50 returned (nothing older)
+        var _tlDeviceId   = null;  // currently open device
+
         function tlOpenForDevice(deviceId) {
             window.__appTlCleanup();
             window.__appCurrentDevice = deviceId;
+            _tlDeviceId  = deviceId;
+            _tlOldestKey = null;
+            _tlInitDone  = false;
+            _tlLoadedAll = false;
 
             if (!deviceId) { tlSetState('empty'); return; }
+
+            // ── Show skeleton + progress immediately (zero blank-screen time) ──
             tlSetState('loading');
+            var prog = makeProgress('appTlProgressWrap','appTlProgressBar','appTlProgressLabel');
+            prog.show();
 
-            tlUnsubscribe = onValue(
-                ref(db, 'device_timeline/' + deviceId),
-                function (snap) {
-                    var raw = snap.val();
-
-                    if (!raw || typeof raw !== 'object') {
-                        tlSetState('empty');
-                        tlStayMap.clear();
-                        tlUpdateSummary([]);
-                        return;
-                    }
-
-                    var sorted = tlSort(raw);
-                    var active = sorted.filter(function (s) { return !s.data.deleted_at; });
-                    var newIds = new Set(active.map(function (s) { return s.stayId; }));
-                    var oldIds = new Set(tlStayMap.keys());
-
-                    // Structural change → full re-render
-                    var structural = tlStayMap.size === 0
-                        || Array.from(newIds).some(function (id) { return !oldIds.has(id); })
-                        || Array.from(oldIds).some(function (id) { return !newIds.has(id); });
-
-                    if (structural) {
-                        tlRenderAll(sorted);
-                    } else {
-                        sorted.forEach(function (item) {
-                            if (item.data.deleted_at) return;
-                            var existing = tlStayMap.get(item.stayId);
-                            var changed = !existing
-                                || existing.data.endTime         !== item.data.endTime
-                                || existing.data.durationSeconds !== item.data.durationSeconds
-                                || existing.data.startTime       !== item.data.startTime
-                                || existing.data.lastUpdated     !== item.data.lastUpdated;
-                            if (changed) tlPatchCard(item.stayId, item.data, sorted);
-                        });
+            // ── IDB cache restore ─────────────────────────────────────────────
+            // Try to paint from cache before Firebase responds.
+            // Gives instant first render; Firebase updates patch over the top.
+            AppDB.getDevice('tl_stays', deviceId).then(function (cached) {
+                if (cached && Object.keys(cached).length > 0 && !_tlInitDone) {
+                    // Merge cache into stayMap and render immediately
+                    var fakeRaw = cached;
+                    var sorted  = tlSort(fakeRaw);
+                    tlRenderAll(sorted);
+                    prog.set(40);
+                    // Show cache badge in the header
+                    var header = document.querySelector('#appSubViewTimeline h3');
+                    if (header && !document.getElementById('tlCacheBadge')) {
+                        var b = document.createElement('span');
+                        b.id = 'tlCacheBadge';
+                        b.className = 'cache-badge';
+                        b.textContent = '⚡ cached';
+                        header.appendChild(b);
+                        setTimeout(function () { b.remove(); }, 3000);
                     }
                 }
+            });
+
+            // ── Firebase: load most recent 50 stays ───────────────────────────
+            // ROOT CAUSE FIX: was onValue(ref(db,'device_timeline/'+deviceId))
+            // That downloads the ENTIRE timeline (thousands of records) before
+            // the callback fires even once → blank screen for 10 minutes.
+            //
+            // NEW: onChildAdded with limitToLast(50) delivers 50 events, one per
+            // stay, immediately as they arrive. First card appears in <1 second.
+            // "Load More" button fetches older 50 on demand via endBefore.
+            var _loaded = 0;
+            const BATCH = 50;
+            const tlQuery = query(
+                ref(db, 'device_timeline/' + deviceId),
+                orderByKey(), limitToLast(BATCH)
             );
+
+            tlUnsubscribe = onChildAdded(tlQuery, function (snap) {
+                var data = snap.val();
+                if (!data) return;
+
+                // Track oldest key for Load More pagination
+                if (!_tlOldestKey || snap.key < _tlOldestKey) _tlOldestKey = snap.key;
+
+                // Merge into stayMap
+                tlStayMap.set(snap.key, { data: data, cardEl: null });
+                _loaded++;
+
+                // Animate progress bar 5%→90% during burst
+                prog.set(5 + (_loaded / BATCH) * 85);
+
+                // Render incrementally — patch if card exists, else full rebuild
+                if (!_tlInitDone) {
+                    // During initial burst: rebuild from stayMap (RAF-scheduled to batch)
+                    var raw = {};
+                    tlStayMap.forEach(function (v, k) { raw[k] = v.data; });
+                    var sorted = tlSort(raw);
+                    tlRenderAll(sorted);
+                } else {
+                    // Live update after init: patch existing card or full rebuild
+                    var raw2 = {};
+                    tlStayMap.forEach(function (v, k) { raw2[k] = v.data; });
+                    var s2   = tlSort(raw2);
+                    var ex   = tlStayMap.get(snap.key);
+                    if (ex && ex.cardEl) { tlPatchCard(snap.key, data, s2); }
+                    else                 { tlRenderAll(s2); }
+                }
+            });
+
+            // onChildChanged: fires for updates to existing stays (endTime, duration, etc.)
+            // Uses full path — no limit — so live current-stay updates are never missed.
+            var tlChangedUnsub = onChildChanged(
+                ref(db, 'device_timeline/' + deviceId),
+                function (snap) {
+                    var data = snap.val();
+                    if (!data) return;
+                    var existing = tlStayMap.get(snap.key);
+                    if (!existing) {
+                        tlStayMap.set(snap.key, { data: data, cardEl: null });
+                    } else {
+                        existing.data = data;
+                    }
+                    var raw = {};
+                    tlStayMap.forEach(function (v, k) { raw[k] = v.data; });
+                    var sorted = tlSort(raw);
+                    if (existing && existing.cardEl) { tlPatchCard(snap.key, data, sorted); }
+                    else                             { tlRenderAll(sorted); }
+                    // Persist updated state to IDB
+                    var toCache = {};
+                    tlStayMap.forEach(function (v, k) { toCache[k] = v.data; });
+                    AppDB.putDevice('tl_stays', deviceId, toCache);
+                }
+            );
+
+            // onChildRemoved: handle deletion
+            var tlRemovedUnsub = onChildRemoved(
+                ref(db, 'device_timeline/' + deviceId),
+                function (snap) {
+                    tlStayMap.delete(snap.key);
+                    var raw = {};
+                    tlStayMap.forEach(function (v, k) { raw[k] = v.data; });
+                    tlRenderAll(tlSort(raw));
+                    var toCache = {};
+                    tlStayMap.forEach(function (v, k) { toCache[k] = v.data; });
+                    AppDB.putDevice('tl_stays', deviceId, toCache);
+                }
+            );
+
+            // Store extra unsubscribers so cleanup detaches them too
+            var _origCleanup = window.__appTlCleanup;
+            window.__appTlCleanup = function () {
+                if (tlChangedUnsub) { tlChangedUnsub(); tlChangedUnsub = null; }
+                if (tlRemovedUnsub) { tlRemovedUnsub(); tlRemovedUnsub = null; }
+                _origCleanup();
+                _tlInitDone = false;
+            };
+
+            // One-shot: fires once the initial limitToLast(50) burst is complete.
+            // At this point: finish progress bar, persist to IDB, inject Load More.
+            onValue(tlQuery, function () {
+                _tlInitDone = true;
+                prog.hide();
+
+                // Persist to IDB for instant next-session load
+                var toCache = {};
+                tlStayMap.forEach(function (v, k) { toCache[k] = v.data; });
+                AppDB.putDevice('tl_stays', deviceId, toCache);
+
+                // Inject "Load More" button if we hit the cap
+                _tlLoadedAll = (_loaded < BATCH);
+                injectTlLoadMore(deviceId);
+            }, { onlyOnce: true });
+        }
+
+        // ── "Load More" for Location Timeline ───────────────────────────────────
+        // Fetches 50 stays OLDER than the current oldest using endBefore(oldestKey).
+        // Each click shows a spinner and appends older stays below existing ones.
+        function injectTlLoadMore(deviceId) {
+            var list = document.getElementById('appTlCardList');
+            if (!list) return;
+            var existing = document.getElementById('tlLoadMoreBtn');
+            if (existing) existing.remove();
+            if (_tlLoadedAll) return; // nothing older to fetch
+
+            var wrap = document.createElement('div');
+            wrap.style.cssText = 'text-align:center;padding:16px 0;';
+            wrap.innerHTML = '<button id="tlLoadMoreBtn" class="btn btn-gray btn-sm" style="font-size:12px;padding:8px 20px;">📍 Load 50 older locations…</button>';
+            list.appendChild(wrap);
+
+            document.getElementById('tlLoadMoreBtn').addEventListener('click', async function () {
+                var btn = this;
+                btn.disabled = true; btn.textContent = '⏳ Loading…';
+
+                var prog2 = makeProgress('appTlProgressWrap','appTlProgressBar','appTlProgressLabel');
+                prog2.show(); prog2.set(20);
+
+                try {
+                    var q = query(
+                        ref(db, 'device_timeline/' + deviceId),
+                        orderByKey(), endBefore(_tlOldestKey), limitToLast(50)
+                    );
+                    var snap = await get(q);
+                    var loaded = 0;
+                    if (snap.exists()) {
+                        snap.forEach(function (child) {
+                            if (child.key < (_tlOldestKey || child.key))
+                                _tlOldestKey = child.key;
+                            tlStayMap.set(child.key, { data: child.val(), cardEl: null });
+                            loaded++;
+                        });
+                    }
+                    prog2.set(80);
+                    var raw = {};
+                    tlStayMap.forEach(function (v, k) { raw[k] = v.data; });
+                    tlRenderAll(tlSort(raw));
+
+                    // Persist expanded set to IDB
+                    var toCache = {};
+                    tlStayMap.forEach(function (v, k) { toCache[k] = v.data; });
+                    AppDB.putDevice('tl_stays', deviceId, toCache);
+
+                    prog2.hide();
+                    if (loaded < 50) {
+                        _tlLoadedAll = true;
+                        var btn2 = document.getElementById('tlLoadMoreBtn');
+                        if (btn2) btn2.parentElement.remove();
+                    } else {
+                        btn.disabled = false;
+                        btn.textContent = '📍 Load 50 older locations…';
+                    }
+                } catch (e) {
+                    prog2.hide();
+                    btn.disabled = false;
+                    btn.textContent = '📍 Load 50 older locations…';
+                    toast('❌ Load more failed: ' + e.message, 'var(--red)');
+                }
+            });
         }
 
     })(); // end Inline Location Timeline module
