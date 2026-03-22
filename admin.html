@@ -5859,15 +5859,6 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
 
             // ── Download merged audio for a day ───────────────────────────────
             window.__ambDownloadDay = function(dateKey) {
-                // Always download from the cached merged blob URL — never async.
-                // Browsers block a.click() inside Promise.then() (non-user-gesture).
-                // ambPreMergeAll() populates ambMergedURLs in the background on load.
-                var url = ambMergedURLs[dateKey];
-                if (!url) {
-                    toast('⏳ Audio still preparing… try again in a moment.', 'var(--purple)');
-                    return;
-                }
-
                 var group = ambDayGroups.find(function(g){ return g.dateKey===dateKey; });
                 if (!group) return;
                 var chunks = group.chunks.filter(function(c){ return !!c.audio_url; });
@@ -5886,13 +5877,31 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
                 var endStr   = ambFmtFileTime(endTime.toISOString ? endTime.toISOString() : endChunk.start_time);
                 var filename = devName + ' ' + dateStr + ' ' + startStr + ' to ' + endStr + '.mp3';
 
-                var a = document.createElement('a');
-                a.href = url;
-                a.download = filename;
-                document.body.appendChild(a);
-                a.click();
-                setTimeout(function(){ document.body.removeChild(a); }, 200);
-                toast('✅ Downloaded: ' + filename, 'var(--green)');
+                function doDownload(url) {
+                    if (!url) {
+                        toast('❌ Could not prepare full audio file.', 'var(--red)');
+                        return;
+                    }
+                    var a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    setTimeout(function(){ document.body.removeChild(a); }, 200);
+                    toast('✅ Downloaded: ' + filename, 'var(--green)');
+                }
+
+                var cachedUrl = ambMergedURLs[dateKey];
+                if (cachedUrl) {
+                    doDownload(cachedUrl);
+                    return;
+                }
+
+                toast('🔄 Preparing full audio…', 'var(--purple)');
+                ambMergeChunks(chunks, true).then(function(blobURL) {
+                    if (blobURL) ambMergedURLs[dateKey] = blobURL;
+                    doDownload(blobURL);
+                });
             };
 
             // ── Delete all chunks for a day (soft-delete — UNCHANGED) ─────────
