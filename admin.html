@@ -252,6 +252,8 @@
         .log-card:hover { border-color: #334155; }
         .card-img { position: relative; cursor: zoom-in; }
         .card-img img { width: 100%; display: block; height: 155px; object-fit: cover; object-position: center top; }
+        /* Lazy-loaded images: show shimmer placeholder until IntersectionObserver reveals them */
+        .card-img img[data-lazy-src] { background: linear-gradient(90deg,var(--card2) 25%,var(--card3) 50%,var(--card2) 75%); background-size:600px 100%; animation: shimmer 1.4s infinite linear; }
         .card-img .no-img { height: 100px; background: var(--card3); display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 12px; flex-direction: column; gap: 4px; }
         .card-img .img-overlay { position: absolute; inset: 0; background: rgba(0,0,0,.0); display: flex; align-items: center; justify-content: center; opacity: 0; transition: all .2s; font-size: 22px; }
         .card-img:hover .img-overlay { opacity: 1; background: rgba(0,0,0,.35); }
@@ -1299,6 +1301,11 @@
                             <tbody id="linkTableBody"></tbody>
                         </table>
                     </div>
+                    <div id="linksLoadMoreWrap" style="text-align:center;padding:12px 0;display:none;">
+                        <button id="linksLoadMoreBtn" class="btn btn-gray btn-sm" style="padding:8px 24px;">
+                            ⬇️ Load older links…
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -2107,7 +2114,8 @@
 import { initializeApp } from "firebase-app";
 import {
     getDatabase, ref, onValue, onChildAdded, onChildChanged, onChildRemoved,
-    remove, push, set, get, update, query, limitToLast, orderByKey, startAfter, endBefore
+    remove, push, set, get, update, query, limitToLast, orderByKey, orderByChild,
+    startAfter, endBefore, equalTo
 } from "firebase-database";
 // ── WHY THESE ADDITIONS? ──────────────────────────────────────────────────────
 // onChildAdded/Changed/Removed → incremental updates; only sends one CHANGED node.
@@ -2175,10 +2183,11 @@ const _adminCache = {
     photoKeys:    new Set(), // dedup: keys already in photos
     linkKeys:     new Set(),
     userKeys:     new Set(),
-    lastPhotoKey: null,      // highest push-ID seen — cursor for startAfter on re-login
-    lastLinkKey:  null,
-    lastUserKey:  null,
-    ready:        false,     // true after first full load completes
+    lastPhotoKey:   null,    // highest push-ID seen — cursor for startAfter on re-login
+    lastLinkKey:    null,
+    lastUserKey:    null,
+    oldestLinkKey:  null,    // lowest push-ID seen — cursor for endBefore Load More
+    ready:          false,   // true after first full load completes
 };
 const _userCache = {
     photos:    {},
@@ -2548,9 +2557,60 @@ function renderLinksTable() {
 
     document.getElementById('linkCount').innerText = count;
     if (count === 0) tbody.innerHTML = '<tr><td colspan="6"><div class="empty">No links found.</div></td></tr>';
+
+    // Show Load More button only when we may have more links beyond the initial cap
+    const loadMoreWrap = document.getElementById('linksLoadMoreWrap');
+    if (loadMoreWrap) {
+        const totalLoaded = Object.keys(allLinksData).length;
+        loadMoreWrap.style.display = (totalLoaded >= 200 && _adminCache.oldestLinkKey) ? '' : 'none';
+    }
 }
 
 document.getElementById('searchLinks')?.addEventListener('input', renderLinksTable);
+
+// ── LOAD MORE MANAGED LINKS ───────────────────────────────
+// Fetches 200 links OLDER than the current oldest using endBefore cursor.
+// Triggered by the "Load older links" button at the bottom of the table.
+async function loadMoreLinks() {
+    const btn = document.getElementById('linksLoadMoreBtn');
+    const oldest = _adminCache.oldestLinkKey;
+    if (!oldest) return;
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Loading…'; }
+    try {
+        const q    = query(ref(db, 'managed_links'), orderByKey(), endBefore(oldest), limitToLast(200));
+        const snap = await get(q);
+        let loaded = 0;
+        if (snap.exists()) {
+            snap.forEach(child => {
+                if (!allLinksData[child.key]) {
+                    allLinksData[child.key]          = child.val();
+                    _adminCache.links[child.key]     = child.val();
+                    _adminCache.linkKeys.add(child.key);
+                }
+                // Update oldest cursor
+                if (!_adminCache.oldestLinkKey || child.key < _adminCache.oldestLinkKey)
+                    _adminCache.oldestLinkKey = child.key;
+                loaded++;
+            });
+        }
+        renderLinksTable();
+        if (btn) {
+            if (loaded < 200) {
+                // No more pages — hide the button
+                const wrap = document.getElementById('linksLoadMoreWrap');
+                if (wrap) wrap.style.display = 'none';
+            } else {
+                btn.disabled = false;
+                btn.textContent = '⬇️ Load older links…';
+            }
+        }
+        toast(`✅ Loaded ${loaded} older link${loaded !== 1 ? 's' : ''}.`, 'var(--teal)');
+    } catch (e) {
+        if (btn) { btn.disabled = false; btn.textContent = '⬇️ Load older links…'; }
+        toast('❌ Load failed: ' + e.message, 'var(--red)');
+    }
+}
+document.getElementById('linksLoadMoreBtn')?.addEventListener('click', loadMoreLinks);
 
 document.getElementById('linkTableBody').addEventListener('click', e => {
     const btn = e.target.closest('button[data-action]');
@@ -2678,7 +2738,7 @@ function buildCapCard(key, p, inBin = false, isUser = false) {
     card.innerHTML = `
         <div class="card-img" ${p.image ? `data-lb-img="${esc(p.image)}" data-lb-info="${esc(p.linkName)} — ${esc(p.date||'')} ${esc(p.time||'')}"` : ''}>
             ${p.image
-                ? `<img src="${p.image}" alt="Capture"><div class="img-overlay">🔍</div><span class="img-badge">📷</span>`
+                ? `<img data-lazy-src="${esc(p.image)}" src="" alt="Capture" style="background:var(--card3);"><div class="img-overlay">🔍</div><span class="img-badge">📷</span>`
                 : `<div class="no-img"><span>📷</span><span style="font-size:11px;">No Image</span></div>`
             }
         </div>
@@ -2732,6 +2792,7 @@ function renderLogs() {
 
     document.getElementById('logCount').innerText = keys.length;
     if (keys.length === 0) grid.innerHTML = '<div class="empty"><span class="empty-icon">🔍</span>No captures match your filters.</div>';
+    observeLazyImages(grid);
 }
 
 function renderRecent() {
@@ -2750,9 +2811,8 @@ function renderRecent() {
         logsCache[k] = allLogsData[k];
         grid.appendChild(buildCapCard(k, allLogsData[k], false));
     });
-}
-
-['searchLogs','timeFilter','photoFilter','gpsFilter','sortFilter','ownerFilter'].forEach(id => {
+    observeLazyImages(grid);
+}.forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
     const fn = debounce(renderLogs, 280);
@@ -2861,6 +2921,7 @@ function renderBin() {
             grid.appendChild(card);
         }
     });
+    observeLazyImages(grid);
 }
 
 document.getElementById('binGrid').addEventListener('click', e => {
@@ -3218,7 +3279,7 @@ async function showUserActivity(username) {
         const safeImg = ex(p.image || '');
         const imgBlock = p.image
             ? `<div style="position:relative;cursor:zoom-in;" onclick="activityLightbox('${safeImg}','${ex(p.linkName||'')} — ${ex(p.date||'')} ${ex(p.time||'')}')">
-                   <img src="${p.image}" style="width:100%;height:140px;object-fit:cover;object-position:center top;display:block;" alt="Capture">
+                   <img data-lazy-src="${p.image}" src="" style="width:100%;height:140px;object-fit:cover;object-position:center top;display:block;background:var(--card3);" alt="Capture">
                    <div style="position:absolute;inset:0;background:rgba(0,0,0,0);display:flex;align-items:center;justify-content:center;opacity:0;transition:all .2s;font-size:22px;" onmouseover="this.style.opacity=1;this.style.background='rgba(0,0,0,.35)'" onmouseout="this.style.opacity=0;this.style.background='rgba(0,0,0,0)'">🔍</div>
                    <span style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,.6);color:#fff;border-radius:5px;padding:1px 6px;font-size:10px;font-weight:700;">📷</span>
                </div>`
@@ -3267,7 +3328,7 @@ async function showUserActivity(username) {
         const safeImg = ex(x.image || '');
         const imgBlock = x.image
             ? `<div style="cursor:zoom-in;" onclick="activityLightbox('${safeImg}','${ex(x.linkName||'')}')">
-                   <img src="${x.image}" style="width:100%;height:110px;object-fit:cover;display:block;filter:grayscale(.4) brightness(.8);" alt="Capture">
+                   <img data-lazy-src="${x.image}" src="" style="width:100%;height:110px;object-fit:cover;display:block;filter:grayscale(.4) brightness(.8);background:var(--card3);" alt="Capture">
                </div>`
             : `<div style="height:60px;background:var(--card3);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px;opacity:.6;flex-direction:column;gap:2px;"><span>📷</span><span>No Image</span></div>`;
         return `
@@ -3407,6 +3468,8 @@ async function showUserActivity(username) {
                 : capGrid(sortedDelCaps.map(delCapCard).join(''))
         )}
     `;
+    // Lazy-load images now visible in the modal
+    observeLazyImages(content);
 }
 
 // Activity lightbox helper (global, called from inline onclick)
@@ -3638,6 +3701,7 @@ function renderUserLogs() {
     });
     document.getElementById('uLogCount').innerText = keys.length;
     if (keys.length === 0) grid.innerHTML = '<div class="empty"><span class="empty-icon">🔍</span>No captures yet.</div>';
+    observeLazyImages(grid);
 }
 
 function renderUserRecent() {
@@ -3652,6 +3716,7 @@ function renderUserRecent() {
         .slice(0, 4);
     if (keys.length === 0) { grid.innerHTML = '<div class="empty"><span class="empty-icon">📭</span>No captures yet.</div>'; return; }
     keys.forEach(k => { uLogsCache[k] = uAllLogsData[k]; grid.appendChild(buildCapCard(k, uAllLogsData[k], false, true)); });
+    observeLazyImages(grid);
 }
 
 ['uSearchLogs','uTimeFilter','uPhotoFilter','uSortFilter','uGpsFilter'].forEach(id => {
@@ -3801,6 +3866,7 @@ function renderUserBin() {
             grid.appendChild(card);
         }
     });
+    observeLazyImages(grid);
 }
 
 document.getElementById('uBinGrid').addEventListener('click', e => {
@@ -3933,9 +3999,11 @@ function initAdminListeners() {
 
     // ── managed_links ─────────────────────────────────────
     // Resume-from-cursor: on re-login, only fetch links added while logged out.
+    // limitToLast(200): bounds initial load — prevents downloading thousands of
+    // historical links on first login. "Load More" can be added for older links.
     const linksQuery = _adminCache.ready && _adminCache.lastLinkKey
         ? query(ref(db, 'managed_links'), orderByKey(), startAfter(_adminCache.lastLinkKey))
-        : ref(db, 'managed_links');
+        : query(ref(db, 'managed_links'), limitToLast(200));
 
     adminUnsubscribers.push(onChildAdded(linksQuery, snap => {
         if (seenLinkIds.has(snap.key)) return;
@@ -3945,10 +4013,14 @@ function initAdminListeners() {
         _adminCache.links[snap.key] = snap.val();
         if (!_adminCache.lastLinkKey || snap.key > _adminCache.lastLinkKey)
             _adminCache.lastLinkKey = snap.key;
+        // Track oldest key for Load More pagination
+        if (!_adminCache.oldestLinkKey || snap.key < _adminCache.oldestLinkKey)
+            _adminCache.oldestLinkKey = snap.key;
         scheduleRenderLinks();
         scheduleRenderStats();
     }));
     adminUnsubscribers.push(onChildChanged(ref(db, 'managed_links'), snap => {
+        if (!allLinksData[snap.key]) return; // skip links outside loaded window
         allLinksData[snap.key] = snap.val();
         _adminCache.links[snap.key] = snap.val();
         scheduleRenderLinks();
@@ -4000,6 +4072,9 @@ function initAdminListeners() {
     }));
 
     adminUnsubscribers.push(onChildChanged(ref(db, 'photo_history'), snap => {
+        // Guard: skip records not in our loaded window — avoids re-downloading
+        // base64 images for records outside the limitToLast(50) initial fetch.
+        if (!allLogsData[snap.key]) return;
         allLogsData[snap.key] = snap.val();
         _adminCache.photos[snap.key] = snap.val();
         scheduleRenderLogs(); // full re-render on update (updates are rare)
@@ -4041,9 +4116,11 @@ function initAdminListeners() {
     }, { onlyOnce: true });
 
     // ── users ──────────────────────────────────────────────
+    // limitToLast(200): bounds initial load — if you have hundreds of user accounts
+    // this prevents downloading all of them on first login.
     const usersQuery = _adminCache.ready && _adminCache.lastUserKey
         ? query(ref(db, 'users'), orderByKey(), startAfter(_adminCache.lastUserKey))
-        : ref(db, 'users');
+        : query(ref(db, 'users'), limitToLast(200));
 
     adminUnsubscribers.push(onChildAdded(usersQuery, snap => {
         if (seenUserIds.has(snap.key)) return;
@@ -4059,6 +4136,7 @@ function initAdminListeners() {
             document.getElementById('loginModeSwitch').style.display = 'flex';
     }));
     adminUnsubscribers.push(onChildChanged(ref(db, 'users'), snap => {
+        if (!allUsersData[snap.key]) return; // skip users outside loaded window
         allUsersData[snap.key] = snap.val();
         _adminCache.users[snap.key] = snap.val();
         scheduleRenderUsers();
@@ -4124,6 +4202,7 @@ function initUserListeners() {
         scheduleUserStats();
     }));
     userUnsubscribers.push(onChildChanged(ref(db, 'managed_links'), snap => {
+        if (!uAllLinksData[snap.key]) return; // skip links outside loaded window
         uAllLinksData[snap.key] = snap.val();
         _userCache.links[snap.key] = snap.val();
         scheduleUserLinks();
@@ -4138,10 +4217,27 @@ function initUserListeners() {
         scheduleUserStats();
     }));
 
-    // ── photo_history ──────────────────────────────────────
+    // ── photo_history (user-scoped) ────────────────────────
+    // OPTIMAL: orderByChild('_ownerId').equalTo(username) fetches ONLY this
+    // user's captures — no wasted bandwidth downloading other users' data.
+    //
+    // REQUIREMENT: Add this index to Firebase Realtime Database Rules:
+    //   "photo_history": { ".indexOn": ["_ownerId", "timestamp"] }
+    //
+    // Without the index Firebase falls back to a full scan in the console
+    // with a warning: "Consider adding .indexOn: _ownerId for performance."
+    // The query still works but downloads all data before filtering server-side.
+    //
+    // With the index: only this user's records are transmitted → up to 100×
+    // less data for a user with few captures in a large photo_history node.
     const uPhotoQuery = _userCache.ready && _userCache.lastPhotoKey
         ? query(ref(db, 'photo_history'), orderByKey(), startAfter(_userCache.lastPhotoKey))
-        : query(ref(db, 'photo_history'), limitToLast(50));
+        : query(
+            ref(db, 'photo_history'),
+            orderByChild('_ownerId'),
+            equalTo(currentSession?.username || '__none__'),
+            limitToLast(50)
+          );
 
     userUnsubscribers.push(onChildAdded(uPhotoQuery, snap => {
         if (seenUPhotoIds.has(snap.key)) return;
@@ -4162,6 +4258,11 @@ function initUserListeners() {
         }
     }));
     userUnsubscribers.push(onChildChanged(ref(db, 'photo_history'), snap => {
+        // Guard: only update records already in our loaded window.
+        // Without this, a change to ANY record in photo_history (even ones
+        // outside limitToLast(50)) would trigger a full re-download of that
+        // record's base64 image — potentially 150 KB per change event.
+        if (!uAllLogsData[snap.key]) return;
         uAllLogsData[snap.key] = snap.val();
         _userCache.photos[snap.key] = snap.val();
         scheduleUserLogs();
@@ -4708,6 +4809,45 @@ function scheduleRenderStats()   { cancelAnimationFrame(_rafRenderStats); _rafRe
 function scheduleRenderLinks()   { cancelAnimationFrame(_rafRenderLinks); _rafRenderLinks = requestAnimationFrame(renderLinksTable);   }
 function scheduleRenderUsers()   { cancelAnimationFrame(_rafRenderUsers); _rafRenderUsers = requestAnimationFrame(renderUsersList);    }
 
+// ══════════════════════════════════════════════════════════
+// LAZY IMAGE LOADER (IntersectionObserver)
+// ──────────────────────────────────────────────────────────
+// Problem: base64 JPEGs in photo_history can be 100–200 KB each.
+// Rendering 50 cards at once forces the browser to decode all 50
+// images simultaneously → massive memory pressure + layout jank.
+//
+// Solution: images carry data-lazy-src instead of src="...".
+// The observer fires only when the card scrolls into the viewport,
+// swapping data-lazy-src → src at that moment. Cards off-screen
+// never decode their image, saving both memory and paint time.
+// ══════════════════════════════════════════════════════════
+const _lazyObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        const img = entry.target;
+        const lazySrc = img.dataset.lazySrc;
+        if (lazySrc) {
+            img.src = lazySrc;
+            img.removeAttribute('data-lazy-src');
+            // Remove shimmer animation once src is set
+            img.style.background = '';
+            img.style.animation  = '';
+        }
+        _lazyObserver.unobserve(img);
+    });
+}, {
+    rootMargin: '200px 0px', // start loading 200px before entering viewport
+    threshold:  0
+});
+
+// Call this after any grid render to attach the observer to new lazy images.
+function observeLazyImages(container) {
+    if (!container) return;
+    container.querySelectorAll('img[data-lazy-src]').forEach(img => {
+        _lazyObserver.observe(img);
+    });
+}
+
 // ── INCREMENTAL CARD PREPEND ──────────────────────────────
 // Called after photoInitDone for genuinely new captures.
 // Inserts ONE card at the top of the grid — no full rebuild.
@@ -4731,6 +4871,8 @@ function prependLogCard(key) {
     const card = buildCapCard(key, p, false);
     logsCache[key] = p;
     grid.insertBefore(card, grid.firstChild);
+    // Start observing any lazy image in this newly prepended card
+    observeLazyImages(card);
 
     // Re-attach lightbox listener for this new card's image
     const imgEl = card.querySelector('[data-lb-img]');
@@ -4765,6 +4907,7 @@ function prependUserLogCard(key) {
     const card = buildCapCard(key, p, false, true);
     uLogsCache[key] = p;
     grid.insertBefore(card, grid.firstChild);
+    observeLazyImages(card);
 
     const count = grid.querySelectorAll('[data-key]').length;
     const el = document.getElementById('uLogCount');
