@@ -1990,16 +1990,6 @@
 <!-- ══════════════════════════════════════════════════════════
      FIREBASE + SCRIPT
 ══════════════════════════════════════════════════════════ -->
-<script type="importmap">
-{
-    "imports": {
-        "firebase-app":      "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js",
-        "firebase-database": "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js",
-        "firebase-auth":     "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js"
-    }
-}
-</script>
-
 <!-- ════════════════════════════════════════════════════════════════════
      IndexedDB PERSISTENCE LAYER
      ────────────────────────────────────────────────────────────────────
@@ -2112,7 +2102,7 @@
 
 <!-- ══ LOGIN WATCHDOG (plain script — runs before module loads) ══════════════
      The entire application runs inside a type="module" script below.
-     If that module fails to load (network error, importmap unsupported,
+     If that module fails to load (network error, Firebase CDN blocked,
      Firebase CDN blocked, CSP header) the login button gets NO onclick handler
      and clicking it silently does nothing.
      This watchdog:
@@ -2178,12 +2168,12 @@ setTimeout(function() {
 </script>
 
 <script type="module">
-import { initializeApp } from "firebase-app";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import {
     getDatabase, ref, onValue, onChildAdded, onChildChanged, onChildRemoved,
     remove, push, set, get, update, query, limitToLast, orderByKey, orderByChild,
     startAfter, endBefore, equalTo
-} from "firebase-database";
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 // ── WHY THESE ADDITIONS? ──────────────────────────────────────────────────────
 // onChildAdded/Changed/Removed → incremental updates; only sends one CHANGED node.
 // query + limitToLast          → bounds large collections on initial load.
@@ -2200,7 +2190,7 @@ import {
     updatePassword,
     reauthenticateWithCredential,
     EmailAuthProvider
-} from "firebase-auth";
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
 // ── FIREBASE ──────────────────────────────────────────────
 const firebaseConfig = {
