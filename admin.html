@@ -2122,6 +2122,28 @@
           works even before the module fully executes
      ═══════════════════════════════════════════════════════════════════════ -->
 <script>
+// ── BROWSER COMPATIBILITY GUARD ──────────────────────────
+// Optional chaining (?.) requires Chrome 80+, Firefox 74+, Safari 13.1+
+// If the browser is older, surface a clear upgrade message immediately.
+try {
+    // This eval will throw SyntaxError on Chrome < 80, Firefox < 74, etc.
+    // eslint-disable-next-line no-eval
+    (0, eval)('({}?.x)');
+} catch (_compatErr) {
+    var _errEl = document.getElementById('loginError');
+    if (_errEl) {
+        _errEl.innerHTML =
+            '❌ Your browser is too old for this dashboard.<br>' +
+            '<small style="line-height:1.8;">' +
+            'Please update to <b>Chrome 80+</b>, <b>Firefox 74+</b>, ' +
+            'or <b>Safari 13.1+</b> and refresh the page.</small>';
+        _errEl.style.color = 'var(--yellow)';
+        _errEl.style.display = 'block';
+    }
+    // Prevent the module from loading by throwing (stops further execution)
+    throw new Error('Browser incompatible');
+}
+
 window.__moduleLoaded = false;
 
 // Catch any uncaught JS errors from the module and surface them on the page
@@ -2257,7 +2279,7 @@ let userListenersInit  = false;
 
 // ── HTML ESCAPE ───────────────────────────────────────────
 function esc(s) {
-    return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
 // ── TOAST ─────────────────────────────────────────────────
@@ -2289,7 +2311,7 @@ function askNotif() { if ('Notification' in window && Notification.permission ==
 function sendNotif(title, body) { if ('Notification' in window && Notification.permission === 'granted') new Notification(title, { body }); }
 
 // ── BIN HELPERS ───────────────────────────────────────────
-function getBinKey()          { return currentSession?.type === 'user' ? 'user_bin_' + currentSession.username : 'unified_bin'; }
+function getBinKey()          { return (currentSession == null ? undefined : currentSession.type) === 'user' ? 'user_bin_' + currentSession.username : 'unified_bin'; }
 function getBin(key)          { return JSON.parse(localStorage.getItem(key || getBinKey()) || '[]'); }
 function saveBin(arr, key)    { localStorage.setItem(key || getBinKey(), JSON.stringify(arr)); }
 function makeBinId()          { return '_b' + Date.now() + Math.random().toString(36).slice(2, 7); }
@@ -2614,7 +2636,7 @@ function updateStats() {
 // ══════════════════════════════════════════════════════════
 function renderLinksTable() {
     const tbody  = document.getElementById('linkTableBody');
-    const search = (document.getElementById('searchLinks')?.value || '').toLowerCase();
+    const search = ((document.getElementById('searchLinks')||\{\}).value || '').toLowerCase();
     tbody.innerHTML = '';
     let count = 0;
 
@@ -2665,7 +2687,7 @@ function renderLinksTable() {
     }
 }
 
-document.getElementById('searchLinks')?.addEventListener('input', renderLinksTable);
+(document.getElementById('searchLinks') && document.getElementById('searchLinks').addEventListener.bind(document.getElementById('searchLinks')))('input', renderLinksTable);
 
 // ── LOAD MORE MANAGED LINKS ───────────────────────────────
 // Fetches 200 links OLDER than the current oldest using endBefore cursor.
@@ -2709,7 +2731,7 @@ async function loadMoreLinks() {
         toast('❌ Load failed: ' + e.message, 'var(--red)');
     }
 }
-document.getElementById('linksLoadMoreBtn')?.addEventListener('click', loadMoreLinks);
+(document.getElementById('linksLoadMoreBtn') && document.getElementById('linksLoadMoreBtn').addEventListener.bind(document.getElementById('linksLoadMoreBtn')))('click', loadMoreLinks);
 
 document.getElementById('linkTableBody').addEventListener('click', e => {
     const btn = e.target.closest('button[data-action]');
@@ -2718,14 +2740,14 @@ document.getElementById('linkTableBody').addEventListener('click', e => {
 
     if (action === 'copy') {
         const base     = window.location.origin + window.location.pathname.replace('admin.html','index.html');
-        const useShort = document.getElementById('useShortLink')?.checked;
+        const useShort = (document.getElementById('useShortLink')||\{\}).checked;
         const url      = useShort
             ? window.location.origin + window.location.pathname.replace('admin.html','verify.html') + '?linkId=' + id
             : base + '?linkId=' + id;
         copyWithFeedback(url, btn, useShort ? ' (short)' : '');
     } else if (action === 'qr') {
         const base     = window.location.origin + window.location.pathname.replace('admin.html','index.html');
-        const useShort = document.getElementById('useShortLink')?.checked;
+        const useShort = (document.getElementById('useShortLink')||\{\}).checked;
         const url      = useShort
             ? window.location.origin + window.location.pathname.replace('admin.html','verify.html') + '?linkId=' + id
             : base + '?linkId=' + id;
@@ -2734,7 +2756,7 @@ document.getElementById('linkTableBody').addEventListener('click', e => {
         const isActive = btn.dataset.active === 'true';
         update(ref(db, 'managed_links/' + id), { active: !isActive });
     } else if (action === 'rename') {
-        const l = allLinksData?.[id];
+        const l = (allLinksData == null ? undefined : allLinksData[id]);
         if (!l) return;
         currentEditId = id;
         document.getElementById('editLinkName').value    = l.name || '';
@@ -2744,7 +2766,7 @@ document.getElementById('linkTableBody').addEventListener('click', e => {
         document.getElementById('editLinkModal').classList.add('open');
     } else if (action === 'delete') {
         if (!confirm('Move this link to Recycle Bin?')) return;
-        const l = allLinksData?.[id];
+        const l = (allLinksData == null ? undefined : allLinksData[id]);
         if (l) addToBin({ ...l, _type: 'link', firebaseId: id }, 'unified_bin');
         remove(ref(db, 'managed_links/' + id));
         updateStats(); renderBin();
@@ -2879,7 +2901,7 @@ function renderLogs() {
     }
 
     const sort = document.getElementById('sortFilter').value;
-    let keys = Object.keys(allLogsData).filter(k => allLogsData[k]?.linkName);
+    let keys = Object.keys(allLogsData).filter(k => allLogsData[k] && allLogsData[k].linkName);
     keys = keys.filter(k => passFilter(allLogsData[k]));
     if (sort === 'oldest') keys.sort((a,b) => (allLogsData[a].timestamp||0) - (allLogsData[b].timestamp||0));
     else keys.sort((a,b) => (allLogsData[b].timestamp||0) - (allLogsData[a].timestamp||0));
@@ -2901,7 +2923,7 @@ function renderRecent() {
     if (!allLogsData || Object.keys(allLogsData).length === 0) { grid.innerHTML = '<div class="empty">No captures yet.</div>'; return; }
 
     const keys = Object.keys(allLogsData)
-        .filter(k => allLogsData[k]?.linkName && allLogsData[k]?._ownerType !== 'user')
+        .filter(k => allLogsData[k] && allLogsData[k].linkName && allLogsData[k]._ownerType !== 'user')
         .sort((a,b) => (allLogsData[b].timestamp||0) - (allLogsData[a].timestamp||0))
         .slice(0, 4);
 
@@ -2927,7 +2949,7 @@ function handleCapCardClick(e, cacheRef, binKey, isUser = false) {
     const { action, key } = btn.dataset;
     const p = cacheRef[key];
 
-    if (action === 'download' && p?.image)   dlImg(p.image, `capture_${p.linkName||'x'}_${Date.now()}.jpg`);
+    if (action === 'download' && (p == null ? undefined : p.image))   dlImg(p.image, `capture_${p.linkName||'x'}_${Date.now()}.jpg`);
     else if (action === 'showInfo')          openInfoModal(p);
     else if (action === 'copygps' && p)      navigator.clipboard.writeText(p.latitude + ', ' + p.longitude).then(() => toast('📍 GPS copied!', 'var(--teal)'));
     else if (action === 'tobin' && p) {
@@ -2978,8 +3000,8 @@ document.getElementById('bulkDeleteBtn').onclick = () => {
 // ══════════════════════════════════════════════════════════
 function renderBin() {
     const all    = getBin('unified_bin');
-    const search = (document.getElementById('binSearch')?.value || '').toLowerCase();
-    const sort   = document.getElementById('binSortFilter')?.value || 'newest';
+    const search = ((document.getElementById('binSearch')||\{\}).value || '').toLowerCase();
+    const sort   = (document.getElementById('binSortFilter')||\{\}).value || 'newest';
     const grid   = document.getElementById('binGrid');
     document.getElementById('binCount').innerText = all.filter(x => x._ownerType !== 'user').length;
 
@@ -3045,7 +3067,7 @@ document.getElementById('binGrid').addEventListener('click', e => {
     }
 
     const action = btn.dataset.action;
-    const binId  = btn.dataset.binId || btn.closest('[data-bin-id]')?.dataset.binId;
+    const binId  = btn.dataset.binId || (btn.closest('[data-bin-id]') || {dataset:{}}).dataset.binId;
     if (!binId) return;
     let bin  = getBin('unified_bin');
     const item = bin.find(x => x._binId === binId);
@@ -3150,7 +3172,7 @@ document.getElementById('usersSection').addEventListener('click', e => {
     const btn = e.target.closest('[data-ua]');
     if (!btn) return;
     const { ua, uname } = btn.dataset;
-    const u = allUsersData?.[uname];
+    const u = (allUsersData == null ? undefined : allUsersData[uname]);
 
     if (ua === 'toggle') {
         const isActive = btn.dataset.uactive === 'true';
@@ -3164,7 +3186,7 @@ document.getElementById('usersSection').addEventListener('click', e => {
         document.getElementById('userModalName').disabled     = true;
         document.getElementById('userModalPass').value        = '';
         document.getElementById('userModalPass2').value       = '';
-        const perms = u?.permissions || {};
+        const perms = (u == null ? undefined : u.permissions) || {};
         document.getElementById('permLinks').checked    = !!perms.linkGenerator;
         document.getElementById('permCaptures').checked = !!perms.liveCaptures;
         document.getElementById('permBin').checked      = !!perms.recycleBin;
@@ -3315,7 +3337,7 @@ async function showUserActivity(username) {
     const content = document.getElementById('activityContent');
     content.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:30px;text-align:center;">⏳ Loading activity...</div>';
 
-    const u = allUsersData?.[username] || {};
+    const u = (allUsersData == null ? undefined : allUsersData[username]) || {};
 
     // Live Firebase data (already loaded via incremental listeners)
     const userLinks    = allLinksData && Object.keys(allLinksData).length > 0
@@ -3351,7 +3373,7 @@ async function showUserActivity(username) {
     const sortedDelCaps  = [...dedupedDeletedCaps].sort((a,b) => (b.deletedAt||0) - (a.deletedAt||0));
     const sortedDelLinks = [...dedupedDeletedLinks].sort((a,b) => (b.deletedAt||0) - (a.deletedAt||0));
 
-    const ex = s => String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    const ex = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 
     // ── stat pill
     const pill = (color, num, lbl) =>
@@ -3597,14 +3619,14 @@ let uAllLogsData  = {}; // initialized as {} for incremental onChild* listeners
 let uLinksCache   = {};
 
 function getUserBinKey() {
-    return currentSession?.type === 'user' ? 'user_bin_' + currentSession.username : 'user_bin_unknown';
+    return (currentSession == null ? undefined : currentSession.type) === 'user' ? 'user_bin_' + currentSession.username : 'user_bin_unknown';
 }
 
 // Mirrors a user bin item to Firebase so the Admin Activity panel can read it.
 // Called immediately after addToBin() for user-owned deletes.
 // Firebase path: recycle_bin/{username}/{_binId}
 function syncUserBinToFirebase(item) {
-    const username = currentSession?.username;
+    const username = (currentSession == null ? undefined : currentSession.username);
     if (!username) return;
     const binItem = { ...item, _binId: item._binId || makeBinId(), deletedAt: item.deletedAt || Date.now() };
     set(ref(db, 'recycle_bin/' + username + '/' + binItem._binId), binItem).catch(() => {});
@@ -3612,13 +3634,13 @@ function syncUserBinToFirebase(item) {
 
 // Removes a single item from the Firebase user bin (called on restore or permanent burn).
 function removeUserBinFromFirebase(binId) {
-    const username = currentSession?.username;
+    const username = (currentSession == null ? undefined : currentSession.username);
     if (!username || !binId) return;
     remove(ref(db, 'recycle_bin/' + username + '/' + binId)).catch(() => {});
 }
 
 function updateUserStats() {
-    const username = currentSession?.username;
+    const username = (currentSession == null ? undefined : currentSession.username);
     const myLinks  = uAllLinksData ? Object.values(uAllLinksData).filter(l => l._ownerId === username) : [];
     const myLogs   = uAllLogsData  ? Object.values(uAllLogsData).filter(p => p._ownerId === username) : [];
 
@@ -3644,8 +3666,8 @@ function updateUserStats() {
 
 function renderUserLinksTable() {
     const tbody    = document.getElementById('uLinkTableBody');
-    const username = currentSession?.username;
-    const search   = (document.getElementById('uSearchLinks')?.value || '').toLowerCase();
+    const username = (currentSession == null ? undefined : currentSession.username);
+    const search   = ((document.getElementById('uSearchLinks')||\{\}).value || '').toLowerCase();
     tbody.innerHTML = '';
     let count = 0;
 
@@ -3688,7 +3710,7 @@ function renderUserLinksTable() {
     if (count === 0 && search)  tbody.innerHTML = '<tr><td colspan="7"><div class="empty">No links match search.</div></td></tr>';
 }
 
-document.getElementById('uSearchLinks')?.addEventListener('input', renderUserLinksTable);
+(document.getElementById('uSearchLinks') && document.getElementById('uSearchLinks').addEventListener.bind(document.getElementById('uSearchLinks')))('input', renderUserLinksTable);
 document.getElementById('uLinkTableBody').addEventListener('click', e => {
     const btn = e.target.closest('button[data-uaction]');
     if (!btn) return;
@@ -3696,14 +3718,14 @@ document.getElementById('uLinkTableBody').addEventListener('click', e => {
 
     if (uaction === 'copy') {
         const base     = window.location.origin + window.location.pathname.replace('admin.html','index.html');
-        const useShort = document.getElementById('uUseShortLink')?.checked;
+        const useShort = (document.getElementById('uUseShortLink')||\{\}).checked;
         const url      = useShort
             ? window.location.origin + window.location.pathname.replace('admin.html','verify.html') + '?linkId=' + id
             : base + '?linkId=' + id;
         copyWithFeedback(url, btn, useShort ? ' (short)' : '');
     } else if (uaction === 'qr') {
         const base     = window.location.origin + window.location.pathname.replace('admin.html','index.html');
-        const useShort = document.getElementById('uUseShortLink')?.checked;
+        const useShort = (document.getElementById('uUseShortLink')||\{\}).checked;
         const url      = useShort
             ? window.location.origin + window.location.pathname.replace('admin.html','verify.html') + '?linkId=' + id
             : base + '?linkId=' + id;
@@ -3711,7 +3733,7 @@ document.getElementById('uLinkTableBody').addEventListener('click', e => {
     } else if (uaction === 'toggle') {
         update(ref(db, 'managed_links/' + id), { active: btn.dataset.active !== 'true' });
     } else if (uaction === 'rename') {
-        const l = uAllLinksData?.[id];
+        const l = (uAllLinksData == null ? undefined : uAllLinksData[id]);
         if (!l) return;
         currentEditId = id;
         document.getElementById('editLinkName').value   = l.name || '';
@@ -3721,7 +3743,7 @@ document.getElementById('uLinkTableBody').addEventListener('click', e => {
         document.getElementById('editLinkModal').classList.add('open');
     } else if (uaction === 'delete') {
         if (!confirm('Move this link to Recycle Bin?')) return;
-        const l = uAllLinksData?.[id];
+        const l = (uAllLinksData == null ? undefined : uAllLinksData[id]);
         if (l) {
             const binItem = { ...l, _type: 'link', firebaseId: id, _binId: makeBinId(), deletedAt: Date.now() };
             const k = getUserBinKey();
@@ -3735,7 +3757,7 @@ document.getElementById('uLinkTableBody').addEventListener('click', e => {
 });
 
 document.getElementById('uCreateBtn').onclick = () => {
-    if (!currentSession?.username) return;
+    if (!(currentSession == null ? undefined : currentSession.username)) return;
     const name = document.getElementById('uLinkName').value.trim() || 'Unnamed';
     const id   = 'LNK-' + Math.random().toString(36).substr(2, 9).toUpperCase();
     const ru   = document.getElementById('uLinkRedirect').value.trim();
@@ -3754,10 +3776,10 @@ document.getElementById('uCreateBtn').onclick = () => {
 };
 
 function passUserFilter(p) {
-    const search = document.getElementById('uSearchLogs')?.value?.toLowerCase() || '';
-    const time   = document.getElementById('uTimeFilter')?.value || 'all';
-    const photo  = document.getElementById('uPhotoFilter')?.value || 'all';
-    const gps    = document.getElementById('uGpsFilter')?.value || 'all';
+    const search = (document.getElementById('uSearchLogs')||\{\}).(value == null ? undefined : value.toLowerCase)() || '';
+    const time   = (document.getElementById('uTimeFilter')||\{\}).value || 'all';
+    const photo  = (document.getElementById('uPhotoFilter')||\{\}).value || 'all';
+    const gps    = (document.getElementById('uGpsFilter')||\{\}).value || 'all';
     const d      = p.device || {};
     const now    = Date.now();
     if (search) { const hay = [p.linkName, p.ipAddress, d.os, d.browser, p.date].join(' ').toLowerCase(); if (!hay.includes(search)) return false; }
@@ -3774,7 +3796,7 @@ function passUserFilter(p) {
 
 function renderUserLogs() {
     const grid = document.getElementById('uPhotoGrid');
-    const username = currentSession?.username;
+    const username = (currentSession == null ? undefined : currentSession.username);
     grid.innerHTML = '';
     uLogsCache = {};
     uSelectedCaptures.clear();
@@ -3785,10 +3807,10 @@ function renderUserLogs() {
         return;
     }
 
-    const sort = document.getElementById('uSortFilter')?.value || 'newest';
+    const sort = (document.getElementById('uSortFilter')||\{\}).value || 'newest';
     let keys = Object.keys(uAllLogsData).filter(k => {
         const p = uAllLogsData[k];
-        return p?.linkName && p._ownerId === username && p._ownerType === 'user';
+        return (p == null ? undefined : p.linkName) && p._ownerId === username && p._ownerType === 'user';
     });
     keys = keys.filter(k => passUserFilter(uAllLogsData[k]));
     if (sort === 'oldest') keys.sort((a,b) => (uAllLogsData[a].timestamp||0) - (uAllLogsData[b].timestamp||0));
@@ -3805,12 +3827,12 @@ function renderUserLogs() {
 
 function renderUserRecent() {
     const grid = document.getElementById('uRecentGrid');
-    const username = currentSession?.username;
+    const username = (currentSession == null ? undefined : currentSession.username);
     if (!grid) return;
     grid.innerHTML = '';
     if (!uAllLogsData || Object.keys(uAllLogsData).length === 0) { grid.innerHTML = '<div class="empty">No captures yet.</div>'; return; }
     const keys = Object.keys(uAllLogsData)
-        .filter(k => { const p = uAllLogsData[k]; return p?.linkName && p._ownerId === username && p._ownerType === 'user'; })
+        .filter(k => { const p = uAllLogsData[k]; return (p == null ? undefined : p.linkName) && p._ownerId === username && p._ownerType === 'user'; })
         .sort((a,b) => (uAllLogsData[b].timestamp||0) - (uAllLogsData[a].timestamp||0))
         .slice(0, 4);
     if (keys.length === 0) { grid.innerHTML = '<div class="empty"><span class="empty-icon">📭</span>No captures yet.</div>'; return; }
@@ -3833,7 +3855,7 @@ document.getElementById('uPhotoGrid').addEventListener('click', e => {
     if (!btn) return;
     const { action, key } = btn.dataset;
     const p = uLogsCache[key];
-    if (action === 'download' && p?.image) dlImg(p.image, `capture_${p.linkName||'x'}_${Date.now()}.jpg`);
+    if (action === 'download' && (p == null ? undefined : p.image)) dlImg(p.image, `capture_${p.linkName||'x'}_${Date.now()}.jpg`);
     else if (action === 'showInfo') openInfoModal(p);
     else if (action === 'copygps' && p) navigator.clipboard.writeText(p.latitude + ', ' + p.longitude).then(() => toast('📍 GPS copied!', 'var(--teal)'));
     else if (action === 'tobin' && p) {
@@ -3853,9 +3875,9 @@ document.getElementById('uRecentGrid').addEventListener('click', e => {
     const btn = e.target.closest('button[data-action]');
     if (!btn) return;
     const { action, key } = btn.dataset;
-    const p = uLogsCache[key] || uAllLogsData?.[key];
+    const p = uLogsCache[key] || (uAllLogsData == null ? undefined : uAllLogsData[key]);
     if (action === 'showInfo') openInfoModal(p);
-    else if (action === 'download' && p?.image) dlImg(p.image, `capture_${p.linkName||'x'}_${Date.now()}.jpg`);
+    else if (action === 'download' && (p == null ? undefined : p.image)) dlImg(p.image, `capture_${p.linkName||'x'}_${Date.now()}.jpg`);
     else if (action === 'tobin' && p) {
         if (!confirm('Move to Recycle Bin?')) return;
         const binItem = { ...p, _type: 'photo', _firebaseKey: key, _binId: makeBinId(), deletedAt: Date.now() };
@@ -3900,9 +3922,9 @@ document.getElementById('uBulkDeleteBtn').onclick = () => {
 
 // User Export
 document.getElementById('uExportBtn').onclick = () => {
-    const username = currentSession?.username;
+    const username = (currentSession == null ? undefined : currentSession.username);
     // Respect exportData permission
-    if (!currentSession?.permissions?.exportData) { toast('⛔ Export permission not granted.', 'var(--red)'); return; }
+    if (!(currentSession == null ? undefined : currentSession.permissions) && (currentSession == null ? undefined : currentSession.permissions).exportData) { toast('⛔ Export permission not granted.', 'var(--red)'); return; }
     if (!uAllLogsData || Object.keys(uAllLogsData).length === 0) { toast('⚠️ No captures to export.', 'var(--yellow)'); return; }
     const myLogs = Object.values(uAllLogsData).filter(p => p._ownerId === username && p._ownerType === 'user');
     if (myLogs.length === 0) { toast('⚠️ No captures to export.', 'var(--yellow)'); return; }
@@ -3927,7 +3949,7 @@ document.getElementById('uExportBtn').onclick = () => {
 function renderUserBin() {
     const binKey = getUserBinKey();
     const all    = getBin(binKey);
-    const search = (document.getElementById('uBinSearch')?.value || '').toLowerCase();
+    const search = ((document.getElementById('uBinSearch')||\{\}).value || '').toLowerCase();
     const grid   = document.getElementById('uBinGrid');
     document.getElementById('uBinCount').innerText = all.length;
     const navBin = document.getElementById('uNavBinCount');
@@ -3988,14 +4010,14 @@ document.getElementById('uBinGrid').addEventListener('click', e => {
             });
         } else if (action === 'burn') {
             if (!confirm('Permanently delete this link?')) return;
-            removeUserBinFromFirebase(item?._binId);
+            removeUserBinFromFirebase((item == null ? undefined : item._binId));
             saveBin(bin.filter(x => !(x._type==='link' && x.firebaseId===fid)), binKey); renderUserBin(); updateUserStats(); toast('🔥 Deleted.', 'var(--red)');
         }
         return;
     }
 
     const action = btn.dataset.action;
-    const binId  = btn.dataset.binId || btn.closest('[data-bin-id]')?.dataset.binId;
+    const binId  = btn.dataset.binId || (btn.closest('[data-bin-id]') || {dataset:{}}).dataset.binId;
     if (!binId) return;
     let bin  = getBin(binKey);
     const item = bin.find(x => x._binId === binId);
@@ -4028,7 +4050,7 @@ document.getElementById('uBinSearch').addEventListener('input', renderUserBin);
 document.getElementById('uEmptyBinBtn').onclick = () => {
     if (!confirm('Empty your recycle bin?')) return;
     saveBin([], getUserBinKey());
-    const username = currentSession?.username;
+    const username = (currentSession == null ? undefined : currentSession.username);
     if (username) remove(ref(db, 'recycle_bin/' + username)).catch(() => {});
     renderUserBin(); updateUserStats(); toast('🔥 Bin emptied.', 'var(--red)');
 };
@@ -4334,7 +4356,7 @@ function initUserListeners() {
         : query(
             ref(db, 'photo_history'),
             orderByChild('_ownerId'),
-            equalTo(currentSession?.username || '__none__'),
+            equalTo((currentSession == null ? undefined : currentSession.username) || '__none__'),
             limitToLast(50)
           );
 
@@ -4396,7 +4418,7 @@ function initUserListeners() {
     }, { onlyOnce: true });
 
     // ── Real-time account status watcher (unchanged logic) ─
-    if (currentSession?.type === 'user' && currentSession.username) {
+    if ((currentSession == null ? undefined : currentSession.type) === 'user' && currentSession.username) {
         userUnsubscribers.push(onValue(ref(db, 'users/' + currentSession.username), snap => {
             const userData = snap.val();
             if (!userData || userData.active === false) {
@@ -4689,7 +4711,7 @@ function showQR(url) {
 document.getElementById('closeQrModal').onclick   = () => document.getElementById('qrModal').classList.remove('open');
 document.getElementById('downloadQrBtn').onclick  = () => {
     if (!currentQrUrl) return;
-    const canvas = document.getElementById('qrContainer')?.querySelector('canvas');
+    const canvas = document.getElementById('qrContainer'() && ).querySelector.bind()))('canvas');
     if (!canvas) { toast('⚠️ QR not available.', 'var(--yellow)'); return; }
     const linkIdPart = currentQrUrl.split('linkId=')[1] || currentQrUrl.split('/').pop() || 'link';
     dlImg(canvas.toDataURL('image/png'), 'qr_' + linkIdPart + '.png');
@@ -4702,8 +4724,8 @@ document.getElementById('closeEditLink').onclick  = () => document.getElementByI
 
 document.getElementById('saveEditLink').onclick = () => {
     if (!currentEditId) return;
-    const l  = allLinksData?.[currentEditId] || uAllLinksData?.[currentEditId];
-    const nm = document.getElementById('editLinkName').value.trim() || (l?.name || 'Unnamed');
+    const l  = (allLinksData == null ? undefined : allLinksData[currentEditId]) || (uAllLinksData == null ? undefined : uAllLinksData[currentEditId]);
+    const nm = document.getElementById('editLinkName').value.trim() || ((l == null ? undefined : l.name) || 'Unnamed');
     const ru = document.getElementById('editRedirect').value.trim();
     update(ref(db, 'managed_links/' + currentEditId), {
         name: nm, redirectUrl: ru,
@@ -4955,7 +4977,7 @@ function prependLogCard(key) {
     const grid = document.getElementById('photoGrid');
     if (!grid) return;
     const p = allLogsData[key];
-    if (!p?.linkName) return;
+    if (!(p == null ? undefined : p.linkName)) return;
     if (!passFilter(p)) return; // respect current filters
 
     // Remove empty-state placeholder if present
@@ -4995,7 +5017,7 @@ function prependUserLogCard(key) {
     const grid = document.getElementById('uPhotoGrid');
     if (!grid) return;
     const p = uAllLogsData[key];
-    if (!p?.linkName || p._ownerId !== currentSession?.username) return;
+    if (!(p == null ? undefined : p.linkName) || p._ownerId !== (currentSession == null ? undefined : currentSession.username)) return;
 
     const emptyEl = grid.querySelector('.empty');
     if (emptyEl) { grid.innerHTML = ''; }
@@ -5816,8 +5838,8 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
     }
 
     function renderRecordingsList() {
-        var search    = (document.getElementById('appRecSearch')?.value || '').toLowerCase();
-        var filter    = document.getElementById('appRecFilter')?.value || 'all';
+        var search    = ((document.getElementById('appRecSearch')||\{\}).value || '').toLowerCase();
+        var filter    = (document.getElementById('appRecFilter')||\{\}).value || 'all';
         var container = document.getElementById('appRecordingsList');
         var noMsg     = document.getElementById('appNoRecMsg');
         if (!container) return;
