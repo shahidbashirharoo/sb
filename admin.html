@@ -943,7 +943,7 @@
             <!-- Email field added for Firebase Auth — password alone is no longer enough -->
             <input type="email"    id="adminEmail" placeholder="Admin email" autocomplete="username">
             <input type="password" id="adminPass"  placeholder="Admin password" autocomplete="current-password">
-            <button class="btn btn-primary" id="loginBtn" style="width:100%;padding:11px;font-size:14px;justify-content:center;">
+            <button class="btn btn-primary" id="loginBtn" onclick="window._doAdminLogin && window._doAdminLogin()" style="width:100%;padding:11px;font-size:14px;justify-content:center;">
                 🔓 Access Admin Dashboard
             </button>
             <p id="loginError" style="color:var(--red);font-size:12px;margin-top:10px;display:none;">
@@ -2110,6 +2110,51 @@
 })();
 </script>
 
+<!-- ══ LOGIN WATCHDOG (plain script — runs before module loads) ══════════════
+     The entire application runs inside a type="module" script below.
+     If that module fails to load (network error, importmap unsupported,
+     Firebase CDN blocked, CSP header) the login button gets NO onclick handler
+     and clicking it silently does nothing.
+     This watchdog:
+       1. Shows a visible error message after 8 s if the module never sets
+          window.__moduleLoaded = true
+       2. Exposes window._doAdminLogin() as a direct fallback so the button
+          works even before the module fully executes
+     ═══════════════════════════════════════════════════════════════════════ -->
+<script>
+window.__moduleLoaded = false;
+
+// Catch any uncaught JS errors from the module and surface them on the page
+window.addEventListener('error', function(e) {
+    var errEl = document.getElementById('loginError');
+    if (errEl && !window.__moduleLoaded) {
+        errEl.innerText = '❌ Script error: ' + (e.message || 'Unknown error') + '. Please refresh.';
+        errEl.style.display = 'block';
+    }
+});
+window.addEventListener('unhandledrejection', function(e) {
+    var errEl = document.getElementById('loginError');
+    if (errEl && !window.__moduleLoaded) {
+        var msg = (e.reason && e.reason.message) ? e.reason.message : String(e.reason || 'Unknown error');
+        errEl.innerText = '❌ Load error: ' + msg + '. Please refresh.';
+        errEl.style.display = 'block';
+    }
+});
+
+// Watchdog timer — if module hasn't set __moduleLoaded in 8 s, show error
+setTimeout(function() {
+    if (!window.__moduleLoaded) {
+        var errEl = document.getElementById('loginError');
+        if (errEl) {
+            errEl.innerText = '❌ Failed to load scripts. Check your internet connection and refresh the page.';
+            errEl.style.display = 'block';
+        }
+        var btn = document.getElementById('loginBtn');
+        if (btn) { btn.disabled = false; btn.textContent = '🔓 Access Admin Dashboard'; }
+    }
+}, 8000);
+</script>
+
 <script type="module">
 import { initializeApp } from "firebase-app";
 import {
@@ -2148,6 +2193,11 @@ const firebaseConfig = {
 const app  = initializeApp(firebaseConfig);
 const db   = getDatabase(app);
 const auth = getAuth(app); // Firebase Auth instance
+
+// ── Mark module as successfully loaded (watchdog checks this) ─
+// Placed here — after all imports resolve and Firebase initialises —
+// so the watchdog only clears once we know the whole module is viable.
+window.__moduleLoaded = true;
 
 // ── STATE ─────────────────────────────────────────────────
 // Initialized as {} (not null) so incremental onChild* listeners can
@@ -2318,6 +2368,7 @@ async function doAdminLogin() {
     const password = document.getElementById('adminPass').value;
     const errEl    = document.getElementById('loginError');
     errEl.style.display = 'none';
+    errEl.style.color   = 'var(--red)';
 
     if (!email || !password) {
         errEl.innerText = '❌ Please enter your email and password.';
@@ -2325,35 +2376,83 @@ async function doAdminLogin() {
         return;
     }
 
-    // Disable button while request is in flight
+    // Basic email format check before hitting the network
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        errEl.innerText = '❌ Enter a valid email address (e.g. admin@gmail.com).';
+        errEl.style.display = 'block';
+        return;
+    }
+
     const btn = document.getElementById('loginBtn');
-    btn.disabled = true;
+    btn.disabled    = true;
     btn.textContent = '⏳ Signing in…';
 
     try {
-        // Firebase verifies credentials — throws on failure
         await signInWithEmailAndPassword(auth, email, password);
-        // onAuthStateChanged (below) will handle showing the dashboard
+        // onAuthStateChanged below will show the dashboard on success
     } catch (e) {
-        // Map Firebase error codes to user-friendly messages
-        const msg =
-            e.code === 'auth/invalid-credential'   ? '❌ Incorrect email or password.' :
-            e.code === 'auth/user-not-found'        ? '❌ No admin account found.' :
-            e.code === 'auth/wrong-password'        ? '❌ Incorrect password.' :
-            e.code === 'auth/invalid-email'         ? '❌ Invalid email address.' :
-            e.code === 'auth/too-many-requests'     ? '❌ Too many attempts. Try later.' :
-                                                      '❌ Login failed. Try again.';
+        // Always log the raw Firebase error code for debugging
+        console.error('[Admin Login] Firebase error:', e.code, e.message);
+
+        // ── Comprehensive Firebase Auth error code mapping ────────────
+        // Covers every error code that can realistically fire here.
+        const code = e.code || '';
+        let msg;
+
+        if (code === 'auth/invalid-credential' ||
+            code === 'auth/wrong-password'      ||
+            code === 'auth/user-not-found'      ||
+            code === 'auth/invalid-login-credentials') {
+            msg = '❌ Incorrect email or password. Check your credentials and try again.';
+
+        } else if (code === 'auth/invalid-email') {
+            msg = '❌ That email address format is invalid.';
+
+        } else if (code === 'auth/user-disabled') {
+            msg = '❌ This admin account has been disabled. Contact support.';
+
+        } else if (code === 'auth/too-many-requests') {
+            msg = '❌ Too many failed attempts. Wait a few minutes and try again.';
+
+        } else if (code === 'auth/operation-not-allowed') {
+            msg = '❌ Email/Password sign-in is not enabled in Firebase.\n' +
+                  'Go to: Firebase Console → Authentication → Sign-in method → Enable Email/Password.';
+
+        } else if (code === 'auth/configuration-not-found' ||
+                   code === 'auth/app-not-authorized'       ||
+                   code === 'auth/project-not-found') {
+            msg = '❌ Firebase Authentication is not configured for this project.\n' +
+                  'Go to: Firebase Console → Authentication → Get Started.';
+
+        } else if (code === 'auth/network-request-failed') {
+            msg = '❌ Network error — cannot reach Firebase. Check your internet connection and try again.';
+
+        } else if (code === 'auth/internal-error') {
+            msg = '❌ Firebase internal error. Try refreshing the page.';
+
+        } else if (code === 'auth/api-key-not-valid') {
+            msg = '❌ Invalid Firebase API key. Check the firebaseConfig in admin.html.';
+
+        } else {
+            // Show the raw code so the user can report it
+            msg = '❌ Login failed (' + (code || 'unknown') + '). Check the browser Console (F12) for details.';
+        }
+
         errEl.innerText = msg;
         errEl.style.display = 'block';
         document.getElementById('adminPass').value = '';
     } finally {
-        btn.disabled = false;
+        btn.disabled    = false;
         btn.textContent = '🔓 Access Admin Dashboard';
     }
 }
 document.getElementById('loginBtn').onclick = doAdminLogin;
 document.getElementById('adminPass').addEventListener('keydown', e => { if (e.key === 'Enter') doAdminLogin(); });
 document.getElementById('adminEmail').addEventListener('keydown', e => { if (e.key === 'Enter') doAdminLogin(); });
+
+// Expose to window so the button's onclick="" HTML attribute fallback works
+// even on browsers where module scoping hides the function from global space
+window._doAdminLogin = doAdminLogin;
 
 async function doUserLogin() {
     const username = document.getElementById('userLoginName').value.trim();
@@ -4931,6 +5030,49 @@ cleanBin();
 renderBin();
 setInterval(cleanBin, 3600000);
 checkUsersExist();
+
+// ── FIREBASE AUTH SELF-TEST ───────────────────────────────
+// Runs once on page load. Verifies that Firebase Auth is reachable
+// and that Email/Password sign-in is enabled. Shows a clear error on
+// the login page if either check fails — before the user wastes time
+// entering credentials that can never work.
+(async function firebaseAuthSelfTest() {
+    try {
+        // Attempt a deliberately-invalid sign-in.
+        // If Auth is configured correctly this throws auth/invalid-credential.
+        // If Auth is NOT set up it throws auth/operation-not-allowed,
+        // auth/configuration-not-found, auth/app-not-authorized, etc.
+        await signInWithEmailAndPassword(auth, '__selftest__@test.invalid', '__selftest__');
+    } catch (e) {
+        const code = e.code || '';
+        // These are the "healthy" error codes — Auth is working, just rejected bad creds
+        const healthyCodes = [
+            'auth/invalid-credential', 'auth/user-not-found', 'auth/wrong-password',
+            'auth/invalid-login-credentials', 'auth/invalid-email', 'auth/too-many-requests'
+        ];
+        if (healthyCodes.includes(code)) return; // Auth is fine — nothing to do
+
+        // Unhealthy: surface a clear actionable message on the login page
+        const errEl = document.getElementById('loginError');
+        if (!errEl) return;
+        let advice = '';
+        if (code === 'auth/operation-not-allowed') {
+            advice = '⚙️ Fix: Firebase Console → Authentication → Sign-in method → Enable Email/Password.';
+        } else if (code === 'auth/configuration-not-found' || code === 'auth/app-not-authorized') {
+            advice = '⚙️ Fix: Firebase Console → Authentication → click "Get Started" to enable Authentication.';
+        } else if (code === 'auth/network-request-failed') {
+            advice = '⚙️ Fix: Check internet connection or disable browser extensions blocking gstatic.com.';
+        } else if (code === 'auth/api-key-not-valid') {
+            advice = '⚙️ Fix: The apiKey in firebaseConfig is wrong. Copy it from Firebase Console → Project Settings.';
+        } else {
+            advice = '⚙️ Firebase error code: ' + code + ' — check browser Console (F12) for details.';
+        }
+        errEl.innerHTML = '⚠️ Firebase Authentication is not ready.<br><small style="line-height:1.6;">' + advice + '</small>';
+        errEl.style.color   = 'var(--yellow)';
+        errEl.style.display = 'block';
+        console.error('[Firebase Auth Self-Test] Failed with:', code, e.message);
+    }
+})();
 
 // ── FIREBASE AUTH SESSION RESTORE ────────────────────────
 // onAuthStateChanged fires immediately on page load:
