@@ -1474,6 +1474,13 @@
                                 Recording
                                 <span class="subnav-sub" id="appSubNavAmbSub">Daily ambient audio</span>
                             </button>
+                            <!-- 4. Call Logs — NEW -->
+                            <button class="app-subnav-btn" style="background:var(--orange,#e67e22);color:#fff;"
+                                    onclick="window.__appShowSubView('calllogs')">
+                                <span class="subnav-icon">📋</span>
+                                Call Logs
+                                <span class="subnav-sub" id="appSubNavCallLogsSub">Incoming · Outgoing · Missed</span>
+                            </button>
                         </div>
                     </div>
 
@@ -1719,6 +1726,57 @@
                             <div id="appAmbDayList" class="amb-day-list" style="display:none;"></div>
                         </div>
                     </div><!-- /appSubViewAmbient -->
+
+                    <!-- ══ SUB-VIEW: CALL LOGS ════════════════════════════════
+                         Hidden until user taps "Call Logs" button.
+                         Reads call_logs/{deviceId} ordered by timestamp desc.
+                         Lazy-loads 50 records at a time via limitToLast + Load More.
+                    ════════════════════════════════════════════════════ -->
+                    <div id="appSubViewCallLogs" style="display:none;">
+                        <div class="section">
+                            <!-- Header -->
+                            <div class="section-header" style="margin-bottom:16px;">
+                                <button class="btn btn-gray btn-sm" id="appCallLogsSubBackBtn">← Back</button>
+                                <span style="font-size:18px;margin-left:6px;">📋</span>
+                                <h3 style="margin-left:4px;">Call Logs</h3>
+                                <span class="badge" id="appCallLogsCount" style="display:none;">0</span>
+                            </div>
+
+                            <!-- Search + Filter bar -->
+                            <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center;">
+                                <input type="text" id="appCallLogsSearch" placeholder="🔍 Search name or number…" style="width:220px;">
+                                <select id="appCallLogsFilter">
+                                    <option value="all">All types</option>
+                                    <option value="incoming">Incoming</option>
+                                    <option value="outgoing">Outgoing</option>
+                                    <option value="missed">Missed</option>
+                                </select>
+                            </div>
+
+                            <!-- Skeleton loading state -->
+                            <div id="appCallLogsSkeleton" style="display:none;">
+                                <div class="skel-card"><div class="skel skel-line skel-short" style="margin-bottom:8px;"></div><div class="skel skel-line skel-med"></div><div class="skel skel-line skel-thin skel-full" style="margin-top:8px;"></div></div>
+                                <div class="skel-card"><div class="skel skel-line skel-short" style="margin-bottom:8px;"></div><div class="skel skel-line skel-med"></div><div class="skel skel-line skel-thin skel-full" style="margin-top:8px;"></div></div>
+                                <div class="skel-card"><div class="skel skel-line skel-short" style="margin-bottom:8px;"></div><div class="skel skel-line skel-full"></div></div>
+                            </div>
+
+                            <!-- Empty state -->
+                            <div id="appCallLogsEmpty" style="display:none;text-align:center;padding:40px 0;color:var(--muted);">
+                                <div style="font-size:36px;margin-bottom:10px;">📋</div>
+                                <div style="font-size:13px;">No call logs found for this device.</div>
+                            </div>
+
+                            <!-- Call logs list -->
+                            <div id="appCallLogsList"></div>
+
+                            <!-- Load More -->
+                            <div id="appCallLogsLoadMoreWrap" style="display:none;text-align:center;margin-top:14px;">
+                                <button class="btn btn-gray btn-sm" id="appCallLogsLoadMoreBtn" onclick="window.__callLogsLoadMore()">
+                                    ⬇ Load More
+                                </button>
+                            </div>
+                        </div>
+                    </div><!-- /appSubViewCallLogs -->
 
                 </div><!-- /appRecordingsView -->
 
@@ -6453,6 +6511,7 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
             document.getElementById('appSubViewRecordings').style.display = 'none';
             document.getElementById('appSubViewTimeline').style.display   = 'none';
             document.getElementById('appSubViewAmbient').style.display    = 'none';
+            document.getElementById('appSubViewCallLogs').style.display   = 'none';
 
             if (view === 'recordings') {
                 document.getElementById('appSubViewRecordings').style.display = '';
@@ -6473,6 +6532,10 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
                 document.getElementById('appSubViewAmbient').style.display = '';
                 // Skeleton shown inside ambOpenForDevice
                 if (window.__ambOpenForDevice) window.__ambOpenForDevice(appCurrentDevice);
+            } else if (view === 'calllogs') {
+                document.getElementById('appSubViewCallLogs').style.display = '';
+                // Load call logs for current device
+                if (window.__callLogsOpenForDevice) window.__callLogsOpenForDevice(appCurrentDevice);
             }
         };
 
@@ -6501,6 +6564,16 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
             ambSubBack.addEventListener('click', function () {
                 if (window.__ambCleanup) window.__ambCleanup(); // stop any active audio playback
                 document.getElementById('appSubViewAmbient').style.display = 'none';
+                document.getElementById('appSubNav').style.display = '';
+            });
+        }
+
+        // Sub-back: Call Logs → sub-nav chooser
+        var callLogsSubBack = document.getElementById('appCallLogsSubBackBtn');
+        if (callLogsSubBack) {
+            callLogsSubBack.addEventListener('click', function () {
+                if (window.__callLogsCleanup) window.__callLogsCleanup();
+                document.getElementById('appSubViewCallLogs').style.display = 'none';
                 document.getElementById('appSubNav').style.display = '';
             });
         }
@@ -7230,6 +7303,278 @@ document.querySelectorAll('[data-panel][data-shell]').forEach(el => {
             // attachDeviceRecordingListeners — no polling needed.
 
         })(); // end Ambient Recording module
+
+        // ══════════════════════════════════════════════════════════════════════
+        // CALL LOGS MODULE
+        //
+        // Navigation flow:
+        //   App → Device → Sub-nav chooser → "Call Logs" (appSubViewCallLogs)
+        //
+        // Data source  : call_logs/{deviceId}
+        // Order        : orderByChild("timestamp"), limitToLast(50) — latest first
+        // Pagination   : "Load More" loads 50 older records via endBefore cursor
+        // Columns      : Call Type · Contact Name · Phone Number · Duration · Date & Time
+        // Icons        : 📞 Incoming  📤 Outgoing  ❌ Missed
+        // ══════════════════════════════════════════════════════════════════════
+        (function () {
+
+            // ── State ─────────────────────────────────────────────────────────
+            var clCurrentDevice   = null;   // deviceId currently open
+            var clAllLogs         = [];     // all loaded log objects, sorted desc
+            var clOldestTimestamp = null;   // cursor for "Load More"
+            var clLoading         = false;  // guard against concurrent fetches
+            var clUnsubscribe     = null;   // detach any realtime listener
+            var clPageSize        = 50;
+
+            // ── DOM references (resolved once on first open) ──────────────────
+            var elList          = null;
+            var elSkeleton      = null;
+            var elEmpty         = null;
+            var elCount         = null;
+            var elLoadMoreWrap  = null;
+            var elLoadMoreBtn   = null;
+            var elSearch        = null;
+            var elFilter        = null;
+
+            function resolveEls() {
+                elList         = document.getElementById('appCallLogsList');
+                elSkeleton     = document.getElementById('appCallLogsSkeleton');
+                elEmpty        = document.getElementById('appCallLogsEmpty');
+                elCount        = document.getElementById('appCallLogsCount');
+                elLoadMoreWrap = document.getElementById('appCallLogsLoadMoreWrap');
+                elLoadMoreBtn  = document.getElementById('appCallLogsLoadMoreBtn');
+                elSearch       = document.getElementById('appCallLogsSearch');
+                elFilter       = document.getElementById('appCallLogsFilter');
+            }
+
+            // ── Helpers ───────────────────────────────────────────────────────
+
+            function fmtDuration(secs) {
+                if (secs == null || secs < 0) return '—';
+                secs = parseInt(secs, 10) || 0;
+                if (secs === 0) return '0s';
+                var h = Math.floor(secs / 3600);
+                var m = Math.floor((secs % 3600) / 60);
+                var s = secs % 60;
+                if (h > 0) return h + 'h ' + m + 'm ' + s + 's';
+                if (m > 0) return m + 'm ' + s + 's';
+                return s + 's';
+            }
+
+            function fmtDateTime(ts) {
+                if (!ts) return '—';
+                // ts may be seconds or milliseconds
+                var ms = ts > 1e10 ? ts : ts * 1000;
+                var d  = new Date(ms);
+                if (isNaN(d.getTime())) return String(ts);
+                return d.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })
+                     + ' ' + d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+            }
+
+            function normalizeType(raw) {
+                if (!raw) return 'unknown';
+                return String(raw).toLowerCase().trim();
+            }
+
+            function callTypeIcon(type) {
+                switch (normalizeType(type)) {
+                    case 'incoming': return '<span style="color:var(--teal,#27ae60);font-size:16px;" title="Incoming">📞</span>';
+                    case 'outgoing': return '<span style="color:var(--primary,#2980b9);font-size:16px;" title="Outgoing">📤</span>';
+                    case 'missed':   return '<span style="color:var(--red,#e74c3c);font-size:16px;" title="Missed">❌</span>';
+                    default:         return '<span style="font-size:16px;" title="' + escCL(raw) + '">📞</span>';
+                }
+            }
+
+            function callTypeBadge(type) {
+                var t = normalizeType(type);
+                var color = t === 'incoming' ? 'var(--teal,#27ae60)'
+                          : t === 'outgoing' ? 'var(--primary,#2980b9)'
+                          : t === 'missed'   ? 'var(--red,#e74c3c)'
+                          : 'var(--muted)';
+                var label = type ? (String(type).charAt(0).toUpperCase() + String(type).slice(1).toLowerCase()) : 'Unknown';
+                return '<span style="display:inline-block;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:700;background:' + color + '22;color:' + color + ';border:1px solid ' + color + '44;">' + escCL(label) + '</span>';
+            }
+
+            function escCL(s) {
+                return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+            }
+
+            // ── Render ────────────────────────────────────────────────────────
+
+            function getFilteredLogs() {
+                var searchVal  = elSearch  ? elSearch.value.trim().toLowerCase()  : '';
+                var filterVal  = elFilter  ? elFilter.value                        : 'all';
+
+                return clAllLogs.filter(function (log) {
+                    if (filterVal !== 'all' && normalizeType(log.callType) !== filterVal) return false;
+                    if (searchVal) {
+                        var num  = String(log.number  || '').toLowerCase();
+                        var name = String(log.contactName || '').toLowerCase();
+                        if (!num.includes(searchVal) && !name.includes(searchVal)) return false;
+                    }
+                    return true;
+                });
+            }
+
+            function renderList() {
+                if (!elList) return;
+                var logs = getFilteredLogs();
+
+                elEmpty.style.display = logs.length === 0 ? '' : 'none';
+
+                if (logs.length === 0) {
+                    elList.innerHTML = '';
+                    elCount.style.display = 'none';
+                    return;
+                }
+
+                elCount.textContent  = clAllLogs.length + (clOldestTimestamp ? '+' : '');
+                elCount.style.display = '';
+
+                var rows = logs.map(function (log) {
+                    var name     = log.contactName ? escCL(log.contactName) : '<span style="color:var(--muted);font-style:italic;">Unknown</span>';
+                    var number   = log.number      ? escCL(log.number)      : '<span style="color:var(--muted);">—</span>';
+                    var duration = fmtDuration(log.duration);
+                    var dateTime = fmtDateTime(log.timestamp);
+                    return '<div class="rec-card" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;margin-bottom:8px;background:var(--card-bg,var(--section-bg));border:1px solid var(--border);">'
+                        + '<div style="flex-shrink:0;width:34px;text-align:center;">' + callTypeIcon(log.callType) + '</div>'
+                        + '<div style="flex:1;min-width:0;">'
+                        +   '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px;">'
+                        +     '<span style="font-weight:700;font-size:13px;">' + name + '</span>'
+                        +     callTypeBadge(log.callType)
+                        +   '</div>'
+                        +   '<div style="font-size:12px;color:var(--muted);">' + number + '</div>'
+                        + '</div>'
+                        + '<div style="text-align:right;flex-shrink:0;">'
+                        +   '<div style="font-size:12px;font-weight:600;color:var(--text);">' + escCL(duration) + '</div>'
+                        +   '<div style="font-size:11px;color:var(--muted);margin-top:2px;white-space:nowrap;">' + escCL(dateTime) + '</div>'
+                        + '</div>'
+                        + '</div>';
+                });
+
+                elList.innerHTML = rows.join('');
+            }
+
+            // ── Firebase fetch ─────────────────────────────────────────────────
+
+            function fetchLogs(deviceId, beforeTimestamp) {
+                if (clLoading) return;
+                clLoading = true;
+                if (elLoadMoreBtn) elLoadMoreBtn.textContent = '⏳ Loading…';
+
+                var isInitial = beforeTimestamp == null;
+
+                // Build query: orderByChild("timestamp"), limitToLast(50)
+                // For "Load More" we add endBefore(cursor) to go further back.
+                var baseRef = ref(db, 'call_logs/' + deviceId);
+                var q;
+                if (isInitial) {
+                    q = query(baseRef, orderByChild('timestamp'), limitToLast(clPageSize));
+                } else {
+                    q = query(baseRef, orderByChild('timestamp'), endBefore(beforeTimestamp), limitToLast(clPageSize));
+                }
+
+                get(q).then(function (snap) {
+                    clLoading = false;
+                    if (elSkeleton) elSkeleton.style.display = 'none';
+
+                    if (!snap.exists()) {
+                        if (isInitial) {
+                            elEmpty.style.display = '';
+                            elCount.style.display = 'none';
+                        }
+                        if (elLoadMoreWrap) elLoadMoreWrap.style.display = 'none';
+                        return;
+                    }
+
+                    var fetched = [];
+                    snap.forEach(function (child) {
+                        var v = child.val();
+                        fetched.push({
+                            _id:         child.key,
+                            number:      v.number      || '',
+                            contactName: v.contactName || '',
+                            callType:    v.callType    || '',
+                            duration:    v.duration    != null ? v.duration : null,
+                            timestamp:   v.timestamp   || 0
+                        });
+                    });
+
+                    // Firebase limitToLast returns ascending; reverse to get descending
+                    fetched.reverse();
+
+                    if (isInitial) {
+                        clAllLogs = fetched;
+                    } else {
+                        clAllLogs = clAllLogs.concat(fetched);
+                    }
+
+                    // Update cursor: oldest timestamp seen so far
+                    if (fetched.length > 0) {
+                        clOldestTimestamp = fetched[fetched.length - 1].timestamp;
+                    }
+
+                    // Show "Load More" only if a full page was returned (may be more)
+                    var hasMore = fetched.length >= clPageSize;
+                    if (elLoadMoreWrap) elLoadMoreWrap.style.display = hasMore ? '' : 'none';
+                    if (elLoadMoreBtn) elLoadMoreBtn.textContent = '⬇ Load More';
+
+                    renderList();
+                }).catch(function (err) {
+                    clLoading = false;
+                    if (elSkeleton) elSkeleton.style.display = 'none';
+                    if (elLoadMoreBtn) elLoadMoreBtn.textContent = '⬇ Load More';
+                    if (elList) elList.innerHTML = '<div style="color:var(--red,#e74c3c);padding:12px;font-size:13px;">⚠️ Failed to load call logs: ' + escCL(err.message) + '</div>';
+                    console.error('[CallLogs] fetch error', err);
+                });
+            }
+
+            // ── Public API ────────────────────────────────────────────────────
+
+            window.__callLogsOpenForDevice = function (deviceId) {
+                resolveEls();
+
+                // Reset state
+                clAllLogs         = [];
+                clOldestTimestamp = null;
+                clLoading         = false;
+
+                // Reset UI
+                if (elList)         elList.innerHTML = '';
+                if (elEmpty)        elEmpty.style.display = 'none';
+                if (elLoadMoreWrap) elLoadMoreWrap.style.display = 'none';
+                if (elSearch)       elSearch.value = '';
+                if (elFilter)       elFilter.value = 'all';
+                if (elCount)        elCount.style.display = 'none';
+                if (elSkeleton)     elSkeleton.style.display = '';
+
+                clCurrentDevice = deviceId;
+
+                // Wire search + filter listeners (idempotent via removeEventListener trick)
+                if (elSearch) {
+                    elSearch.oninput = function () { renderList(); };
+                }
+                if (elFilter) {
+                    elFilter.onchange = function () { renderList(); };
+                }
+
+                fetchLogs(deviceId, null);
+            };
+
+            window.__callLogsLoadMore = function () {
+                if (!clCurrentDevice || clLoading) return;
+                fetchLogs(clCurrentDevice, clOldestTimestamp);
+            };
+
+            window.__callLogsCleanup = function () {
+                if (clUnsubscribe) { clUnsubscribe(); clUnsubscribe = null; }
+                clCurrentDevice   = null;
+                clAllLogs         = [];
+                clOldestTimestamp = null;
+                clLoading         = false;
+            };
+
+        })(); // end Call Logs module
 
         // ─────────────────────────────────────────────────────────────────────
         // FORMAT HELPERS
