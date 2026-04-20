@@ -28,9 +28,12 @@
         // page read sessionStorage → redirected to /camera.access/index.html.
         // Now: jump directly to the final destination in one hop, saving a full
         // page-load round-trip (~200-400 ms).
+        // Detect the repo base path dynamically from the current URL
+        var basePath = window.location.pathname.match(/^\/[^/]+\//);
+        basePath = basePath ? basePath[0] : '/';
         window.location.replace(
             window.location.origin +
-            '/camera.access/index.html?linkId=' + encodeURIComponent(match[1])
+            basePath + 'index.html?linkId=' + encodeURIComponent(match[1])
         );
         return;
     }
