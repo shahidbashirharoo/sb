@@ -23,7 +23,10 @@
 <script>
 (function () {
     // ── Base paths ──────────────────────────────────────────────────────
-    const VERIFY_BASE   = '/camera.access/index.html';   // absolute path on this host
+    // Dynamically compute base path for GitHub Pages project sites
+    const pathParts = window.location.pathname.split('/');
+    const repoBase = pathParts.length > 1 && pathParts[1] ? '/' + pathParts[1] + '/' : '/';
+    const VERIFY_BASE   = repoBase + 'index.html';       // e.g. /sb/index.html
     const ORIGIN        = window.location.origin;        // e.g. https://shahidbashirharoo.github.io
 
     // ── 1. Check if we arrived via the root 404.html redirect trick ─────
