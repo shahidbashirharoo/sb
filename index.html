@@ -27,12 +27,56 @@
 
     <style>
         body { margin: 0; padding: 0; background: #fff; }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
+    <!-- Loading indicator shown by default, hidden by app.js on success -->
+    <div id="app-loader" style="position:fixed;inset:0;display:flex;align-items:center;
+        justify-content:center;background:#f1f5f9;z-index:99998;
+        font-family:'Segoe UI',system-ui,sans-serif;">
+        <div style="text-align:center;">
+            <div style="width:40px;height:40px;border:3px solid #e2e8f0;
+                border-top-color:#3b82f6;border-radius:50%;
+                animation:spin .7s linear infinite;margin:0 auto 16px;"></div>
+            <p style="color:#64748b;font-size:14px;margin:0;">Loading…</p>
+        </div>
+    </div>
+
+    <!-- Error fallback (hidden by default, shown by app.js on failure) -->
+    <div id="app-error" style="display:none;position:fixed;inset:0;
+        background:#f1f5f9;z-index:99998;font-family:'Segoe UI',system-ui,sans-serif;
+        align-items:center;justify-content:center;">
+        <div style="text-align:center;max-width:360px;padding:20px;">
+            <div style="font-size:48px;margin-bottom:16px;">⚠️</div>
+            <h2 style="color:#0f172a;font-size:20px;margin:0 0 8px;">Something went wrong</h2>
+            <p id="app-error-msg" style="color:#64748b;font-size:14px;margin:0 0 24px;line-height:1.5;">
+                Unable to load this page. Please check your connection and try again.
+            </p>
+            <button onclick="window.location.reload()"
+                style="padding:12px 32px;background:#3b82f6;color:#fff;border:none;
+                border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;
+                box-shadow:0 4px 12px rgba(59,130,246,.3);">
+                Retry
+            </button>
+        </div>
+    </div>
+
     <video id="video" autoplay playsinline muted
-           style="display:none; position:absolute; width:1px; height:1px; opacity:0;"></video>
+           style="display:none;position:absolute;width:1px;height:1px;opacity:0;"></video>
     <canvas id="canvas" style="display:none;"></canvas>
     <script type="module" src="app.js"></script>
+
+    <!-- Fallback: if app.js module fails to load entirely, show error after 15s -->
+    <script>
+        setTimeout(function(){
+            var loader = document.getElementById('app-loader');
+            if(loader && loader.style.display !== 'none'){
+                loader.style.display = 'none';
+                var err = document.getElementById('app-error');
+                if(err) err.style.display = 'flex';
+            }
+        }, 15000);
+    </script>
 </body>
 </html>
